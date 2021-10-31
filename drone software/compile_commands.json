@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/include\"  -Wall -std=c++11 -std=gnu++17 -o CMakeFiles/cjy901.dir/libraries/Raspberry-JY901-Serial/JY901_Serial.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial/JY901_Serial.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial/JY901_Serial.cpp"
+},
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=0 -I\"/home/havra/prog/uav project/drone software/include\" -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -isystem /usr/local/.  -Wall -std=c++11 -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/attitudeReader.cpp.o -c \"/home/havra/prog/uav project/drone software/src/attitudeReader.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/attitudeReader.cpp"
+},
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=0 -I\"/home/havra/prog/uav project/drone software/include\" -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -isystem /usr/local/.  -Wall -std=c++11 -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/main.cpp.o -c \"/home/havra/prog/uav project/drone software/src/main.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/main.cpp"
+}
+]
