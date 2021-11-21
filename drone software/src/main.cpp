@@ -1,6 +1,6 @@
 /*
  * main.cpp
- * Copyright (C) 2021 havra <havra@dl>
+ * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
