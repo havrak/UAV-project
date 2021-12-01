@@ -19,6 +19,7 @@ using namespace std;
 class ImuInterface {
 	private:
 	int pollingDelay = 10;
+	const bool debug = true;
 	CJY901 JY901;
   static ImuInterface* imuInterface;
   static mutex mutexImuInterface;

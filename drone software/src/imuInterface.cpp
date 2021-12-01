@@ -29,10 +29,13 @@ ImuInterface* ImuInterface::GetInstance()
 bool ImuInterface::attachIMU()
 {
 	bool status = JY901.attach("/dev/ttyS0");
-	/* if(!status) return false; */
+	if(!status ) {
+		if(debug) cout << "IMUINTERFACE | attachIMU | Failed to attach IMU " << endl;
+		return false;
+	}
 	/* status = JY901.changeBaudRate(115200); */
 	JY901.setGPSrate(9600);
-	cout << "Status of IMU: " << status << endl;
+	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << status << endl;
 	return status;
 }
 
@@ -60,10 +63,7 @@ void ImuInterface::setPollingDelay(int newPollingDelay)
 
 void ImuInterface::startLoop()
 {
-	//cout << GetInstance() << endl;
-	cout << "Loop Initialization" << endl;
 	loopThread = thread(&ImuInterface::updateFunction, this);
-	cout << "aaaa" << endl;
 
 }
 
@@ -73,7 +73,7 @@ double ImuInterface::getTemp()
 	double toReturn = JY901.getTemp();
 	sensorMutex.unlock();
 	return toReturn;
-} // may need further test
+}
 
 double ImuInterface::getAccX() {
 	sensorMutex.lock();

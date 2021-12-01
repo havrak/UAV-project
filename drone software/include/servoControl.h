@@ -8,24 +8,36 @@
 #ifndef SERVOCONTROL_H
 #define SERVOCONTROL_H
 
+#define MIXING_GAIN 0.5
+#define PCA9685_ADDRESS 0x70
+
 #include <chrono>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <PCA9685.h>
 
 using namespace std;
 
 class ServoControl {
 	private:
-	int pollingDelay = 10;
+	int fd = -1;
+	const bool debug = true;
   static ServoControl* servoControl;
   static mutex mutexServoControl;
+	unsigned int gOnVals[_PCA9685_CHANS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	unsigned int gOffVals[_PCA9685_CHANS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	protected:
 	ServoControl();
 
 	public:
+	unsigned int sOnVals[_PCA9685_CHANS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	unsigned int sOffVals[_PCA9685_CHANS] = { 0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	static ServoControl* GetInstance();
+	bool calibrateESC();
+	void getPWMValues();
+	void setPWMValues();
 };
 
 

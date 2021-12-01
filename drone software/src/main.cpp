@@ -7,6 +7,7 @@
 
 #include "attitudeReader.h"
 #include "imuInterface.h"
+#include "servoControl.h"
 #include <iostream>
 #include <wiringPi.h>
 using namespace std;
@@ -18,15 +19,15 @@ int main(int argc, char** argv)
 	cout << "Imu attached" << endl;
 	ImuInterface::GetInstance()->startLoop();
 	cout << "Loop started" << endl;
+	ServoControl::GetInstance();
 
 	while (true) {
-		cout << "X: " << endl;
-		cout << ImuInterface::GetInstance()->getGPSH() << endl;
-		cout << "Y: " << endl;
-		cout << ImuInterface::GetInstance()->getGPSV() << endl;
-		cout << "Z: " << endl;
-		cout << ImuInterface::GetInstance()->getGPSY() << endl;
-		this_thread::sleep_for(chrono::milliseconds(100));
+		cout << "GPS H: " << ImuInterface::GetInstance()->getGPSH() << endl;
+		cout << "GPS V: " << ImuInterface::GetInstance()->getGPSV() << endl;
+		cout << "GPS Y: " << ImuInterface::GetInstance()->getGPSY() << endl;
+		ServoControl::GetInstance()->getPWMValues();
+		//ServoControl::GetInstance()->setPWMValues();
+		this_thread::sleep_for(chrono::milliseconds(1000));
 	}
 	return 1;
 }
