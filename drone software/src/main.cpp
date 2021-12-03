@@ -5,7 +5,6 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "attitudeReader.h"
 #include "imuInterface.h"
 #include "servoControl.h"
 #include <iostream>

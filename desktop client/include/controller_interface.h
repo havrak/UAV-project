@@ -10,24 +10,39 @@
 
 #include <mutex>
 #include <thread>
-#include <vector>
+#include <list>
 #include "control_interpreter.h"
+
+#define JOY_DEV "/dev/input/js0"
 
 using namespace std;
 
+
+
+enum controlSurface{
+	L_ANALOG, R_ANALOG, L_TRIGGER, R_TRIGGER, L_BUMPER, R_BUMBER,
+	X, Y, A, B,
+	START, SELECT,
+	L_STICK_BUTTON, R_STICK_BUTTON,
+	D_PAD
+};
+
+
+
+
 class ControllerInterface{
 	private:
-    vector<ControlInterpreter> observers;
+    list<ControlInterpreter *> observers;
 		thread loopThread;
 		ControlInterpreter ci;
-		ControllerInterface();
 		virtual void eventLoop(); // get's started by constuctor
 		void notifyObserverEvent();
 
 
 	public:
-		void addObserver(ControlInterpreter v);
-		void removeObserver(ControlInterpreter v);
+		ControllerInterface();
+		void addObserver(ControlInterpreter *v);
+		void removeObserver(ControlInterpreter *v);
 
 };
 

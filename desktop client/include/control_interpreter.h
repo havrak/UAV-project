@@ -8,12 +8,10 @@
 #ifndef CONTROL_INTERPRETER_H
 #define CONTROL_INTERPRETER_H
 
-class Observer{
-	virtual int update();
-};
 
-class ControlInterpreter : Observer {
-
+class ControlInterpreter{
+	public:
+		virtual int update();
 };
 
 #endif /* !CONTROL_INTERPRETER_H */
