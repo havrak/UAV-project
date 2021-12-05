@@ -24,8 +24,7 @@ int main(int argc, char** argv)
 		cout << "GPS H: " << ImuInterface::GetInstance()->getGPSH() << endl;
 		cout << "GPS V: " << ImuInterface::GetInstance()->getGPSV() << endl;
 		cout << "GPS Y: " << ImuInterface::GetInstance()->getGPSY() << endl;
-		ServoControl::GetInstance()->getPWMValues();
-		//ServoControl::GetInstance()->setPWMValues();
+		ServoControl::GetInstance()->testServo();
 		this_thread::sleep_for(chrono::milliseconds(1000));
 	}
 	return 1;

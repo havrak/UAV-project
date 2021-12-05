@@ -27,7 +27,7 @@ using namespace std;
 class LinuxControllerImplementation : ControllerInterface {
 	private:
 		const bool debug = true;
-		int joy_fd = -1;
+		int gamepadFD = -1;
 		int num_of_axis = 0;
 		int num_of_buttons =0;
 		char name_of_joystick[80];

@@ -13,16 +13,16 @@ LinuxControllerImplementation::LinuxControllerImplementation() {
 }
 
 ReturnErrorMessage LinuxControllerImplementation::setupController() {
-  if ((joy_fd = open(JOY_DEV, O_RDONLY)) < 0) {
+  if ((gamepadFD = open(JOY_DEV, O_RDONLY)) < 0) {
     if (debug)
       cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
               "open device";
     return *new ReturnErrorMessage(true, 1, "Failed to open device");
   }
 
-  ioctl(joy_fd, JSIOCGAXES, &num_of_axis);
-  ioctl(joy_fd, JSIOCGBUTTONS, &num_of_buttons);
-  ioctl(joy_fd, JSIOCGNAME(80), &name_of_joystick);
+  ioctl(gamepadFD, JSIOCGAXES, &num_of_axis);
+  ioctl(gamepadFD, JSIOCGBUTTONS, &num_of_buttons);
+  ioctl(gamepadFD, JSIOCGNAME(80), &name_of_joystick);
 
   joy_button.resize(num_of_buttons, 0);
   joy_axis.resize(num_of_axis, 0);
@@ -31,7 +31,7 @@ ReturnErrorMessage LinuxControllerImplementation::setupController() {
        << "  axis: " << num_of_axis << endl
        << "  buttons: " << num_of_buttons << endl;
 
-  fcntl(joy_fd, F_SETFL, O_NONBLOCK); // using non-blocking mode
+  fcntl(gamepadFD, F_SETFL, O_NONBLOCK); // using non-blocking mode
   return *new ReturnErrorMessage(false, 0, "");
 }
 
@@ -40,7 +40,7 @@ void LinuxControllerImplementation::eventLoop() {
   while (true) {
     js_event js;
 
-    read(joy_fd, &js, sizeof(js_event));
+    read(gamepadFD, &js, sizeof(js_event));
 
     switch (js.type & ~JS_EVENT_INIT) {
     case JS_EVENT_AXIS:
@@ -69,6 +69,6 @@ void LinuxControllerImplementation::eventLoop() {
       cout << " " << (int)joy_button[i];
     cout << endl;
 
-    usleep(100);
+    usleep(50);
   }
 }
