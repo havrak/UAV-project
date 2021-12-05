@@ -9,7 +9,9 @@
 #define SERVOCONTROL_H
 
 #define MIXING_GAIN 0.5
-#define PCA9685_ADDRESS 0x40
+
+#define MIN_PULSE_LENGTH 1000 // Minimum pulse length in µs
+#define MAX_PULSE_LENGTH 3000 // Maximum pulse length in µs
 
 /* #include <PCA9685.h> */
 #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h"
@@ -21,6 +23,8 @@
 #include <thread>
 
 using namespace std;
+
+
 
 class ServoControl {
 private:

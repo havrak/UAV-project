@@ -16,9 +16,17 @@ int main(int argc, char** argv)
 	//wiringPiSetup();
 	ImuInterface::GetInstance()->attachIMU();
 	cout << "Imu attached" << endl;
-	ImuInterface::GetInstance()->startLoop();
+	//ImuInterface::GetInstance()->startLoop();
 	cout << "Loop started" << endl;
+
+	if (!bcm2835_init()) {
+			cerr << "MAIN | main | failed to open I2C device" << endl;
+	} else {
+			cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
+	}
+
 	ServoControl::GetInstance();
+	cout << "ServoControl created" << endl;
 
 	while (true) {
 		cout << "GPS H: " << ImuInterface::GetInstance()->getGPSH() << endl;

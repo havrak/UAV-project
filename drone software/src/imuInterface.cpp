@@ -34,6 +34,7 @@ bool ImuInterface::attachIMU()
 		return false;
 	}
 	/* status = JY901.changeBaudRate(115200); */
+	JY901.setD1mode(0x05); // change mode of D1 port to gps
 	JY901.setGPSrate(9600);
 	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << status << endl;
 	return status;
