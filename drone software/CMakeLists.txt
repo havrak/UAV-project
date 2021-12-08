@@ -18,6 +18,11 @@ add_library(
 target_include_directories(
   cjy901 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/Raspberry-JY901-Serial/")
 
+add_library(ina226 STATIC
+            "${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-ina226/ina226.cpp")
+target_include_directories(
+  ina226 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-ina226/")
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(${WIRINGPI_INCLUDE_DIRS})
 include_directories(${BCM2835_INCLUDE_DIRS})
@@ -25,16 +30,8 @@ include_directories(${BCM2835_INCLUDE_DIRS})
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# target_link_libraries( ${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT}
-# ${WIRINGPI_LIBRARIES} cjy901
-# "${PROJECT_SOURCE_DIR}/libraries/rpidmx512-Lib-PCA9685/libpca9685.a")
-
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${WIRINGPI_LIBRARIES} ${BCM2835_LIBRARIES}
-         cjy901
+         cjy901 ina226
          "${PROJECT_SOURCE_DIR}/libraries/rpidmx512-Lib-PCA9685/libpca9685.a")
-
-# target_link_libraries( ${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT}
-# ${WIRINGPI_LIBRARIES} bcm2835 cjy901
-# "${PROJECT_SOURCE_DIR}/libraries/rpidmx512-Lib-PCA9685/libpca9685.a")

@@ -34,20 +34,13 @@ private:
   static mutex mutexServoControl;
 	PCA9685Servo servo;
 
-  /* unsigned int gOnVals[_PCA9685_CHANS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; */
-  /* unsigned int gOffVals[_PCA9685_CHANS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; */
-
 protected:
   ServoControl();
 
 public:
-  /* unsigned int sOnVals[_PCA9685_CHANS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; */
-  /* unsigned int sOffVals[_PCA9685_CHANS] = {0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; */
   static ServoControl *GetInstance();
   bool calibrateESC();
 	void testServo();
-  /* void getPWMValues(); */
-  /* void setPWMValues(); */
 };
 
 #endif /* !SERVOCONTROL_H */

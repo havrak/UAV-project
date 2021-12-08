@@ -33,7 +33,6 @@ bool ImuInterface::attachIMU()
 		if(debug) cout << "IMUINTERFACE | attachIMU | Failed to attach IMU " << endl;
 		return false;
 	}
-	/* status = JY901.changeBaudRate(115200); */
 	JY901.setD1mode(0x05); // change mode of D1 port to gps
 	JY901.setGPSrate(9600);
 	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << status << endl;
@@ -42,13 +41,17 @@ bool ImuInterface::attachIMU()
 
 void ImuInterface::updateFunction()
 {
-	cout << "Loop" << endl;
 
 	while (true) {
 		sensorMutex.lock();
 		JY901.receiveSerialData();
 		sensorMutex.unlock();
 		this_thread::sleep_for(chrono::milliseconds(pollingDelay));
+		if(getD1Status() != 0x05){
+			std::cout << "IMUINTERFACE | updateFunction | d1 status is not 0x05" << std::endl;
+			JY901.setD1mode(0x05); // change mode of D1 port to gps
+			JY901.setGPSrate(9600);
+		}
 	}
 }
 
