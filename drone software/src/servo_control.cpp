@@ -5,7 +5,7 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "servoControl.h"
+#include "servo_control.h"
 #include "bcm2835.h"
 #include <cstdint>
 #include <cstdio>

@@ -5,8 +5,8 @@
  * Distributed under terms of the MIT license.
  */
 
-#ifndef BATTERYINTERFACE_H
-#define BATTERYINTERFACE_H
+#ifndef BATTERY_INTERFACE_H
+#define BATTERY_INTERFACE_H
 
 #include "../libraries/raspberry-pi-ina226/ina226.h"
 #include <cmath>

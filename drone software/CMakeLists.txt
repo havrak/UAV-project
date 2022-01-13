@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME uav_drone)
 project(${PROJECT_NAME})
 
+find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(wiringPi REQUIRED)
@@ -32,6 +33,10 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(
   ${PROJECT_NAME}
-  PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${WIRINGPI_LIBRARIES} ${BCM2835_LIBRARIES}
-         cjy901 ina226
+  PUBLIC ${CMAKE_THREAD_LIBS_INIT}
+         ${WIRINGPI_LIBRARIES}
+         ${BCM2835_LIBRARIES}
+         ${OpenCV_LIBS}
+         cjy901
+         ina226
          "${PROJECT_SOURCE_DIR}/libraries/rpidmx512-Lib-PCA9685/libpca9685.a")

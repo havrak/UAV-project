@@ -5,10 +5,11 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "batteryInterface.h"
-#include "imuInterface.h"
+#include "battery_interface.h"
+#include "imu_interface.h"
+#include "servo_control.h"
+#include "camera_streamer.h"
 #include "bcm2835.h"
-#include "servoControl.h"
 #include <iostream>
 
 using namespace std;
@@ -30,6 +31,10 @@ int main(int argc, char** argv)
 	} else {
 			cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
 	}
+	cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl;
+	//CameraStreamer *cs1 = new CameraStreamer(0, 5000, "192.168.6.11");
+	//cs1->setupStream();
+	cout << "MAIN | main | CAMERA_STREAMER setted up" << endl;
 
 	ServoControl::GetInstance();
 	cout << "ServoControl created" << endl;
@@ -39,11 +44,14 @@ int main(int argc, char** argv)
 		cout << "GPS H: " << ImuInterface::GetInstance()->getGPSH() << endl;
 		cout << "GPS V: " << ImuInterface::GetInstance()->getGPSV() << endl;
 		cout << "GPS Y: " << ImuInterface::GetInstance()->getGPSY() << endl;
+
 		cout << endl;
 		cout << "Voltage: " << BatteryInterface::GetInstance()->getVoltage() << endl;
 		cout << "Current: " << BatteryInterface::GetInstance()->getCurrent() << endl;
 
-		ServoControl::GetInstance()->testServo();
+		//ServoControl::GetInstance()->testServo();
+		nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL);
+
 	}
 	return 1;
 }

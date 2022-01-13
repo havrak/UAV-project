@@ -5,7 +5,7 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "imuInterface.h"
+#include "imu_interface.h"
 #include <chrono>
 #include <iostream>
 
@@ -19,7 +19,7 @@ ImuInterface::ImuInterface()
 ImuInterface* ImuInterface::GetInstance()
 {
 	if (imuInterface == nullptr) {
-		mutexImuInterface.lock(); // just so the this just doesn't couse
+		mutexImuInterface.lock();
 		if (imuInterface == nullptr) imuInterface = new ImuInterface();
 		mutexImuInterface.unlock();
 	}
@@ -34,7 +34,8 @@ bool ImuInterface::attachIMU()
 		return false;
 	}
 	JY901.setD1mode(0x05); // change mode of D1 port to gps
-	JY901.setGPSrate(9600);
+	JY901.saveConf(0);
+
 	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << status << endl;
 	return status;
 }
@@ -47,11 +48,6 @@ void ImuInterface::updateFunction()
 		JY901.receiveSerialData();
 		sensorMutex.unlock();
 		this_thread::sleep_for(chrono::milliseconds(pollingDelay));
-		if(getD1Status() != 0x05){
-			std::cout << "IMUINTERFACE | updateFunction | d1 status is not 0x05" << std::endl;
-			JY901.setD1mode(0x05); // change mode of D1 port to gps
-			JY901.setGPSrate(9600);
-		}
 	}
 }
 

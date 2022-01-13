@@ -5,7 +5,7 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "batteryInterface.h"
+#include "battery_interface.h"
 
 BatteryInterface* BatteryInterface::batteryInterface = nullptr;
 mutex BatteryInterface::mutexBatteryInterface;

@@ -5,8 +5,8 @@
  * Distributed under terms of the MIT license.
  */
 
-#ifndef SERVOCONTROL_H
-#define SERVOCONTROL_H
+#ifndef SERVO_CONTROL_H
+#define SERVO_CONTROL_H
 
 #define MIXING_GAIN 0.5
 

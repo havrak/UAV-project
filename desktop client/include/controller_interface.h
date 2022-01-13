@@ -5,8 +5,8 @@
  * Distributed under terms of the MIT license.
  */
 
-#ifndef CONTROLLERINTERFACE_H
-#define CONTROLLERINTERFACE_H
+#ifndef CONTROLLER_INTERFACE_H
+#define CONTROLLER_INTERFACE_H
 
 #include <mutex>
 #include <thread>
