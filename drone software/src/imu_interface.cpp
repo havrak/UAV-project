@@ -28,7 +28,8 @@ ImuInterface* ImuInterface::GetInstance()
 
 bool ImuInterface::attachIMU()
 {
-	bool status = JY901.attach("/dev/ttyS0");
+	bool status = JY901.startI2C(0x50);
+
 	if(!status ) {
 		if(debug) cout << "IMUINTERFACE | attachIMU | Failed to attach IMU " << endl;
 		return false;
@@ -38,6 +39,7 @@ bool ImuInterface::attachIMU()
 
 	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << status << endl;
 	return status;
+
 }
 
 void ImuInterface::updateFunction()
@@ -66,6 +68,7 @@ void ImuInterface::startLoop()
 	loopThread = thread(&ImuInterface::updateFunction, this);
 
 }
+
 
 double ImuInterface::getTemp()
 {
@@ -158,30 +161,6 @@ double ImuInterface::getMagZ() {
   return toReturn;
 }  // getMagZ()
 
-short ImuInterface::getD0Status() {
-	sensorMutex.lock();
-	double toReturn = JY901.getD0Status();
-	sensorMutex.unlock();
-  return toReturn;
-}
-short ImuInterface::getD1Status() {
-	sensorMutex.lock();
-	double toReturn = JY901.getD1Status();
-	sensorMutex.unlock();
-  return toReturn;
-}
-short ImuInterface::getD2Status() {
-	sensorMutex.lock();
-	double toReturn = JY901.getD2Status();
-	sensorMutex.unlock();
-  return toReturn;
-}
-short ImuInterface::getD3Status() {
-	sensorMutex.lock();
-	double toReturn = JY901.getD3Status();
-	sensorMutex.unlock();
-  return toReturn;
-}
 
 int ImuInterface::getPressure() {
 	sensorMutex.lock();
@@ -197,39 +176,6 @@ int ImuInterface::getAltitude() {
   return toReturn;
 }  // getAltitude() unit: cm
 
-int ImuInterface::getLon() {
-	sensorMutex.lock();
-	double toReturn = JY901.getLon();
-	sensorMutex.unlock();
-  return toReturn;
-}
-int ImuInterface::getLat() {
-	sensorMutex.lock();
-	double toReturn = JY901.getLat();
-	sensorMutex.unlock();
-  return toReturn;
-}
-
-double ImuInterface::getGPSH() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGPSH();
-	sensorMutex.unlock();
-  return toReturn;
-}  // get GPS Height, unit: m(meters)
-
-double ImuInterface::getGPSY() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGPSY();
-	sensorMutex.unlock();
-  return toReturn;
-}  // get GPS Yaw, unit: degree(s)
-
-double ImuInterface::getGPSV() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGPSV();
-	sensorMutex.unlock();
-  return toReturn;
-}  // get GPS Velocity, unit: kilometers per hour
 
 double ImuInterface::getQuater(string str) {
 	double toReturn =0;
@@ -246,21 +192,6 @@ double ImuInterface::getQuater(string str) {
   return toReturn;
 }  // getQuater()
 
-double ImuInterface::getDOP(string str) {
-	double toReturn =0;
-	sensorMutex.lock();
-  if (str.compare("sn") == 0)
-    toReturn = JY901.getDOP("sn");  // get sn
-  if (str.compare("pdop") == 0)
-    toReturn = JY901.getDOP("pdop");  // get pdop
-  if (str.compare("hdop") == 0)
-    toReturn = JY901.getDOP("hdop");  // get hdop
-  if (str.compare("vdop") == 0)
-    toReturn = JY901.getDOP("vdop");  // get vdop
-	sensorMutex.unlock();
-  return toReturn;
-
-}  // getDOP()
 
 milliseconds ImuInterface::getLastTime() {
 	sensorMutex.lock();

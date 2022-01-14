@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 add_library(
   cjy901 STATIC
-  "${PROJECT_SOURCE_DIR}/libraries/Raspberry-JY901-Serial/JY901_Serial.cpp")
+  "${PROJECT_SOURCE_DIR}/libraries/Raspberry-JY901-Serial/JY901.cpp")
 target_include_directories(
   cjy901 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/Raspberry-JY901-Serial/")
 

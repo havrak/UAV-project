@@ -8,7 +8,7 @@
 #ifndef IMUINTERFACE_H
 #define IMUINTERFACE_H
 
-#include "../libraries/Raspberry-JY901-Serial/JY901_Serial.h"
+#include "../libraries/Raspberry-JY901-Serial/JY901.h"
 #include <chrono>
 #include <mutex>
 #include <string>
@@ -52,19 +52,9 @@ class ImuInterface {
 	double getMagX();						 // get X-axis magnetic field
 	double getMagY();						 // get Y-axis magnetic field
 	double getMagZ();						 // get Z-axis magnetic field
-	short getD0Status();				 // get D0 Status
-	short getD1Status();				 // get D1 Status
-	short getD2Status();				 // get D2 Status
-	short getD3Status();				 // get D3 Status
 	int getPressure();					 // get pressure(JY-901B)
 	int getAltitude();					 // get altitude(JY-901B)
-	int getLon();								 // get lontitude
-	int getLat();								 // get latitude
-	double getGPSH();						 // GPS height
-	double getGPSY();						 // GPS speed angle
-	double getGPSV();						 // GPS speed
 	double getQuater(string);		 // get quaternion
-	double getDOP(string);			 // get GPS DOP
 	milliseconds getLastTime(); // get last receive time
 	short getAccRawX();					 // get X-axis raw acceleration data
 	short getAccRawY();					 // get Y-axis raw acceleration data
