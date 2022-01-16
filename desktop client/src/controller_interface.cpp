@@ -9,7 +9,7 @@
 #include "control_interpreter.h"
 
 ControllerInterface::ControllerInterface(){
-	loopThread = thread(&ControllerInterface::eventLoop, this);
+	//loopThread = thread(&ControllerInterface::eventLoop, this);
 }
 
 void ControllerInterface::addObserver(ControlInterpreter *v){

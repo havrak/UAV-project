@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	/* cs1->setupStream(); */
 	/* cout << "MAIN | main | CAMERA_STREAMER setted up" << endl; */
 
-	//IMPORTANT: ALWAYS KILL PROGRAMM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
+	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
 	ServoControl::GetInstance();
 	// cout << "MAIN | main | ServoControl created" << endl;
 

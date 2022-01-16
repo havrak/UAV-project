@@ -11,7 +11,6 @@
 #define MIXING_GAIN 0.5
 
 #define MIN_PULSE_LENGTH 200 // Minimum pulse length in µs1
-#define ARM_PULSE_LENGTH 300 // Minimum pulse length in µs1
 #define CEN_PULSE_LENGTH 1000 // Central pulse length in µs
 #define MAX_PULSE_LENGTH 1800 // Maximum pulse length in µs
 // NOTE: current max is over 1900

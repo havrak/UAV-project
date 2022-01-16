@@ -9,6 +9,7 @@
 #define LINUX_CONTROLLER_IMPLEMENTATION_H
 
 
+#include "control_interpreter.h"
 #include "controller_interface.h"
 #include "return_error_message.h"
 #include <iostream>
@@ -24,7 +25,10 @@ using namespace std;
 
 #define DEV_FILE "/dev/input/js0"
 
-class LinuxControllerImplementation : ControllerInterface {
+class LinuxControllerImplementation : public ControllerInterface {
+	protected:
+		void eventLoop() override;
+
 	private:
 		const bool debug = true;
 		int fd = -1;
@@ -37,7 +41,6 @@ class LinuxControllerImplementation : ControllerInterface {
 	public:
 		LinuxControllerImplementation();
 		ReturnErrorMessage setupController();
-		void eventLoop() override;
 };
 
 #endif /* !LINUX_CONTROLLER_IMPLEMENTATION_H */

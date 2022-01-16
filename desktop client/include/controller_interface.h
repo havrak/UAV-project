@@ -31,11 +31,13 @@ enum controlSurface{
 
 
 class ControllerInterface{
+	protected:
+		thread loopThread;
+		virtual void eventLoop(){}; // get's started by constuctor
+
 	private:
     list<ControlInterpreter *> observers;
-		thread loopThread;
-		ControlInterpreter ci;
-		virtual void eventLoop(); // get's started by constuctor
+		//ControlInterpreter ci;
 		void notifyObserverEvent();
 
 

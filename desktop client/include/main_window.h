@@ -9,13 +9,13 @@
 void cameraLoop();
 bool initializeCamera();
 
-class CameraGrabberWindow : public Gtk::Window
+class MainWindow : public Gtk::Window
 {
 
 public:
 
-	CameraGrabberWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refGlade);
-	virtual ~CameraGrabberWindow();
+	MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refGlade);
+	virtual ~MainWindow();
 	void stopCamera();
 	void pauseResumeCamera();
 	void updateImage(cv::Mat & frame);
@@ -40,6 +40,6 @@ extern Glib::Dispatcher dispatcher;
 extern volatile bool captureVideoFromCamera;
 extern cv::VideoCapture camera;
 extern cv::Mat frameBGR, frame;
-extern CameraGrabberWindow *cameraGrabberWindow;
+extern MainWindow *cameraGrabberWindow;
 
 #endif // CAMERAIMAGEWINDOW_H_

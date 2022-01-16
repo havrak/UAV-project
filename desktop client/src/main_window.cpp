@@ -1,9 +1,9 @@
-#include "camera_image_grabber.h"
+#include "main_window.h"
 #include <opencv2/videoio.hpp>
 
 using namespace std;
 
-CameraGrabberWindow::CameraGrabberWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refGlade)
+MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refGlade)
 		: Gtk::Window(cobject)
 		, builder(refGlade)
 {
@@ -12,17 +12,17 @@ CameraGrabberWindow::CameraGrabberWindow(BaseObjectType* cobject, const Glib::Re
 	this->builder->get_widget("DrawingImage", this->drawingImage);
 	this->builder->get_widget("closeButton", this->closeButton);
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
-	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &CameraGrabberWindow::stopCamera));
-	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &CameraGrabberWindow::pauseResumeCamera));
+	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
+	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 
 	this->drawingImage->set("../images/image_not_found.png");
 }
 
-CameraGrabberWindow::~CameraGrabberWindow()
+MainWindow::~MainWindow()
 {
 }
 
-void CameraGrabberWindow::pauseResumeCamera()
+void MainWindow::pauseResumeCamera()
 {
 	this->paused = !this->paused;
 	if (this->paused) {
@@ -32,12 +32,12 @@ void CameraGrabberWindow::pauseResumeCamera()
 	}
 }
 
-void CameraGrabberWindow::stopCamera()
+void MainWindow::stopCamera()
 {
 	Window::close();
 }
 
-void CameraGrabberWindow::updateImage(cv::Mat& frame)
+void MainWindow::updateImage(cv::Mat& frame)
 {
 	if (!frame.empty()) {
 		this->drawingImage->set(Gdk::Pixbuf::create_from_data(frame.data, Gdk::COLORSPACE_RGB, false, 8, frame.cols, frame.rows, frame.step));

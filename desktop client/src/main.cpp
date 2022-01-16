@@ -1,8 +1,9 @@
+#include "main_window.h"
+#include "controller_interface.h"
+#include "linux_controller_implementation.h"
 #include <gtkmm.h>
 #include <iostream>
-
-#include "camera_image_grabber.h"
-//#include "single_image_window.h"
+#include <stdio.h>
 
 using namespace std;
 
@@ -11,7 +12,7 @@ Glib::Dispatcher dispatcher; // pro komunikaci mezi vlákny
 volatile bool captureVideoFromCamera = false;
 cv::VideoCapture camera; // třída pro zachytávání orbrzau
 cv::Mat frameBGR, frame; // dvojrozměnré pole, které reprezentuje koktrétní obrázek
-CameraGrabberWindow* cameraGrabberWindow = nullptr;
+MainWindow* cameraGrabberWindow = nullptr;
 
 int main(int argc, char** argv)
 {
@@ -22,17 +23,21 @@ int main(int argc, char** argv)
 	/* 	Gtk::Main::run(singleImageWindow); */
 
 	Gtk::Main app(argc, argv); // stupstíme gtk okno
-	cout << "GTK window created" << endl;
 	Glib::RefPtr<Gtk::Builder> builder;
 	try {
-		builder = Gtk::Builder::create_from_file("main_window.glade"); // načteme jeho podobu z glade
+		builder = Gtk::Builder::create_from_file("main_window.glade");  // create gtk builder, load glade file
 	} catch (const std::exception& p_exception) {
 		cerr << p_exception.what();
 	}
-	cout << "GTK window created" << endl;
+	cout << "MAIN | main | GTK window created" << endl;
 
 	builder->get_widget_derived("MainWindow", cameraGrabberWindow); // vytvoří widget cameraGrabberWindow, který pracuje s GTK třídami
-	cout << "cameraGrabberWindow registered by GTK" << endl;
+	cout << "MAIN | main | cameraGrabberWindow created" << endl;
+
+	// ControllerInterface* ci = dynamic_cast<ControllerInterface*>(new LinuxControllerImplementation());
+
+	LinuxControllerImplementation lci = LinuxControllerImplementation();
+
 	if (cameraGrabberWindow) { // pokud se úspěšně vytvořilo, tak zobraz
 
 		dispatcher.connect([&]() {
@@ -61,4 +66,5 @@ int main(int argc, char** argv)
 		camera.release();
 		cout << "Camera released success!" << endl;
 	}
+	return 0;
 }

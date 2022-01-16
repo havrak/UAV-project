@@ -8,10 +8,13 @@
 #ifndef CONTROL_INTERPRETER_H
 #define CONTROL_INTERPRETER_H
 
+#include <iostream>
+using namespace std;
+
 
 class ControlInterpreter{
 	public:
-		virtual int update();
+		virtual int update(){return 0;}
 };
 
 #endif /* !CONTROL_INTERPRETER_H */

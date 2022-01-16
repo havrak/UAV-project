@@ -79,13 +79,8 @@ return true;
 bool ServoControl::armESC()
 {
 	cout << "SERVOCONTROL | armESC | arming ESC" << endl;
-	uint16_t arm = ARM_PULSE_LENGTH;
-	servo.Set(CHANNEL(0), arm);
-	servo.Set(CHANNEL(0), arm);
-	servo.Set(CHANNEL(0), arm);
-	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 	slowDownToMin();
-	nanosleep((const struct timespec[]) { { 2, 0L } }, NULL);
+	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 	return true;
 }
 
@@ -110,7 +105,9 @@ void ServoControl::testServo()
 		servo.Set(CHANNEL(0), i);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
-	nanosleep((const struct timespec[]) { { 4, 0L } }, NULL);
+	cout << "SERVOCONTROL | testServo | ZERO" << endl;
+
+	nanosleep((const struct timespec[]) { { 5, 0L } }, NULL);
 
 	/* cout  << "SERVOCONTROL | testServo | testing servos" << endl; */
 	/* for (int i = 1; i < 5; i++) { */

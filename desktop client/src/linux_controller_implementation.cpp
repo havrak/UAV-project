@@ -6,7 +6,6 @@
  */
 
 #include "linux_controller_implementation.h"
-#include "return_error_message.h"
 
 LinuxControllerImplementation::LinuxControllerImplementation()
 {
@@ -34,7 +33,10 @@ ReturnErrorMessage LinuxControllerImplementation::setupController()
 			 << "  buttons: " << num_of_buttons << endl;
 
 	fcntl(fd, F_SETFL, O_NONBLOCK); // using non-blocking mode
+	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
 	return *new ReturnErrorMessage(false, 0, "");
+
+
 }
 
 void LinuxControllerImplementation::eventLoop()
