@@ -42,34 +42,6 @@ bool ImuInterface::attachIMU()
 
 }
 
-void ImuInterface::updateFunction()
-{
-
-	while (true) {
-		sensorMutex.lock();
-		JY901.receiveSerialData();
-		sensorMutex.unlock();
-		this_thread::sleep_for(chrono::milliseconds(pollingDelay));
-	}
-}
-
-int ImuInterface::getPollingDelay()
-{
-	return pollingDelay;
-}
-
-void ImuInterface::setPollingDelay(int newPollingDelay)
-{
-	pollingDelay = newPollingDelay;
-}
-
-void ImuInterface::startLoop()
-{
-	loopThread = thread(&ImuInterface::updateFunction, this);
-
-}
-
-
 double ImuInterface::getTemp()
 {
 	sensorMutex.lock();

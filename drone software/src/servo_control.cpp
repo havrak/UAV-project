@@ -23,16 +23,20 @@ mutex ServoControl::mutexServoControl;
 ServoControl::ServoControl()
 {
 	servo.SetFrequency(60);
-	servo.SetLeftUs(700);
-	servo.SetRightUs(2400);
+	servo.SetLeftUs(MIN_PULSE_LENGTH);
+	servo.SetCenterUs(CEN_PULSE_LENGTH);
+	servo.SetRightUs(MAX_PULSE_LENGTH);
+	servo.SetInvert(false);
+	armESC();
 	servo.SetAngle(CHANNEL(1), ANGLE(90));
 	servo.SetAngle(CHANNEL(2), ANGLE(90));
 	servo.SetAngle(CHANNEL(3), ANGLE(90));
 	servo.SetAngle(CHANNEL(4), ANGLE(90));
 	servo.SetAngle(CHANNEL(5), ANGLE(90));
 	servo.SetAngle(CHANNEL(6), ANGLE(90));
+
 	if (debug)
-		cout << "SERVOCONTROL | ServoControl | servos setted up" << endl;
+		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed" << endl;
 }
 
 ServoControl* ServoControl::GetInstance()
@@ -52,47 +56,69 @@ ServoControl* ServoControl::GetInstance()
 
 bool ServoControl::calibrateESC()
 {
+	int b;
+	/* servo.Set(CHANNEL(0), servo.GetRightUs()); */
+	/* cout << "SERVOCONTROL | calibrateESC | Press key" << endl; */
+	/* cin >> b; */
+	/* servo.Set(CHANNEL(0), servo.GetLeftUs()); */
+
+	//servo.Set(CHANNEL(0), servo.GetRightUs());
+	cout << "SERVOCONTROL | calibrateESC | setting max" << endl;
 	servo.Set(CHANNEL(0), servo.GetRightUs());
-	nanosleep((const struct timespec[]) { { 2, 100000000L } }, NULL);
-	servo.Set(CHANNEL(1), servo.GetLeftUs());
-	nanosleep((const struct timespec[]) { { 2, 100000000L } }, NULL);
-	// servo.Set(CHANNEL(1), servo.GetCenterUs());
+	cout << "SERVOCONTROL | calibrateESC | press key to set min" << endl;
+	cin >> b;
+
+	cout << "SERVOCONTROL | calibrateESC | setting min" << endl;
+	servo.Set(CHANNEL(0), servo.GetLeftUs());
+	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
+
+
+return true;
+}
+
+bool ServoControl::armESC()
+{
+	cout << "SERVOCONTROL | armESC | arming ESC" << endl;
+	uint16_t arm = ARM_PULSE_LENGTH;
+	servo.Set(CHANNEL(0), arm);
+	servo.Set(CHANNEL(0), arm);
+	servo.Set(CHANNEL(0), arm);
+	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
+	slowDownToMin();
+	nanosleep((const struct timespec[]) { { 2, 0L } }, NULL);
 	return true;
+}
+
+void ServoControl::slowDownToMin(){
+	uint16_t min = MIN_PULSE_LENGTH;
+	servo.Set(CHANNEL(0), min);
 }
 
 void ServoControl::testServo()
 {
-	for (int i = 1; i < 10; i++) {
-		for (int j = 0; j < 360; j++) {
-			servo.SetAngle(CHANNEL(0), ANGLE(j));
-			servo.SetAngle(CHANNEL(1), ANGLE(j));
-			servo.SetAngle(CHANNEL(2), ANGLE(j));
-			servo.SetAngle(CHANNEL(3), ANGLE(j));
-			nanosleep((const struct timespec[]) { { 0, 5000000L } }, NULL);
-		}
-		/* cout << endl; */
-		/* cout << "Servo 0:90  Servo 1:0" << endl; */
-		/* cout << "Servo 2:0  Servo 3:0" << endl; */
-		/* nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL); */
-
-		/* servo.SetAngle(CHANNEL(0), ANGLE(180)); */
-		/* servo.SetAngle(CHANNEL(1), ANGLE(180)); */
-		/* servo.SetAngle(CHANNEL(2), ANGLE(90)); */
-		/* servo.SetAngle(CHANNEL(3), ANGLE(90)); */
-
-		/* cout << endl; */
-		/* cout << "Servo 0:180 Servo 1:180" << endl; */
-		/* cout << "Servo 2:90  Servo 3:90" << endl; */
-		/* nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL); */
-
-		/* servo.SetAngle(CHANNEL(0), ANGLE(0)); */
-		/* servo.SetAngle(CHANNEL(1), ANGLE(90)); */
-		/* servo.SetAngle(CHANNEL(2), ANGLE(180)); */
-		/* servo.SetAngle(CHANNEL(3), ANGLE(180)); */
-
-		/* cout << endl; */
-		/* cout << "Servo 0:0   Servo 1:90" << endl; */
-		/* cout << "Servo 2:180  Servo 3:180" << endl; */
-		nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL);
+	cout << "SERVOCONTROL | testServo | reaching max speed on motor" << endl;
+	for (uint16_t i = MIN_PULSE_LENGTH; i <= MAX_PULSE_LENGTH; i += 10) {
+		cout << i << endl;
+		servo.Set(CHANNEL(0), i);
+		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
+	cout << "SERVOCONTROL | testServo | max speed reached" << endl;
+	nanosleep((const struct timespec[]) { { 3, 0L } }, NULL);
+	cout << "SERVOCONTROL | testServo | slowing down motor motor" << endl;
+	for (uint16_t i = MAX_PULSE_LENGTH; i >= MIN_PULSE_LENGTH; i -= 10) {
+		cout << i << endl;
+		servo.Set(CHANNEL(0), i);
+		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
+	}
+	nanosleep((const struct timespec[]) { { 4, 0L } }, NULL);
+
+	/* cout  << "SERVOCONTROL | testServo | testing servos" << endl; */
+	/* for (int i = 1; i < 5; i++) { */
+	/* 	for (int j = 0; j < 360; j++) { */
+	/* 		servo.SetAngle(CHANNEL(1), ANGLE(j)); */
+	/* 		servo.SetAngle(CHANNEL(2), ANGLE(j)); */
+	/* 		nanosleep((const struct timespec[]) { { 0, 5000000L } }, NULL); */
+	/* 	} */
+	/* 	nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL); */
+	/* } */
 }

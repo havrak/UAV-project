@@ -24,7 +24,7 @@ class GPSInterface {
 	private:
 	int pollingDelay = 25; // TODO: should be more accurate
 	int fd;
-	const bool debug = true;
+	const bool debug = false;
   static GPSInterface* gpsInterface;
   static mutex mutexGPSInterface;
 

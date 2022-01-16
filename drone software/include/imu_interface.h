@@ -18,7 +18,6 @@ using namespace std;
 
 class ImuInterface {
 	private:
-	int pollingDelay = 10;
 	const bool debug = true;
 	CJY901 JY901;
   static ImuInterface* imuInterface;
@@ -28,13 +27,9 @@ class ImuInterface {
 	thread loopThread;
 	ImuInterface();
 	mutex sensorMutex;
-	void updateFunction();
 
 	public:
 	static ImuInterface* GetInstance();
-	void startLoop();
-	int getPollingDelay();
-	void setPollingDelay(int newPollingDelay);
 	bool attachIMU(); // bind serial connection
 	CJY901 getSensor();
 
