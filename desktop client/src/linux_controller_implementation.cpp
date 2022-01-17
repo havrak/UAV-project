@@ -72,12 +72,12 @@ void LinuxControllerImplementation::eventLoop()
 
 		cout << "axis/10000: ";
 		for (size_t i(0); i < joy_axis.size(); ++i)
-			cout << " " << setw(2) << joy_axis[i] / 10000;
+			cout << "- [" << (int)joy_axis[i] << ", " << i << "] ";
 		cout << endl;
 
-		cout << "  button: ";
+		cout << "  button ";
 		for (size_t i(0); i < joy_button.size(); ++i)
-			cout << " " << (int)joy_button[i];
+			cout << "- [" << (int)joy_button[i] << ", " << i << "] ";
 		cout << endl;
 
 		usleep(50);

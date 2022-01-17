@@ -1,3 +1,10 @@
+/*
+ * main_window.cpp
+ * Copyright (C) 2021 Havránek Kryštof <krystof@havrak.xyz>
+ *
+ * Distributed under terms of the MIT license.
+ */
+
 #include "main_window.h"
 #include <opencv2/videoio.hpp>
 
@@ -24,6 +31,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::pauseResumeCamera()
 {
+	if (!cameraInitialized) setupCamera();
+
 	this->paused = !this->paused;
 	if (this->paused) {
 		this->resumePauseButton->set_label("resume");
@@ -45,12 +54,27 @@ void MainWindow::updateImage(cv::Mat& frame)
 	}
 }
 
+bool setupCamera()
+{
+	cout << "MAINWINDOW | setupCamera | setting up camera" << endl;
+	cameraInitialized = initializeCamera();
+	if (cameraInitialized) {
+		captureVideoFromCamera = true;
+		cameraThread = thread(&cameraLoop);
+
+
+	} else {
+		cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
+		mainWindow->resumePauseButton->set_label("start cam");
+	}
+	return cameraInitialized;
+}
+
 void cameraLoop()
 {
-
 	while (captureVideoFromCamera) {
 		bool continueToGrabe = true;
-		bool paused = cameraGrabberWindow->isPaused();
+		bool paused = mainWindow->isPaused();
 		if (!paused) {
 			continueToGrabe = camera.read(frameBGR);
 			if (continueToGrabe) {
@@ -62,26 +86,27 @@ void cameraLoop()
 		}
 		if (!continueToGrabe) {
 			captureVideoFromCamera = false;
-			std::cerr << "Faleid to retrieve frame from the device. The camera was stopped." << std::endl;
+			cerr << "MAINWINDOW | main | Failed to retrieve frame from the device" << endl;
 		} else if (paused) {
-			//yields to avoid other threads to starve
 			std::this_thread::sleep_for(std::chrono::milliseconds(30));
 		}
 	}
 }
 
-bool initializeCamera() {
+bool initializeCamera()
+{
 
 	bool result = camera.open("udpsrc port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
 
-	if(result) {
-		for(int i = 0; i < 3; i++) {
+	if (result) {
+		for (int i = 0; i < 3; i++) {
 			camera.grab();
 		}
-		//check decode valid image
-		for(int i = 0; result && i < 3; i++) {
+		for (int i = 0; result && i < 3; i++) { // calculate checksum
 			result = result && camera.read(frameBGR);
 		}
+	}else{
+		cerr << "MAINWINDOW | initializeCamera | Camera failed to initialize" << endl;
 	}
 
 	return result;

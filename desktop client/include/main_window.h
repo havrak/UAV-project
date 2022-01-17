@@ -1,11 +1,20 @@
-#ifndef CAMERAIMAGEWINDOW_H_
-#define CAMERAIMAGEWINDOW_H_
+/*
+ * main_window.h
+ * Copyright (C) 2021 Havránek Kryštof <krystof@havrak.xyz>
+ *
+ * Distributed under terms of the MIT license.
+ */
+
+
+#ifndef MAINWINDOW_H_
+#define MAINWINDOW_H_
 
 #include <gtkmm.h>
 #include <opencv2/opencv.hpp>
 #include <mutex>
 #include <thread>
 
+bool setupCamera();
 void cameraLoop();
 bool initializeCamera();
 
@@ -23,13 +32,13 @@ public:
 	bool isPaused() {
 		return this->paused;
 	}
+	Gtk::ToggleButton *resumePauseButton;
 
 private:
 
 	Glib::RefPtr<Gtk::Builder> builder;
 	Gtk::Image *drawingImage;
 	Gtk::Button *closeButton;
-	Gtk::ToggleButton *resumePauseButton;
 
 	bool paused;
 
@@ -40,6 +49,7 @@ extern Glib::Dispatcher dispatcher;
 extern volatile bool captureVideoFromCamera;
 extern cv::VideoCapture camera;
 extern cv::Mat frameBGR, frame;
-extern MainWindow *cameraGrabberWindow;
-
-#endif // CAMERAIMAGEWINDOW_H_
+extern MainWindow *mainWindow;
+extern bool cameraInitialized;
+extern std::thread cameraThread;
+#endif // MAINWINDOW_H_

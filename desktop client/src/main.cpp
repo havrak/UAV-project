@@ -1,3 +1,10 @@
+/*
+ * main.cpp
+ * Copyright (C) 2021 Havránek Kryštof <krystof@havrak.xyz>
+ *
+ * Distributed under terms of the MIT license.
+ */
+
 #include "main_window.h"
 #include "controller_interface.h"
 #include "linux_controller_implementation.h"
@@ -7,20 +14,18 @@
 
 using namespace std;
 
-std::mutex imageMutex;			 // pro managování zdílení obrazu mezi vláky
-Glib::Dispatcher dispatcher; // pro komunikaci mezi vlákny
+Glib::Dispatcher dispatcher;
 volatile bool captureVideoFromCamera = false;
-cv::VideoCapture camera; // třída pro zachytávání orbrzau
-cv::Mat frameBGR, frame; // dvojrozměnré pole, které reprezentuje koktrétní obrázek
-MainWindow* cameraGrabberWindow = nullptr;
+mutex imageMutex;
+cv::VideoCapture camera; // opencv camera
+cv::Mat frameBGR, frame; // Matrix to store image from camera
+thread cameraThread;
+MainWindow* mainWindow = nullptr;
+bool cameraInitialized;
 
 int main(int argc, char** argv)
 {
 
-	/* 	Gtk::Main app(argc, argv); */
-	/* 	string imagePath = string{argv[2]}; */
-	/* 	SingleImageWindow singleImageWindow(imagePath); */
-	/* 	Gtk::Main::run(singleImageWindow); */
 
 	Gtk::Main app(argc, argv); // stupstíme gtk okno
 	Glib::RefPtr<Gtk::Builder> builder;
@@ -31,40 +36,37 @@ int main(int argc, char** argv)
 	}
 	cout << "MAIN | main | GTK window created" << endl;
 
-	builder->get_widget_derived("MainWindow", cameraGrabberWindow); // vytvoří widget cameraGrabberWindow, který pracuje s GTK třídami
+	builder->get_widget_derived("MainWindow", mainWindow); // vytvoří widget cameraGrabberWindow, který pracuje s GTK třídami
 	cout << "MAIN | main | cameraGrabberWindow created" << endl;
 
 	// ControllerInterface* ci = dynamic_cast<ControllerInterface*>(new LinuxControllerImplementation());
 
-	LinuxControllerImplementation lci = LinuxControllerImplementation();
+	//LinuxControllerImplementation lci = LinuxControllerImplementation();
 
-	if (cameraGrabberWindow) { // pokud se úspěšně vytvořilo, tak zobraz
-
+	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
 		dispatcher.connect([&]() {
 			imageMutex.lock();
-			cameraGrabberWindow->updateImage(frame);
+			mainWindow->updateImage(frame);
 			imageMutex.unlock();
 		});
 
-		bool cameraInitialized = initializeCamera();
 
-		if (cameraInitialized) {
-			captureVideoFromCamera = true;
-			std::thread cameraThread = std::thread(&cameraLoop);
-			Gtk::Main::run(*cameraGrabberWindow);
+		setupCamera();
 
-			captureVideoFromCamera = false;
-			cameraThread.join();
-		} else {
-			cout << "Failed to initialize the camera" << endl;
-		}
+		Gtk::Main::run(*mainWindow);
+
+		// NOTE: cleanup after window is closed
+		captureVideoFromCamera = false; // stop capturing video
+		cameraThread.join(); // wait for camera thread to end
 
 	} else {
-		cout << "Failed to initialize the GUI" << endl;
+		cerr << "MAIN | main | Failed to initialize the GUI" << endl;
 	}
+
+
 	if (camera.isOpened()) {
 		camera.release();
-		cout << "Camera released success!" << endl;
+		cout << "MAIN | main | Camera released success!" << endl;
 	}
 	return 0;
 }
