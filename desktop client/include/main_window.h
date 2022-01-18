@@ -48,8 +48,10 @@ extern std::mutex imageMutex;
 extern Glib::Dispatcher dispatcher;
 extern volatile bool captureVideoFromCamera;
 extern cv::VideoCapture camera;
-extern cv::Mat frameBGR, frame;
+extern cv::Mat frameBGR, frame, frameCorrected;
 extern MainWindow *mainWindow;
 extern bool cameraInitialized;
 extern std::thread cameraThread;
+extern cv::Size imageSize;
+
 #endif // MAINWINDOW_H_

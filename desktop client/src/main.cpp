@@ -18,7 +18,8 @@ Glib::Dispatcher dispatcher;
 volatile bool captureVideoFromCamera = false;
 mutex imageMutex;
 cv::VideoCapture camera; // opencv camera
-cv::Mat frameBGR, frame; // Matrix to store image from camera
+cv::Mat frameBGR, frame, frameCorrected; // Matrix to store image from camera
+cv::Size imageSize;
 thread cameraThread;
 MainWindow* mainWindow = nullptr;
 bool cameraInitialized;
@@ -41,7 +42,7 @@ int main(int argc, char** argv)
 
 	// ControllerInterface* ci = dynamic_cast<ControllerInterface*>(new LinuxControllerImplementation());
 
-	//LinuxControllerImplementation lci = LinuxControllerImplementation();
+	LinuxControllerImplementation lci = LinuxControllerImplementation();
 
 	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
 		dispatcher.connect([&]() {

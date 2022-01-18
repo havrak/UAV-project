@@ -6,6 +6,7 @@
  */
 
 #include "main_window.h"
+#include <opencv2/calib3d.hpp>
 #include <opencv2/videoio.hpp>
 
 using namespace std;
@@ -80,6 +81,8 @@ void cameraLoop()
 			if (continueToGrabe) {
 				imageMutex.lock();
 				cv::cvtColor(frameBGR, frame, cv::COLOR_RGB2BGR);
+				/* frameCorrected = cv::getOptimalNewCameraMatrix(frame, , imageSize, 1, imageSize, 0); */
+				/* cv::undistort( frame, frame, frameCorrected, , frameCorrected); */
 				imageMutex.unlock();
 				dispatcher.emit();
 			}
@@ -105,6 +108,7 @@ bool initializeCamera()
 		for (int i = 0; result && i < 3; i++) { // calculate checksum
 			result = result && camera.read(frameBGR);
 		}
+		imageSize = cv::Size(frameBGR.cols,frameBGR.rows);
 	}else{
 		cerr << "MAINWINDOW | initializeCamera | Camera failed to initialize" << endl;
 	}

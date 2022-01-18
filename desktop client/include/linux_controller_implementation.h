@@ -35,9 +35,29 @@ class LinuxControllerImplementation : public ControllerInterface {
 		int num_of_axis = 0;
 		int num_of_buttons =0;
 		char name_of_joystick[80];
-		vector<char> joy_button;
-		vector<int> joy_axis;
+		vector<int> prevStateAxis;
 
+		// A - 0
+		// B - 1
+		// X - 2
+		// Y - 3
+		// Left bumper - 4
+		// Right bumber - 5
+		// select - 6
+		// start -7
+		// XBOX - 8
+		// Pressed left analog  - 9
+		// Pressed right analog - 10
+		vector<char> curStateButton;
+		// Left analog X - 0 (left is negative)
+		// Left analog Y - 1 (up is negative)
+		// Left trigger - 2 (starts negative)
+		// Right analog X - 3 (left is negative)
+		// Right analog Y - 4 (up is negative)
+		// Right trigger - 5 (starts negative)
+		// D-PAD X - 6 (left is negative: value of 32767)
+		// D-PAD Y - 7 (up is negative: value of 32767)
+		vector<int> curStateAxis;
 	public:
 		LinuxControllerImplementation();
 		ReturnErrorMessage setupController();
