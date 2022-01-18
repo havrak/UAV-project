@@ -20,16 +20,6 @@ using namespace std;
 
 
 
-enum ControlSurface{
-	L_ANALOG, R_ANALOG, L_TRIGGER, R_TRIGGER, L_BUMPER, R_BUMPER,
-	X , Y, A, B,
-	XBOX,START, SELECT,
-	L_STICK_BUTTON, R_STICK_BUTTON,
-	D_PAD,
-	NON_DEFINED
-
-
-};
 
 // OPTIONAL: this should take into account controller type
 ControlSurface getControlSurfaceFor(bool button, int id);

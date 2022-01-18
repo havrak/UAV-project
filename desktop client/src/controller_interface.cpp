@@ -23,20 +23,22 @@ void ControllerInterface::removeObserver(ControlInterpreter* v)
 	observers.remove(v);
 }
 
-void ControllerInterface::notifyObserverEvent(ControlSurface, int val)
+void ControllerInterface::notifyObserverEvent(ControlSurface cs, int val)
 {
+	cout << val << endl;
 	list<ControlInterpreter*>::iterator iterator = observers.begin();
 	while (iterator != observers.end()) {
-		(*iterator)->update();
+		(*iterator)->update(cs, val);
 		++iterator;
 	}
 }
 
-void ControllerInterface::notifyObserverEvent(ControlSurface, int x, int y)
+void ControllerInterface::notifyObserverEvent(ControlSurface cs, int x, int y)
 {
+	cout << x << " " << y<< endl;
 	list<ControlInterpreter*>::iterator iterator = observers.begin();
 	while (iterator != observers.end()) {
-		(*iterator)->update();
+		(*iterator)->update(cs, x,y);
 		++iterator;
 	}
 }

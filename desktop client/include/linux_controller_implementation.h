@@ -48,7 +48,7 @@ class LinuxControllerImplementation : public ControllerInterface {
 		// XBOX - 8
 		// Pressed left analog  - 9
 		// Pressed right analog - 10
-		vector<char> curStateButton;
+		vector<char> buttonsStates;
 		// Left analog X - 0 (left is negative)
 		// Left analog Y - 1 (up is negative)
 		// Left trigger - 2 (starts negative)
@@ -57,7 +57,7 @@ class LinuxControllerImplementation : public ControllerInterface {
 		// Right trigger - 5 (starts negative)
 		// D-PAD X - 6 (left is negative: value of 32767)
 		// D-PAD Y - 7 (up is negative: value of 32767)
-		vector<int> curStateAxis;
+		vector<int> axisStates;
 	public:
 		LinuxControllerImplementation();
 		ReturnErrorMessage setupController();
