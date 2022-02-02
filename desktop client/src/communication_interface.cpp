@@ -29,6 +29,11 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 	return communicationInterface;
 }
 
+// NOTE: each attempt will be called manually by the pilot
+bool CommunicationInterface::establishConnectionToDrone(){
+
+}
+
 
 ControllerDroneBridge* ControllerDroneBridge::GetInstance()
 {

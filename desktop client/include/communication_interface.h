@@ -35,6 +35,8 @@ class CommunicationInterface{
 		static mutex mutexCommunicationInterface;
 	public:
 		static CommunicationInterface* GetInstance();
+		bool setupSocket();
+		bool establishConnectionToDrone();
 
 };
 

@@ -8,16 +8,26 @@
 #include "battery_interface.h"
 #include "bcm2835.h"
 #include "camera_streamer.h"
+#include "communication_interface.h"
 #include "gps_interface.h"
 #include "imu_interface.h"
 #include "servo_control.h"
 #include <cstring>
 #include <iostream>
+#include <csignal>
 
 using namespace std;
 
+void signalHandler( int sigNum){
+	cout << "MAIN | signalHandler | caught signal slowing down" << endl;
+	ServoControl::GetInstance()->slowDownToMin();
+	CommunicationInterface::GetInstance()->cleanUp();
+}
+
 int main(int argc, char** argv)
 {
+	signal(SIGKILL, signalHandler);
+
 	if (argc > 1){
 		if(strcmp(argv[1], "-r") == 0){
 			cout << "MAIN | main | reseting ServoControl" << endl;
@@ -67,7 +77,7 @@ int main(int argc, char** argv)
 		/* 	cout << "MAIN | main | ACC Z: " << ImuInterface::GetInstance()->getAccZ() << endl; */
 
 		/* 	cout << "MAIN | main | GYRO X: " << ImuInterface::GetInstance()->getGyroX() << endl; */
-		/* 	cout << "MAIN | main | GYRO Y: " << ImuInterface::GetInstance()->getGyroY() << endl; */
+		/* cout << "MAIN | main | GYRO Y: " << ImuInterface::GetInstance()->getGyroY() << endl; */
 		/* 	cout << "MAIN | main | GYRO Z: " << ImuInterface::GetInstance()->getGyroZ() << endl; */
 		cout << "MAIN | main | Voltage: " << BatteryInterface::GetInstance()->getVoltage() << endl;
 		cout << "MAIN | main | Current: " << BatteryInterface::GetInstance()->getCurrent() << endl;

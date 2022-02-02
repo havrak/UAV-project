@@ -84,6 +84,7 @@ bool ServoControl::armESC()
 	return true;
 }
 
+
 void ServoControl::slowDownToMin(){
 	uint16_t min = MIN_PULSE_LENGTH;
 	servo.Set(CHANNEL(0), min);
