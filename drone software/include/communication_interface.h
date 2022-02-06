@@ -30,12 +30,14 @@ using namespace std;
 
 #define SERVER_PORT 8066
 #define MAX_CLIENTS 10
+#define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 // 500 bytes for message, 10 for metadata
 struct client{
 	int fd = -1 ;
 	sockaddr_in adress;
 	bool readyToSend = true;
+	int noTriesToFix = 0;
 
 
 	int curIndexInBuffer=0; // position where we have left off, first not filled index
@@ -63,6 +65,7 @@ class CommunicationInterface{
 		//, cli_addr;
 		//int n;
 		int sockfd, newsockfd;
+		const unsigned char terminator[5] = {0x00, 0x00, 0xFF, 0xFF, 0xFF};
 
 		// sets do to
 		fd_set read_fds;
@@ -85,6 +88,7 @@ class CommunicationInterface{
 		bool receiveDataFromClient(client cli);
 		int newClientConnect();
 		void clearClientStruct(client cli);
+		bool fixReceiveData(client cli);
 
 	public:
 		static CommunicationInterface* GetInstance();
