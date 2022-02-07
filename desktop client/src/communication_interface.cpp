@@ -6,6 +6,7 @@
  */
 
 #include "communication_interface.h"
+#include "gtkmm/enums.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 
@@ -29,25 +30,71 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 	}
 	return communicationInterface;
 }
+
+int CommunicationInterface::buildFdSets()
+{
+	FD_SET(STDIN_FILENO, &read_fds);
+	FD_SET(sockfd, &read_fds);
+
+	FD_ZERO(&read_fds);
+	if (sockfd != -1)
+		FD_SET(sockfd, &read_fds);
+
+	FD_ZERO(&write_fds);
+
+	if (sockfd != -1)
+		FD_SET(sockfd, &write_fds);
+
+	FD_ZERO(&except_fds);
+	FD_SET(STDIN_FILENO, &except_fds);
+	FD_SET(sockfd, &except_fds);
+
+	if (sockfd != -1)
+		FD_SET(sockfd, &except_fds);
+
+	return 0;
+}
+
 bool CommunicationInterface::sendData(protocol_codes p, unsigned char priority, unsigned char* data)
 {
-	if(sizeof(data)+10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
-		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (65KB)" << endl;
+	if (sizeof(data) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
+		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
 	}
 
-	char message[sizeof(data)+10];
+	char message[sizeof(*data) + 10];
+
+	// setup metadata
 	message[0] = p;
 	message[1] = priority;
 	message[2] = sizeof(data) >> 8;
 	message[3] = sizeof(data) - (message[2] << 8);
+	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3] + message[4]) % 7);
 
+	// load message
+	memcpy(message + 5, data, sizeof(*data)); // NOTE: clang gives waringing
+
+	// setup terminator
+	int li = sizeof(data) + 5;
+	message[li + 1] = 0x00;
+	message[li + 2] = 0x00;
+	message[li + 3] = 0xFF;
+	message[li + 4] = 0xFF;
+	message[li + 5] = 0XFF;
 
 	serverMutex.lock();
-	message[4]
-  if(send(sockfd, message, sizeof(message),0) <0){
-			//
+	ssize_t bytesSend = 0;
+	bool sending = true;
+	while (sending) {
+		ssize_t sCount = send(sockfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(*message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(*message) - bytesSend), 0);
+		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+			return false;
+		bytesSend += sCount;
+		if (bytesSend == sizeof(*message)) {
+			return true;
+		}
 	}
+	serverMutex.unlock();
 }
 
 // NOTE: will be thread that will end once communication is established

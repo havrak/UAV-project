@@ -17,16 +17,24 @@
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
 
 ThreadPool* ThreadPool::threadPool = nullptr;
 
+ThreadPool::ThreadPool()
+{
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&ThreadPool::worker, this));
+}
+
 ThreadPool* ThreadPool::GetInstance()
 {
-	if (threadPool == nullptr)
+	if (threadPool == nullptr) {
 		threadPool = new ThreadPool();
+	}
 	return threadPool;
 }
 
@@ -88,67 +96,88 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE);
 }
 
-// NOTE: called when data seems broken (packet was incomplete, size din't match or whatever)
+int findSequencesInBuffer(char* message, vector<int>* indexes)
+{
+	return findSequencesInBuffer(message, indexes, 0);
+}
+
+// start with remanding number of chars to match
+int findSequencesInBuffer(char* message, vector<int>* indexes, int charsMatched)
+{
+	int i = 0;
+	int j = -charsMatched;
+	while (i < FIX_SIZE - 1 && j < 5) {
+		if (message[i] == terminator[j]) {
+			i++;
+			j++;
+			if (j == 4) {
+				indexes->push_back(i);
+				j = 0;
+			} else if (i == FIX_SIZE - 1) {
+				i = 0; // j stays the same, i resets
+				indexes->push_back(-j);
+			}
+		} else {
+			i = i - j + 1;
+			j = 0;
+		}
+	}
+	return indexes->size();
+}
+
+// NOTE: called when data seems broken (packet was incomplete, size didn't match or whatever)
 bool CommunicationInterface::fixReceiveData(client cli)
 {
-	if (cli.noTriesToFix >= 5) {
-		cli.noTriesToFix = false;
-		return false;
-	}
-
-	char messageBuffer[MAX_SEND_MESSAGE_SIZE];
+	char messageBuffer[FIX_SIZE];
 	bool receivingData = true;
 	unsigned char infoBuffer[5];
-	int index = 0;
-	bool found = false;
-	int i = 0;
-	int j = 0;
+	vector<int> indexes;
+	int charsOfTerminatorMatched = 0;
+	int charsOfInfoSequenceLoaded = -1;
 
 	while (receivingData) {
-		ssize_t rCount = recv(cli.fd, (char*)&messageBuffer, MAX_MESSAGE_SIZE, MSG_DONTWAIT);
+
+		ssize_t rCount = recv(cli.fd, (char*)&messageBuffer, FIX_SIZE, MSG_DONTWAIT);
+
 		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
 			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from client" << endl;
 			return false; // just give up for now
 		}
-		if (found) {
-			memcpy(&infoBuffer, &messageBuffer + index, 5 - index);
-			goto fixEscape; // just want to jump there
+
+		if (charsOfInfoSequenceLoaded > 0) {
+			memcpy(&infoBuffer, &messageBuffer, 5 - charsOfInfoSequenceLoaded);
+
+		} else {
+			findSequencesInBuffer(messageBuffer, &indexes, charsOfTerminatorMatched);
 		}
-		found = false;
-		while (i < MAX_MESSAGE_SIZE - 1 && j < 5 && !found) { // NOTE: handeling case when sequence is right at the end would be pretty annoying, thus we will handle this by sending more pings than necessary (which will cause indexes to sooner or later align)
-			if (messageBuffer[i] == terminator[j]) {
-				i++;
-				j++;
-				if (j == 4)
-					found = true;
-				if (i == MAX_MESSAGE_SIZE - 1) // we have mathching sequence but it is towards the end of the loop
-					i = 0;											 // j stays the same, i resets
-			} else {
-				if (j > i) // sequence was towards the end of the message, i need to be reset in a different way
-					i = i - (MAX_MESSAGE_SIZE - j);
-				i = i - j + 1;
-				j = 0;
+
+		for (int i : indexes) {
+			if (i < 0) {
+				cout << "COMMUNICATION_INTERFACE | fixReceiveData | we need to check if last: " << i << "math" << endl;
+				charsOfTerminatorMatched = i;
+				break;
 			}
-		}
-		if (found) {
-			if (i + 6 > MAX_MESSAGE_SIZE) { // indexing from 0
-				memcpy(&infoBuffer, &messageBuffer[i + 1], MAX_MESSAGE_SIZE - i - 1);
-				index = MAX_MESSAGE_SIZE - i - 1;
-			} else {
-				memcpy(&infoBuffer, &messageBuffer[i + 1], 5);
-			fixEscape:
-				if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) {
-					cli.noTriesToFix++;
-					fixReceiveData(cli); // just 5 times at max, so recursion will not be a problem
+
+			if (i + 6 > FIX_SIZE) { // NOTE; we cannot load whole info data
+				memcpy(&infoBuffer, &messageBuffer[i + 1], FIX_SIZE - (i + 6));
+				charsOfInfoSequenceLoaded = FIX_SIZE - (i + 1);
+				break;
+			}
+
+			memcpy(&infoBuffer, &messageBuffer[i + 1], 5);
+
+			if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) {
+				cli.curMessageType = infoBuffer[0];
+				cli.curMessagePriority = infoBuffer[1];
+				cli.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
+				cli.curIndexInBuffer = FIX_SIZE - i - 1;
+				cli.noTriesToFix = 0;
+				if (cli.curMessageSize > FIX_SIZE - i - 6) {
+					memcpy(&cli.curMessageBuffer, &messageBuffer[i + 6], FIX_SIZE - i - 6);
+					cli.curIndexInBuffer = FIX_SIZE - i - 6;
+
 				} else {
-					if (i + 6 < MAX_MESSAGE_SIZE) {
-						memcpy(&cli.curMessageBuffer, &messageBuffer + (i + 6), MAX_MESSAGE_SIZE - i - 7); //
-					}
-					cli.curIndexInBuffer = MAX_MESSAGE_SIZE - i - 1;
-					cli.curMessageType = infoBuffer[0];
-					cli.curMessagePriority = infoBuffer[1];
-					cli.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
-					return true;
+					memcpy(&cli.curMessageBuffer, &messageBuffer[i + 6], cli.curMessageSize);
 				}
 			}
 		}
@@ -162,11 +191,9 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 	bool receivingData = true;
 	if (cli.curIndexInBuffer == 0) { // we are starting new message
 		unsigned char infoBuffer[5];
-		ssize_t tmp = recv(cli.fd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
-		if ((tmp < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) // as we call this method recursively we can get into position where there is nothing to read NOTE: check if this doesn't cause any problems
+		ssize_t tmp = recv(cli.fd, (char*)&infoBuffer + bytesReceived, 5 - bytesReceived, MSG_DONTWAIT);
+		if (tmp < 5)
 			return false;
-		if (tmp < 5 && tmp > 0) {
-		}
 
 		if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) { // just check if first few bytes look semi valid
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received data doesn't match" << endl;
@@ -182,12 +209,13 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 			// NOTE: send ping from here
 			return true;
 		}
+		bytesReceived = 0;
 	} else {
 		bytesReceived = cli.curIndexInBuffer;
 	}
 
 	while (receivingData) {
-		ssize_t rCount = recv(cli.fd, (char*)&cli.curMessageBuffer + bytesReceived, cli.curMessageSize - cli.curIndexInBuffer, MSG_DONTWAIT);
+		ssize_t rCount = recv(cli.fd, (char*)&cli.curMessageBuffer + bytesReceived, cli.curMessageSize - cli.curIndexInBuffer + 5, MSG_DONTWAIT);
 		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
 			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from client" << endl;
 			clearClientStruct(cli);
@@ -195,21 +223,16 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 		}
 		cli.curIndexInBuffer += rCount;
 
-		if (cli.curIndexInBuffer == cli.curMessageSize) {
-			unsigned char infoBuffer[5];
+		if (cli.curIndexInBuffer == cli.curMessageSize + 4) {
 
-			recv(cli.fd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
-			if (infoBuffer[0] == 0x00 && infoBuffer[1] == 0x00 && infoBuffer[2] == 0xFF && infoBuffer[3] == 0xFF && infoBuffer[4] == 0xFF) {
+			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == 0x00 && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == 0x00 && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == 0xFF && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == 0xFF && cli.curMessageBuffer[cli.curIndexInBuffer] == 0xFF) {
 				// pushtToQueue();
 
 				clearClientStruct(cli);
 				return true;
 			} else {
-				cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | data doesn't end with correct terminator" << endl;
-				cli.noTriesToFix++;
-				if (cli.noTriesToFix > 4)
-					return false;
-				receiveDataFromClient(cli);
+				cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | Data doesn't end with correct terminator" << endl;
+				return false;
 			}
 		}
 	}
@@ -219,14 +242,8 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 void CommunicationInterface::checkActivityOnSocket()
 {
 	int state;
-	// 0 -- type
-	// 1 -- priority
-	// 2 -- higher byte of size
-	// 3 -- lower byte of size
-	// 4 -- addition to checksum, we want sum to be divisible by 7
 	while (true) {
 		buildFdSets();
-		// select;
 		state = select(sockfd, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoreticaly poll() is better option
 		switch (state) {
 		case -1:
@@ -290,4 +307,30 @@ bool CommunicationInterface::setupSocket()
 	clientLength = sizeof(serv_addr); // same structure so no problem
 	/* clientConnectThread = thread(&CommunicationInterface::checkAndConnectClient, this); */
 	return true;
+}
+
+void ThreadPool::endThreadPool()
+{
+	process = false;
+	workQueueConditionVariable.notify_all();
+	for (thread& t : threads)
+		t.join();
+}
+
+void ThreadPool::worker()
+{
+	while (process) {
+		job j;
+		{
+			unique_lock<mutex> qMutex(workQueueMutex);
+			workQueueConditionVariable.wait(qMutex, [&] {
+				return !workQueue.empty() || !process;
+			});
+			if (!process)
+				break;
+			j = workQueue.front();
+			workQueue.pop();
+		}
+		// here we process the request;
+	}
 }

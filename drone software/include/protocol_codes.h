@@ -9,6 +9,9 @@
 #define PROTOCOL_CODES_H
 
 // would prefer to use macros but I need to do comparations
+const unsigned char terminator[5] = {0x00, 0x00, 0xFF, 0xFF, 0xFF};
+
+
 enum protocol_codes{
 	P_PING=0x01,
 };

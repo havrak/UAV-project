@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+#include <queue>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -29,10 +30,17 @@
 using namespace std;
 
 #define SERVER_PORT 8066
+#define NUMBER_OF_THREADS 5
 #define MAX_CLIENTS 10
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 // 500 bytes for message, 10 for metadata
+#define FIX_SIZE 100
+
+
+int findSequencesInBuffer(char* message, vector<int>* indexes);
+int findSequencesInBuffer(char* message, vector<int>* indexes, int charsMatched);
+
 struct client{
 	int fd = -1 ;
 	sockaddr_in adress;
@@ -45,7 +53,7 @@ struct client{
 	unsigned char curMessagePriority = 0;
 	unsigned int short curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	char curMessageBuffer[MAX_MESSAGE_SIZE]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
 
@@ -65,7 +73,6 @@ class CommunicationInterface{
 		//, cli_addr;
 		//int n;
 		int sockfd, newsockfd;
-		const unsigned char terminator[5] = {0x00, 0x00, 0xFF, 0xFF, 0xFF};
 
 		// sets do to
 		fd_set read_fds;
@@ -96,14 +103,22 @@ class CommunicationInterface{
 		void checkActivityOnSocket();
 		void checkForNewData(); // -> calls callback if new data is found, that processes it (needs to be really fast, will not start new thread just for processing)
 		void cleanUp();
+		void sendDataToClient(client cli, protocol_codes p, unsigned char priority, unsigned char* data);
 };
 
 class ThreadPool{
 	private:
+		ThreadPool();
 		static ThreadPool* threadPool;
-  	vector<thread> threads;
- 		condition_variable_any workQueueConditionVariable;
 
+		vector<thread> threads;
+ 		condition_variable_any workQueueConditionVariable;
+		mutex workQueueMutex;
+		queue<job> workQueue;
+		bool process = true;
+
+		void endThreadPool();
+		void worker();
 
 	public:
 		static ThreadPool* GetInstance();

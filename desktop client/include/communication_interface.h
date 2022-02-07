@@ -48,10 +48,17 @@ class CommunicationInterface{
 		static mutex mutexCommunicationInterface;
 		static mutex serverMutex;
 
+		fd_set read_fds;
+		fd_set write_fds;
+		fd_set except_fds;
+
 		string serverIp = "192.168.6.1";
 		int sockfd;
 		sockaddr_in server;
 		thread establishConnectionToDroneThread;
+
+		int buildFdSets();
+
 
 	public:
 		static CommunicationInterface* GetInstance();
