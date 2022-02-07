@@ -38,6 +38,7 @@ using namespace std;
 
 struct client{
 	int fd = -1 ;
+	mutex *cMutex;
 	sockaddr_in adress;
 	bool readyToSend = true;
 	int noTriesToFix = 0;
@@ -53,7 +54,7 @@ struct client{
 
 
 struct job{ // info about message isn't stored two times, as info in clinet struct is only for processing
-	client *client; // we need the client to know if he is ready to receive data
+	client *cli; // we need the client to know if he is ready to receive data
 
 	unsigned char messageType;
 	unsigned char messagePriority;
@@ -76,12 +77,10 @@ class CommunicationInterface{
 
 		socklen_t clientLength;
 
-		list<mutex> clientMutexes;
 		list<client> clients;
 
 		thread clientConnectThread;
-		thread checkForNewDataThread; // will process new data and send it to thread pool, which will redistribute it
-    //socklen_t clilen;
+		thread checkForNewDataThread;
 
 		static CommunicationInterface* communicationInterface;
 		static mutex mutexCommunicationInterface;
@@ -98,7 +97,7 @@ class CommunicationInterface{
 		void checkActivityOnSocket();
 		void checkForNewData(); // -> calls callback if new data is found, that processes it (needs to be really fast, will not start new thread just for processing)
 		void cleanUp();
-		void sendDataToClient(client cli, protocol_codes p, unsigned char priority, unsigned char* data);
+		bool sendDataToClient(client cli, protocol_codes p, unsigned char priority, unsigned char* data);
 };
 
 class ThreadPool{
@@ -107,7 +106,7 @@ class ThreadPool{
 		static ThreadPool* threadPool;
 
 		vector<thread> threads;
- 		condition_variable_any workQueueConditionVariable;
+ 		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
 		queue<job> workQueue;
 		bool process = true;
@@ -117,6 +116,8 @@ class ThreadPool{
 
 	public:
 		static ThreadPool* GetInstance();
+
+		void addJob(job j);
 
 };
 

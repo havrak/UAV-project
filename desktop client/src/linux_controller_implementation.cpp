@@ -41,10 +41,10 @@ ReturnErrorMessage LinuxControllerImplementation::setupController()
 void LinuxControllerImplementation::eventLoop()
 {
 	js_event js;
+	unsigned int long index;
 
 	while (true) {
 		read(fd, &js, sizeof(js_event));
-		int index;
 		switch (js.type & ~JS_EVENT_INIT) {
 			case JS_EVENT_AXIS:
 

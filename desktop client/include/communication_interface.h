@@ -11,6 +11,7 @@
 #include "control_interpreter.h"
 #include "protocol_codes.h"
 
+#include <queue>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -19,13 +20,34 @@
 #include <string>
 #include <cstring>
 #include <iostream>
+#include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #define SERVERPORT 8066
-#define MAX_MESSAGE_SIZE 500
+#define NUMBER_OF_THREADS 5
+
+#define MAX_SEND_MESSAGE_SIZE 255
+#define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 
 using namespace std;
+
+struct serverStruct{
+	int curIndexInBuffer=0; // position where we have left off, first not filled index
+	unsigned char curMessageType = 0;
+	unsigned char curMessagePriority = 0;
+	unsigned int short curMessageSize = 0;
+	// NOTE: cannot store data here as we should be process multiple request from client at the same time
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+};
+
+struct job{ // info about message isn't stored two times, as info in clinet struct is only for processing
+	unsigned char messageType;
+	unsigned char messagePriority;
+	unsigned int short messageSize;
+	char messageBuffer[MAX_MESSAGE_SIZE];
+};
 
 class ControllerDroneBridge : ControlInterpreter{
 	private:
@@ -54,10 +76,18 @@ class CommunicationInterface{
 
 		string serverIp = "192.168.6.1";
 		int sockfd;
-		sockaddr_in server;
+		sockaddr_in serverAddress;
+		serverStruct server;
+
 		thread establishConnectionToDroneThread;
+		thread checkForNewDataThread;
 
 		int buildFdSets();
+		void checkActivityOnSocket();
+		void clearServerStruct();
+
+		bool fixReceiveData();
+		bool receiveDataFromServer();
 
 
 	public:
@@ -65,6 +95,27 @@ class CommunicationInterface{
 		bool setupSocket();
 		bool establishConnectionToDrone();
 		bool sendData(protocol_codes p, unsigned char priority, unsigned char *data);
+
+};
+
+class ThreadPool{
+	private:
+		ThreadPool();
+		static ThreadPool* threadPool;
+
+		vector<thread> threads;
+ 		condition_variable_any workQueueUpdate;
+		mutex workQueueMutex;
+		queue<job> workQueue;
+		bool process = true;
+
+		void endThreadPool();
+		void worker();
+
+	public:
+		static ThreadPool* GetInstance();
+
+		void addJob(job j);
 
 };
 

@@ -12,6 +12,7 @@
 #include <cerrno>
 #include <chrono>
 #include <cstring>
+#include <mutex>
 #include <netinet/in.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -94,7 +95,7 @@ void CommunicationInterface::clearClientStruct(client cli)
 	cli.curMessagePriority = 0;
 	cli.curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE);
+	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE+5);
 }
 
 // NOTE: will only move socket to last sequence of terminator and valid header data
@@ -157,7 +158,14 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 		if (cli.curIndexInBuffer == cli.curMessageSize + 4) {
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer] == terminator[4]) {
-				// pushtToQueue();
+				job j;
+				j.cli = &cli;
+				j.messageType = cli.curMessageType;
+				j.messagePriority = cli.curMessagePriority;
+				j.messageSize = cli.curMessageSize;
+				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize);
+
+				ThreadPool::GetInstance()->addJob(j);
 
 				clearClientStruct(cli);
 				return true;
@@ -170,12 +178,53 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 	return true;
 }
 
+bool CommunicationInterface::sendDataToClient(client cli, protocol_codes p, unsigned char priority, unsigned char *data){
+	if (sizeof(data) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
+		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
+		return false;
+	}
+	char message[sizeof(*data) + 10];
+
+	// setup metadata
+	message[0] = p;
+	message[1] = priority;
+	message[2] = sizeof(data) >> 8;
+	message[3] = sizeof(data) - (message[2] << 8);
+	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
+
+	// load message
+	memcpy(message + 5, data, sizeof(*data));
+
+	// setup terminator
+	int li = sizeof(data) + 5;
+	message[li + 1] = terminator[0];
+	message[li + 2] = terminator[1];
+	message[li + 3] = terminator[2];
+	message[li + 4] = terminator[3];
+	message[li + 5] = terminator[4];
+
+	ssize_t bytesSend = 0;
+	bool sending = true;
+	cli.cMutex->lock();
+	while (sending) {
+		ssize_t sCount = send(sockfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(*message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(*message) - bytesSend), 0);
+		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+			return false;
+		bytesSend += sCount;
+		if (bytesSend == sizeof(*message)) {
+			return true;
+		}
+	}
+	cli.cMutex->unlock();
+	return false;
+}
+
 void CommunicationInterface::checkActivityOnSocket()
 {
 	int state;
 	while (true) {
 		buildFdSets();
-		state = select(sockfd, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoreticaly poll() is better option
+		state = select(sockfd, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoretically poll() is better option
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
@@ -192,8 +241,6 @@ void CommunicationInterface::checkActivityOnSocket()
 				}
 			}
 		}
-
-		//
 		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 }
@@ -214,7 +261,8 @@ int CommunicationInterface::newClientConnect()
 		c.adress = clientAddress;
 		c.fd = clientfd;
 		clients.push_back(c);
-
+		mutex newMutex;
+		c.cMutex = &newMutex;
 		close(clientfd);
 	}
 	return -1;
@@ -236,14 +284,15 @@ bool CommunicationInterface::setupSocket()
 	}
 	listen(sockfd, 8);
 	clientLength = sizeof(serv_addr); // same structure so no problem
-	/* clientConnectThread = thread(&CommunicationInterface::checkAndConnectClient, this); */
+	checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
 	return true;
 }
+
 
 void ThreadPool::endThreadPool()
 {
 	process = false;
-	workQueueConditionVariable.notify_all();
+	workQueueUpdate.notify_all();
 	for (thread& t : threads)
 		t.join();
 }
@@ -253,8 +302,8 @@ void ThreadPool::worker()
 	while (process) {
 		job j;
 		{
-			unique_lock<mutex> qMutex(workQueueMutex);
-			workQueueConditionVariable.wait(qMutex, [&] {
+			unique_lock<mutex> mutex(workQueueMutex);
+			workQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
 			if (!process)
@@ -264,4 +313,10 @@ void ThreadPool::worker()
 		}
 		// here we process the request;
 	}
+}
+
+void ThreadPool::addJob(job j){
+	lock_guard<mutex> mutex(workQueueMutex);
+	workQueue.push(j);
+	workQueueUpdate.notify_all();
 }
