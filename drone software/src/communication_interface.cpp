@@ -6,6 +6,7 @@
  */
 
 #include "communication_interface.h"
+#include "protocol_codes.h"
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <cerrno>
@@ -96,91 +97,22 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE);
 }
 
-int findSequencesInBuffer(char* message, vector<int>* indexes)
-{
-	return findSequencesInBuffer(message, indexes, 0);
-}
-
-// start with remanding number of chars to match
-int findSequencesInBuffer(char* message, vector<int>* indexes, int charsMatched)
-{
-	int i = 0;
-	int j = -charsMatched;
-	while (i < FIX_SIZE - 1 && j < 5) {
-		if (message[i] == terminator[j]) {
-			i++;
-			j++;
-			if (j == 4) {
-				indexes->push_back(i);
-				j = 0;
-			} else if (i == FIX_SIZE - 1) {
-				i = 0; // j stays the same, i resets
-				indexes->push_back(-j);
-			}
-		} else {
-			i = i - j + 1;
-			j = 0;
-		}
-	}
-	return indexes->size();
-}
-
-// NOTE: called when data seems broken (packet was incomplete, size didn't match or whatever)
+// NOTE: will only move socket to last sequence of terminator and valid header data
 bool CommunicationInterface::fixReceiveData(client cli)
 {
-	char messageBuffer[FIX_SIZE];
+	unsigned char buffer[5];
 	bool receivingData = true;
-	unsigned char infoBuffer[5];
-	vector<int> indexes;
-	int charsOfTerminatorMatched = 0;
-	int charsOfInfoSequenceLoaded = -1;
-
+	int index = 0;
 	while (receivingData) {
 
-		ssize_t rCount = recv(cli.fd, (char*)&messageBuffer, FIX_SIZE, MSG_DONTWAIT);
-
-		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from client" << endl;
-			return false; // just give up for now
+		ssize_t rCount = recv(cli.fd, (char*)&buffer + (index), 1, MSG_DONTWAIT);
+		if (rCount < 0 )
+			return false;
+		if (buffer[index] == terminator[0] && buffer[(index+1)%5] == terminator[1] && buffer[(index+2)%5] == terminator[2] && buffer[(index+3)%5] == terminator[3] && buffer[(index+4)%5] == terminator[4]) {
+			return true;
 		}
+		index = (index + 1) % 5;
 
-		if (charsOfInfoSequenceLoaded > 0) {
-			memcpy(&infoBuffer, &messageBuffer, 5 - charsOfInfoSequenceLoaded);
-
-		} else {
-			findSequencesInBuffer(messageBuffer, &indexes, charsOfTerminatorMatched);
-		}
-
-		for (int i : indexes) {
-			if (i < 0) {
-				cout << "COMMUNICATION_INTERFACE | fixReceiveData | we need to check if last: " << i << "math" << endl;
-				charsOfTerminatorMatched = i;
-				break;
-			}
-
-			if (i + 6 > FIX_SIZE) { // NOTE; we cannot load whole info data
-				memcpy(&infoBuffer, &messageBuffer[i + 1], FIX_SIZE - (i + 6));
-				charsOfInfoSequenceLoaded = FIX_SIZE - (i + 1);
-				break;
-			}
-
-			memcpy(&infoBuffer, &messageBuffer[i + 1], 5);
-
-			if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) {
-				cli.curMessageType = infoBuffer[0];
-				cli.curMessagePriority = infoBuffer[1];
-				cli.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
-				cli.curIndexInBuffer = FIX_SIZE - i - 1;
-				cli.noTriesToFix = 0;
-				if (cli.curMessageSize > FIX_SIZE - i - 6) {
-					memcpy(&cli.curMessageBuffer, &messageBuffer[i + 6], FIX_SIZE - i - 6);
-					cli.curIndexInBuffer = FIX_SIZE - i - 6;
-
-				} else {
-					memcpy(&cli.curMessageBuffer, &messageBuffer[i + 6], cli.curMessageSize);
-				}
-			}
-		}
 	}
 	return false;
 }
@@ -197,9 +129,8 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 
 		if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) { // just check if first few bytes look semi valid
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received data doesn't match" << endl;
-			bool fixed = fixReceiveData(cli);
-			if (!fixed)
-				return false;
+			fixReceiveData(cli);
+			return false;
 		} else {
 			cli.curMessageType = infoBuffer[0];
 			cli.curMessagePriority = infoBuffer[1];
@@ -225,7 +156,7 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 
 		if (cli.curIndexInBuffer == cli.curMessageSize + 4) {
 
-			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == 0x00 && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == 0x00 && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == 0xFF && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == 0xFF && cli.curMessageBuffer[cli.curIndexInBuffer] == 0xFF) {
+			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer] == terminator[4]) {
 				// pushtToQueue();
 
 				clearClientStruct(cli);

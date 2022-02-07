@@ -35,11 +35,6 @@ using namespace std;
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 // 500 bytes for message, 10 for metadata
-#define FIX_SIZE 100
-
-
-int findSequencesInBuffer(char* message, vector<int>* indexes);
-int findSequencesInBuffer(char* message, vector<int>* indexes, int charsMatched);
 
 struct client{
 	int fd = -1 ;
