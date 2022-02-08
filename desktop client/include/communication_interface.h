@@ -33,6 +33,14 @@
 
 using namespace std;
 
+struct sendingStruct{
+
+	unsigned char MessageType = 0;
+	unsigned char MessagePriority = 0;
+	unsigned char *messageBuffer;
+
+};
+
 struct serverStruct{
 	int curIndexInBuffer=0; // position where we have left off, first not filled index
 	unsigned char curMessageType = 0;
@@ -42,7 +50,7 @@ struct serverStruct{
 	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
-struct job{ // info about message isn't stored two times, as info in clinet struct is only for processing
+struct processingStuct{ // info about message isn't stored two times, as info in clinet struct is only for processing
 	unsigned char messageType;
 	unsigned char messagePriority;
 	unsigned int short messageSize;
@@ -94,28 +102,49 @@ class CommunicationInterface{
 		static CommunicationInterface* GetInstance();
 		bool setupSocket();
 		bool establishConnectionToDrone();
-		bool sendData(protocol_codes p, unsigned char priority, unsigned char *data);
+		bool sendData(sendingStruct ss);
 
 };
 
-class ThreadPool{
+// we don't want thing to hang up on waiting to send something
+class SendingThreadPool{
 	private:
-		ThreadPool();
-		static ThreadPool* threadPool;
+		SendingThreadPool();
+		static SendingThreadPool* threadPool;
 
 		vector<thread> threads;
  		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
-		queue<job> workQueue;
+		queue<sendingStruct> workQueue;
 		bool process = true;
 
 		void endThreadPool();
 		void worker();
 
 	public:
-		static ThreadPool* GetInstance();
+		static SendingThreadPool* GetInstance();
+		void scheduleToSend(sendingStruct ss);
+};
 
-		void addJob(job j);
+class ProcessingThreadPool{
+	private:
+		ProcessingThreadPool();
+		static ProcessingThreadPool* threadPool;
+
+		vector<thread> threads;
+ 		condition_variable_any workQueueUpdate;
+		mutex workQueueMutex;
+		queue<processingStuct> workQueue;
+		bool process = true;
+
+		void endThreadPool();
+		void worker();
+
+	public:
+
+		static ProcessingThreadPool* GetInstance();
+
+		void addJob(processingStuct j);
 
 };
 

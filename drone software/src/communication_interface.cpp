@@ -24,18 +24,38 @@
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
 
-ThreadPool* ThreadPool::threadPool = nullptr;
+SendingThreadPool* SendingThreadPool::threadPool = nullptr;
+ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
 
-ThreadPool::ThreadPool()
+/*-----------------------------------
+// Declaring singleton logic
+-----------------------------------*/
+
+SendingThreadPool::SendingThreadPool()
 {
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
-		threads.push_back(std::thread(&ThreadPool::worker, this));
+		threads.push_back(std::thread(&SendingThreadPool::worker, this));
 }
 
-ThreadPool* ThreadPool::GetInstance()
+SendingThreadPool* SendingThreadPool::GetInstance()
 {
 	if (threadPool == nullptr) {
-		threadPool = new ThreadPool();
+		threadPool = new SendingThreadPool();
+	}
+	return threadPool;
+}
+
+
+ProcessingThreadPool::ProcessingThreadPool()
+{
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
+}
+
+ProcessingThreadPool* ProcessingThreadPool::GetInstance()
+{
+	if (threadPool == nullptr) {
+		threadPool = new ProcessingThreadPool();
 	}
 	return threadPool;
 }
@@ -46,12 +66,18 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 		mutexCommunicationInterface.lock();
 		if (communicationInterface == nullptr) {
 			communicationInterface = new CommunicationInterface();
-			ThreadPool::GetInstance(); // let this one also create thread pool
+			ProcessingThreadPool::GetInstance(); // let this one also create thread pool
+			SendingThreadPool::GetInstance();
+
 		}
 		mutexCommunicationInterface.unlock();
 	}
 	return communicationInterface;
 }
+
+/*-----------------------------------
+// CommunicationInterface section
+----------------------------------**/
 
 void CommunicationInterface::cleanUp()
 {
@@ -158,14 +184,14 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 		if (cli.curIndexInBuffer == cli.curMessageSize + 4) {
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer] == terminator[4]) {
-				job j;
+				processingStruct j;
 				j.cli = &cli;
 				j.messageType = cli.curMessageType;
 				j.messagePriority = cli.curMessagePriority;
 				j.messageSize = cli.curMessageSize;
 				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize);
 
-				ThreadPool::GetInstance()->addJob(j);
+				ProcessingThreadPool::GetInstance()->addJob(j);
 
 				clearClientStruct(cli);
 				return true;
@@ -178,25 +204,25 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 	return true;
 }
 
-bool CommunicationInterface::sendDataToClient(client cli, protocol_codes p, unsigned char priority, unsigned char *data){
-	if (sizeof(data) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
+bool CommunicationInterface::sendDataToClient(sendingStruct ss){
+	if (sizeof(*ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
 	}
-	char message[sizeof(*data) + 10];
+	char message[sizeof(*ss.messageBuffer) + 10];
 
 	// setup metadata
-	message[0] = p;
-	message[1] = priority;
-	message[2] = sizeof(data) >> 8;
-	message[3] = sizeof(data) - (message[2] << 8);
+	message[0] = ss.MessageType;
+	message[1] = ss.MessagePriority;
+	message[2] = sizeof(*ss.messageBuffer) >> 8;
+	message[3] = sizeof(*ss.messageBuffer) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
-	memcpy(message + 5, data, sizeof(*data));
+	memcpy(message + 5, ss.messageBuffer, sizeof(*ss.messageBuffer));
 
 	// setup terminator
-	int li = sizeof(data) + 5;
+	int li = sizeof(*ss.messageBuffer) + 5;
 	message[li + 1] = terminator[0];
 	message[li + 2] = terminator[1];
 	message[li + 3] = terminator[2];
@@ -205,7 +231,7 @@ bool CommunicationInterface::sendDataToClient(client cli, protocol_codes p, unsi
 
 	ssize_t bytesSend = 0;
 	bool sending = true;
-	cli.cMutex->lock();
+	ss.cli->cMutex->lock();
 	while (sending) {
 		ssize_t sCount = send(sockfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(*message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(*message) - bytesSend), 0);
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
@@ -215,7 +241,7 @@ bool CommunicationInterface::sendDataToClient(client cli, protocol_codes p, unsi
 			return true;
 		}
 	}
-	cli.cMutex->unlock();
+	ss.cli->cMutex->unlock();
 	return false;
 }
 
@@ -288,8 +314,11 @@ bool CommunicationInterface::setupSocket()
 	return true;
 }
 
+/*-----------------------------------
+// ProcessingThreadPool section
+----------------------------------**/
 
-void ThreadPool::endThreadPool()
+void ProcessingThreadPool::endThreadPool()
 {
 	process = false;
 	workQueueUpdate.notify_all();
@@ -297,10 +326,10 @@ void ThreadPool::endThreadPool()
 		t.join();
 }
 
-void ThreadPool::worker()
+void ProcessingThreadPool::worker()
 {
 	while (process) {
-		job j;
+		processingStruct ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -308,15 +337,54 @@ void ThreadPool::worker()
 			});
 			if (!process)
 				break;
-			j = workQueue.front();
+			ps = workQueue.front();
 			workQueue.pop();
 		}
 		// here we process the request;
 	}
 }
 
-void ThreadPool::addJob(job j){
+void ProcessingThreadPool::addJob(processingStruct ps){
 	lock_guard<mutex> mutex(workQueueMutex);
-	workQueue.push(j);
+	workQueue.push(ps);
 	workQueueUpdate.notify_all();
 }
+
+/*-----------------------------------
+// SendingThreadPool section
+----------------------------------**/
+
+
+void SendingThreadPool::endThreadPool()
+{
+	process = false;
+	workQueueUpdate.notify_all();
+	for (thread& t : threads)
+		t.join();
+}
+
+void SendingThreadPool::worker()
+{
+	sendingStruct ss;
+	while (process) {
+		{
+			unique_lock<mutex> mutex(workQueueMutex);
+			workQueueUpdate.wait(mutex, [&] {
+				return !workQueue.empty() || !process;
+			});
+			if (!process)
+				break;
+			ss = workQueue.front();
+			workQueue.pop();
+		}
+		CommunicationInterface::GetInstance()->sendDataToClient(ss);
+	}
+}
+
+void SendingThreadPool::scheduleToSend(sendingStruct ss)
+{
+	lock_guard<mutex> mutex(workQueueMutex);
+	workQueue.push(ss);
+	workQueueUpdate.notify_all();
+}
+

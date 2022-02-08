@@ -16,18 +16,48 @@ mutex CommunicationInterface::serverMutex;
 ControllerDroneBridge* ControllerDroneBridge::controllerDroneBridge = nullptr;
 mutex ControllerDroneBridge::mutexControllerDroneBridge;
 
-ThreadPool* ThreadPool::threadPool = nullptr;
+SendingThreadPool* SendingThreadPool::threadPool = nullptr;
+ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
 
-ThreadPool::ThreadPool()
+/*-----------------------------------
+// Declaring singleton logic
+-----------------------------------*/
+ControllerDroneBridge* ControllerDroneBridge::GetInstance()
 {
-	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
-		threads.push_back(std::thread(&ThreadPool::worker, this));
+	if (controllerDroneBridge == nullptr) {
+		mutexControllerDroneBridge.lock();
+		if (controllerDroneBridge == nullptr)
+			controllerDroneBridge = new ControllerDroneBridge();
+		mutexControllerDroneBridge.unlock();
+	}
+	return controllerDroneBridge;
 }
 
-ThreadPool* ThreadPool::GetInstance()
+
+SendingThreadPool::SendingThreadPool()
+{
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&SendingThreadPool::worker, this));
+}
+
+SendingThreadPool* SendingThreadPool::GetInstance()
 {
 	if (threadPool == nullptr) {
-		threadPool = new ThreadPool();
+		threadPool = new SendingThreadPool();
+	}
+	return threadPool;
+}
+
+ProcessingThreadPool::ProcessingThreadPool()
+{
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
+}
+
+ProcessingThreadPool* ProcessingThreadPool::GetInstance()
+{
+	if (threadPool == nullptr) {
+		threadPool = new ProcessingThreadPool();
 	}
 	return threadPool;
 }
@@ -36,12 +66,19 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 {
 	if (communicationInterface == nullptr) {
 		mutexCommunicationInterface.lock();
-		if (communicationInterface == nullptr)
+		if (communicationInterface == nullptr){
 			communicationInterface = new CommunicationInterface();
+			ProcessingThreadPool::GetInstance(); // let this one also create thread pool
+			SendingThreadPool::GetInstance();
+		}
 		mutexCommunicationInterface.unlock();
 	}
 	return communicationInterface;
 }
+
+/*-----------------------------------
+// CommunicationInterface section
+----------------------------------**/
 
 void CommunicationInterface::clearServerStruct()
 {
@@ -106,14 +143,14 @@ bool CommunicationInterface::receiveDataFromServer()
 		if (server.curIndexInBuffer == server.curMessageSize + 4) {
 
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
-				job j;
+				processingStuct j;
 
 				j.messageType = server.curMessageType;
 				j.messagePriority = server.curMessagePriority;
 				j.messageSize = server.curMessageSize;
 				memcpy(&j.messageBuffer, &server.curMessageBuffer, j.messageSize);
 
-				ThreadPool::GetInstance()->addJob(j);
+				ProcessingThreadPool::GetInstance()->addJob(j);
 
 				clearServerStruct();
 				return true;
@@ -171,27 +208,27 @@ int CommunicationInterface::buildFdSets()
 	return 0;
 }
 
-bool CommunicationInterface::sendData(protocol_codes p, unsigned char priority, unsigned char* data)
+bool CommunicationInterface::sendData(sendingStruct ss)
 {
-	if (sizeof(data) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
+	if (sizeof(ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
 	}
 
-	char message[sizeof(*data) + 10];
+	char message[sizeof(*ss.messageBuffer) + 10];
 
 	// setup metadata
-	message[0] = p;
-	message[1] = priority;
-	message[2] = sizeof(data) >> 8;
-	message[3] = sizeof(data) - (message[2] << 8);
+	message[0] = ss.MessageType;
+	message[1] = ss.MessagePriority;
+	message[2] = sizeof(*ss.messageBuffer) >> 8;
+	message[3] = sizeof(*ss.messageBuffer) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
-	memcpy(message + 5, data, sizeof(*data)); // NOTE: clang gives waringing
+	memcpy(message + 5, ss.messageBuffer, sizeof(*ss.messageBuffer)); // NOTE: clang gives waringing
 
 	// setup terminator
-	int li = sizeof(data) + 5;
+	int li = sizeof(ss.messageBuffer) + 5;
 	message[li + 1] = terminator[0];
 	message[li + 2] = terminator[1];
 	message[li + 3] = terminator[2];
@@ -251,18 +288,11 @@ bool CommunicationInterface::setupSocket()
 	return true;
 }
 
-ControllerDroneBridge* ControllerDroneBridge::GetInstance()
-{
-	if (controllerDroneBridge == nullptr) {
-		mutexControllerDroneBridge.lock();
-		if (controllerDroneBridge == nullptr)
-			controllerDroneBridge = new ControllerDroneBridge();
-		mutexControllerDroneBridge.unlock();
-	}
-	return controllerDroneBridge;
-}
+/*-----------------------------------
+// ProcessingThreadPool section
+----------------------------------**/
 
-void ThreadPool::endThreadPool()
+void ProcessingThreadPool::endThreadPool()
 {
 	process = false;
 	workQueueUpdate.notify_all();
@@ -270,10 +300,10 @@ void ThreadPool::endThreadPool()
 		t.join();
 }
 
-void ThreadPool::worker()
+void ProcessingThreadPool::worker()
 {
 	while (process) {
-		job j;
+		processingStuct ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -281,16 +311,54 @@ void ThreadPool::worker()
 			});
 			if (!process)
 				break;
-			j = workQueue.front();
+			ps = workQueue.front();
 			workQueue.pop();
 		}
 		// here we process the request;
 	}
 }
 
-void ThreadPool::addJob(job j)
+void ProcessingThreadPool::addJob(processingStuct ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
-	workQueue.push(j);
+	workQueue.push(ps);
+	workQueueUpdate.notify_all();
+}
+
+/*-----------------------------------
+// SendingThreadPool section
+----------------------------------**/
+
+
+void SendingThreadPool::endThreadPool()
+{
+	process = false;
+	workQueueUpdate.notify_all();
+	for (thread& t : threads)
+		t.join();
+}
+
+void SendingThreadPool::worker()
+{
+	while (process) {
+		sendingStruct ss;
+		{
+			unique_lock<mutex> mutex(workQueueMutex);
+			workQueueUpdate.wait(mutex, [&] {
+				return !workQueue.empty() || !process;
+			});
+			if (!process)
+				break;
+			ss = workQueue.front();
+			workQueue.pop();
+		}
+		CommunicationInterface::GetInstance()->sendData(ss);
+	}
+}
+
+void SendingThreadPool::scheduleToSend(sendingStruct ss)
+{
+	lock_guard<mutex> mutex(workQueueMutex);
+	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
