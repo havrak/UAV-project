@@ -9,7 +9,7 @@
 #define COMMUNICATION_INTERFACE_H
 
 #include "control_interpreter.h"
-#include "protocol_codes.h"
+#include "protocol_spec.h"
 
 #include <queue>
 #include <sys/socket.h>

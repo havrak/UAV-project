@@ -11,6 +11,7 @@
 #include <asm-generic/errno.h>
 #include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <mutex>
 #include <netinet/in.h>
@@ -214,15 +215,15 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss){
 	// setup metadata
 	message[0] = ss.MessageType;
 	message[1] = ss.MessagePriority;
-	message[2] = sizeof(*ss.messageBuffer) >> 8;
-	message[3] = sizeof(*ss.messageBuffer) - (message[2] << 8);
+	message[2] = ((uint16_t) sizeof(*ss.messageBuffer)) >> 8;
+	message[3] = ((uint16_t) sizeof(*ss.messageBuffer)) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
 	memcpy(message + 5, ss.messageBuffer, sizeof(*ss.messageBuffer));
 
 	// setup terminator
-	int li = sizeof(*ss.messageBuffer) + 5;
+	int li = sizeof(*ss.messageBuffer) + 4;
 	message[li + 1] = terminator[0];
 	message[li + 2] = terminator[1];
 	message[li + 3] = terminator[2];

@@ -1,12 +1,12 @@
 /*
- * protocol_codes.h
+ * protocol_spec.h
  * Copyright (C) 2022 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#ifndef PROTOCOL_CODES_H
-#define PROTOCOL_CODES_H
+#ifndef PROTOCOL_SPEC_H
+#define PROTOCOL_SPEC_H
 
 const unsigned char terminator[5] = {0x00, 0x00, 0xFF, 0xFF, 0xFF};
 
@@ -17,5 +17,4 @@ enum protocol_codes{
 
 
 
-#endif /* !PROTOCOL_CODES_H */
-
+#endif /* !PROTOCOL_SPEC_H */

@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <vector>
 
-#include "protocol_codes.h"
+#include "protocol_spec.h"
 
 using namespace std;
 
