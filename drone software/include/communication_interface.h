@@ -107,6 +107,7 @@ class CommunicationInterface{
 		void checkForNewData(); // -> calls callback if new data is found, that processes it (needs to be really fast, will not start new thread just for processing)
 		void cleanUp();
 		bool sendDataToClient(sendingStruct ss);
+		bool sendDataToAll(sendingStruct ss);
 };
 
 class SendingThreadPool{
@@ -126,6 +127,7 @@ class SendingThreadPool{
 	public:
 		static SendingThreadPool* GetInstance();
 		void scheduleToSend(sendingStruct ss);
+		void scheduleToSendAll(sendingStruct ss);
 };
 
 class ProcessingThreadPool{
@@ -146,8 +148,10 @@ class ProcessingThreadPool{
 		static ProcessingThreadPool* GetInstance();
 
 		void addJob(processingStruct j);
-
 };
+
+
+
 
 
 #endif /* !COMMUNICATION_INTERFACE_H */

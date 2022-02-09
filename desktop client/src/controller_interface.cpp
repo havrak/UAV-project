@@ -41,6 +41,7 @@ void ControllerInterface::notifyObserverEvent(ControlSurface cs, int x, int y)
 		(*iterator)->update(cs, x,y);
 		++iterator;
 	}
+
 }
 
 ControlSurface getControlSurfaceFor(bool button, int id)

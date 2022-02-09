@@ -5,12 +5,9 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "battery_interface.h"
 #include "bcm2835.h"
 #include "camera_streamer.h"
 #include "communication_interface.h"
-#include "gps_interface.h"
-#include "imu_interface.h"
 #include "servo_control.h"
 #include <cstring>
 #include <iostream>
@@ -22,31 +19,21 @@ void signalHandler( int sigNum){
 	cout << "MAIN | signalHandler | caught signal slowing down" << endl;
 	ServoControl::GetInstance()->slowDownToMin();
 	CommunicationInterface::GetInstance()->cleanUp();
+	exit(127);
 }
 
 int main(int argc, char** argv)
 {
 	signal(SIGKILL, signalHandler);
 
-	if (argc > 1){
-		if(strcmp(argv[1], "-r") == 0){
-			cout << "MAIN | main | reseting ServoControl" << endl;
-			ServoControl::GetInstance();
-		}
-		return 1;
-	}
-	/* ImuInterface::GetInstance()->attachIMU(); */
-	/* cout << "MAIN | main | IMU attached" << endl; */
+	/* if (argc > 1){ */
+	/* 	if(strcmp(argv[1], "-r") == 0){ */
+	/* 		cout << "MAIN | main | reseting ServoControl" << endl; */
+	/* 		ServoControl::GetInstance(); */
+	/* 	} */
+	/* 	return 1; */
+	/* } */
 
-	BatteryInterface::GetInstance()->attachINA226(0x44);
-	cout << "MAIN | main | INA226 attached" << endl;
-	BatteryInterface::GetInstance()->startLoop();
-	cout << "MAIN | main | INA226 Loop started" << endl;
-
-	/* GPSInterface::GetInstance()->attachGPS(); */
-	/* cout << "MAIN | main | GPS attached" << endl; */
-	/* GPSInterface::GetInstance()->startLoop(); */
-	/* cout << "MAIN | main | GPS Loop started" << endl; */
 
 	if (!bcm2835_init()) {
 		cerr << "MAIN | main | failed to open I2C device" << endl;
@@ -79,8 +66,6 @@ int main(int argc, char** argv)
 		/* 	cout << "MAIN | main | GYRO X: " << ImuInterface::GetInstance()->getGyroX() << endl; */
 		/* cout << "MAIN | main | GYRO Y: " << ImuInterface::GetInstance()->getGyroY() << endl; */
 		/* 	cout << "MAIN | main | GYRO Z: " << ImuInterface::GetInstance()->getGyroZ() << endl; */
-		cout << "MAIN | main | Voltage: " << BatteryInterface::GetInstance()->getVoltage() << endl;
-		cout << "MAIN | main | Current: " << BatteryInterface::GetInstance()->getCurrent() << endl;
 		/* 	cout << endl; */
 
 		ServoControl::GetInstance()->testServo();

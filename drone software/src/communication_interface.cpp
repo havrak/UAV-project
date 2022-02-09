@@ -6,7 +6,6 @@
  */
 
 #include "communication_interface.h"
-#include "protocol_codes.h"
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <cerrno>
@@ -46,7 +45,6 @@ SendingThreadPool* SendingThreadPool::GetInstance()
 	return threadPool;
 }
 
-
 ProcessingThreadPool::ProcessingThreadPool()
 {
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
@@ -69,7 +67,6 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 			communicationInterface = new CommunicationInterface();
 			ProcessingThreadPool::GetInstance(); // let this one also create thread pool
 			SendingThreadPool::GetInstance();
-
 		}
 		mutexCommunicationInterface.unlock();
 	}
@@ -122,7 +119,7 @@ void CommunicationInterface::clearClientStruct(client cli)
 	cli.curMessagePriority = 0;
 	cli.curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE+5);
+	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE + 5);
 }
 
 // NOTE: will only move socket to last sequence of terminator and valid header data
@@ -134,13 +131,12 @@ bool CommunicationInterface::fixReceiveData(client cli)
 	while (receivingData) {
 
 		ssize_t rCount = recv(cli.fd, (char*)&buffer + (index), 1, MSG_DONTWAIT);
-		if (rCount < 0 )
+		if (rCount < 0)
 			return false;
-		if (buffer[index] == terminator[0] && buffer[(index+1)%5] == terminator[1] && buffer[(index+2)%5] == terminator[2] && buffer[(index+3)%5] == terminator[3] && buffer[(index+4)%5] == terminator[4]) {
+		if (buffer[index] == terminator[0] && buffer[(index + 1) % 5] == terminator[1] && buffer[(index + 2) % 5] == terminator[2] && buffer[(index + 3) % 5] == terminator[3] && buffer[(index + 4) % 5] == terminator[4]) {
 			return true;
 		}
 		index = (index + 1) % 5;
-
 	}
 	return false;
 }
@@ -205,7 +201,8 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 	return true;
 }
 
-bool CommunicationInterface::sendDataToClient(sendingStruct ss){
+bool CommunicationInterface::sendDataToClient(sendingStruct ss)
+{
 	if (sizeof(*ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
@@ -215,8 +212,8 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss){
 	// setup metadata
 	message[0] = ss.MessageType;
 	message[1] = ss.MessagePriority;
-	message[2] = ((uint16_t) sizeof(*ss.messageBuffer)) >> 8;
-	message[3] = ((uint16_t) sizeof(*ss.messageBuffer)) - (message[2] << 8);
+	message[2] = ((uint16_t)sizeof(*ss.messageBuffer)) >> 8;
+	message[3] = ((uint16_t)sizeof(*ss.messageBuffer)) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
@@ -244,6 +241,16 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss){
 	}
 	ss.cli->cMutex->unlock();
 	return false;
+}
+
+bool CommunicationInterface::sendDataToAll(sendingStruct ss){
+	bool toReturn = true;
+	for(client c : clients){
+		ss.cli = &c;
+		if(!sendDataToClient(ss))
+			toReturn = false;
+	}
+	return toReturn;
 }
 
 void CommunicationInterface::checkActivityOnSocket()
@@ -345,7 +352,8 @@ void ProcessingThreadPool::worker()
 	}
 }
 
-void ProcessingThreadPool::addJob(processingStruct ps){
+void ProcessingThreadPool::addJob(processingStruct ps)
+{
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ps);
 	workQueueUpdate.notify_all();
@@ -354,7 +362,6 @@ void ProcessingThreadPool::addJob(processingStruct ps){
 /*-----------------------------------
 // SendingThreadPool section
 ----------------------------------**/
-
 
 void SendingThreadPool::endThreadPool()
 {
@@ -378,7 +385,10 @@ void SendingThreadPool::worker()
 			ss = workQueue.front();
 			workQueue.pop();
 		}
-		CommunicationInterface::GetInstance()->sendDataToClient(ss);
+		if (ss.cli == nullptr) {
+			CommunicationInterface::GetInstance()->sendDataToAll(ss);
+		} else
+			CommunicationInterface::GetInstance()->sendDataToClient(ss);
 	}
 }
 
@@ -389,3 +399,10 @@ void SendingThreadPool::scheduleToSend(sendingStruct ss)
 	workQueueUpdate.notify_all();
 }
 
+void SendingThreadPool::scheduleToSendAll(sendingStruct ss)
+{
+	lock_guard<mutex> mutex(workQueueMutex);
+	ss.cli = nullptr;
+	workQueue.push(ss);
+	workQueueUpdate.notify_all();
+}
