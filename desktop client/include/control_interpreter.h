@@ -26,6 +26,7 @@ class ControlInterpreter{
 	public:
 		virtual int update(ControlSurface, int x, int y){return 0;}
 		virtual int update(ControlSurface, int val){return 0;}
+		virtual int controlState();
 };
 
 #endif /* !CONTROL_INTERPRETER_H */

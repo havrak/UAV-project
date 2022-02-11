@@ -7,8 +7,10 @@
 
 #include "communication_interface.h"
 #include "gtkmm/enums.h"
+#include <ctime>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <thread>
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
@@ -33,11 +35,11 @@ ControllerDroneBridge* ControllerDroneBridge::GetInstance()
 	return controllerDroneBridge;
 }
 
-
 SendingThreadPool::SendingThreadPool()
 {
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&SendingThreadPool::worker, this));
+	controlThread = (std::thread(&SendingThreadPool::controlWorker, this));
 }
 
 SendingThreadPool* SendingThreadPool::GetInstance()
@@ -66,7 +68,7 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 {
 	if (communicationInterface == nullptr) {
 		mutexCommunicationInterface.lock();
-		if (communicationInterface == nullptr){
+		if (communicationInterface == nullptr) {
 			communicationInterface = new CommunicationInterface();
 			ProcessingThreadPool::GetInstance(); // let this one also create thread pool
 			SendingThreadPool::GetInstance();
@@ -220,8 +222,8 @@ bool CommunicationInterface::sendData(sendingStruct ss)
 	// setup metadata
 	message[0] = ss.MessageType;
 	message[1] = ss.MessagePriority;
-	message[2] = ((uint16_t) sizeof(*ss.messageBuffer)) >> 8;
-	message[3] = ((uint16_t) sizeof(*ss.messageBuffer)) - (message[2] << 8);
+	message[2] = ((uint16_t)sizeof(*ss.messageBuffer)) >> 8;
+	message[3] = ((uint16_t)sizeof(*ss.messageBuffer)) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
@@ -329,13 +331,30 @@ void ProcessingThreadPool::addJob(processingStuct ps)
 // SendingThreadPool section
 ----------------------------------**/
 
-
 void SendingThreadPool::endThreadPool()
 {
 	process = false;
 	workQueueUpdate.notify_all();
 	for (thread& t : threads)
 		t.join();
+}
+
+void SendingThreadPool::controlWorker()
+{
+	while (process) {
+		sendingStruct ss;
+		{
+			unique_lock<mutex> mutex(controlQueueMutex);
+			controlQueueUpdate.wait(mutex, [&] {
+				return !controlQueue.empty() || !process;
+			});
+			if (!process)
+				break;
+			ss = controlQueue.front();
+			controlQueue.pop_front();
+		}
+		CommunicationInterface::GetInstance()->sendData(ss);
+	}
 }
 
 void SendingThreadPool::worker()
@@ -356,9 +375,30 @@ void SendingThreadPool::worker()
 	}
 }
 
+void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
+{
+	lock_guard<mutex> mutex(controlQueueMutex);
+	// with each add we will check how old is the oldest element in queue if it is older than delete it
+	if ((((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+			controlQueueTimestamps.pop_back();
+			controlQueue.pop_back();
+	}
+	controlQueue.push_front(ss);
+	controlQueueTimestamps.push_front(clock());
+	controlQueueUpdate.notify_all();
+}
+
 void SendingThreadPool::scheduleToSend(sendingStruct ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
+
+/*-----------------------------------
+// ControllerDroneBridge
+-----------------------------------*/
+
+
+
+

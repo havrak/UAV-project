@@ -11,17 +11,18 @@
 #include "control_interpreter.h"
 #include "protocol_spec.h"
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <queue>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
-#include <string>
+#include <time.h>
+#include <condition_variable>
 #include <cstring>
 #include <iostream>
-#include <condition_variable>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -33,119 +34,124 @@
 
 using namespace std;
 
-struct sendingStruct{
+struct sendingStruct {
 
 	unsigned char MessageType = 0;
 	unsigned char MessagePriority = 0;
-	unsigned char *messageBuffer;
-
+	unsigned char* messageBuffer;
 };
 
-struct serverStruct{
-	int curIndexInBuffer=0; // position where we have left off, first not filled index
+struct serverStruct {
+	int curIndexInBuffer = 0; // position where we have left off, first not filled index
 	unsigned char curMessageType = 0;
 	unsigned char curMessagePriority = 0;
 	unsigned int short curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
-struct processingStuct{ // info about message isn't stored two times, as info in clinet struct is only for processing
+struct processingStuct { // info about message isn't stored two times, as info in clinet struct is only for processing
 	unsigned char messageType;
 	unsigned char messagePriority;
 	unsigned int short messageSize;
 	char messageBuffer[MAX_MESSAGE_SIZE];
 };
 
-class ControllerDroneBridge : ControlInterpreter{
+class ControllerDroneBridge : ControlInterpreter {
 	private:
-		static ControllerDroneBridge* controllerDroneBridge;
-		static mutex mutexControllerDroneBridge;
+	static ControllerDroneBridge* controllerDroneBridge;
+	static mutex mutexControllerDroneBridge;
 
-		bool active = true;
+	bool active = true;
+
 
 	public:
-		void getActive();
-		void setActive(bool active);
-		static ControllerDroneBridge* GetInstance();
-
-
+	void getActive();
+	void setActive(bool active);
+	static ControllerDroneBridge* GetInstance();
 };
 
-class CommunicationInterface{
+class CommunicationInterface {
 	private:
-		static CommunicationInterface* communicationInterface;
-		static mutex mutexCommunicationInterface;
-		static mutex serverMutex;
+	static CommunicationInterface* communicationInterface;
+	static mutex mutexCommunicationInterface;
+	static mutex serverMutex;
 
-		fd_set read_fds;
-		fd_set write_fds;
-		fd_set except_fds;
+	fd_set read_fds;
+	fd_set write_fds;
+	fd_set except_fds;
 
-		string serverIp = "192.168.6.1";
-		int sockfd;
-		sockaddr_in serverAddress;
-		serverStruct server;
+	string serverIp = "192.168.6.1";
+	int sockfd;
+	sockaddr_in serverAddress;
+	serverStruct server;
 
-		thread establishConnectionToDroneThread;
-		thread checkForNewDataThread;
+	thread establishConnectionToDroneThread;
+	thread checkForNewDataThread;
 
-		int buildFdSets();
-		void checkActivityOnSocket();
-		void clearServerStruct();
+	int buildFdSets();
+	void checkActivityOnSocket();
+	void clearServerStruct();
 
-		bool fixReceiveData();
-		bool receiveDataFromServer();
-
+	bool fixReceiveData();
+	bool receiveDataFromServer();
 
 	public:
-		static CommunicationInterface* GetInstance();
-		bool setupSocket();
-		bool establishConnectionToDrone();
-		bool sendData(sendingStruct ss);
-
+	static CommunicationInterface* GetInstance();
+	bool setupSocket();
+	bool establishConnectionToDrone();
+	bool sendData(sendingStruct ss);
 };
 
 // we don't want thing to hang up on waiting to send something
-class SendingThreadPool{
+class SendingThreadPool {
 	private:
-		SendingThreadPool();
-		static SendingThreadPool* threadPool;
+	SendingThreadPool();
+	static SendingThreadPool* threadPool;
 
-		vector<thread> threads;
- 		condition_variable_any workQueueUpdate;
-		mutex workQueueMutex;
-		queue<sendingStruct> workQueue;
-		bool process = true;
+	vector<thread> threads;
+	condition_variable_any workQueueUpdate;
 
-		void endThreadPool();
-		void worker();
+	mutex workQueueMutex;
+	queue<sendingStruct> workQueue;
+
+	// to prevent stacking up control in queue we will stack them here and control the queue size more easily
+	mutex controlQueueMutex;
+	condition_variable_any controlQueueUpdate;
+	thread controlThread;
+	deque<sendingStruct> controlQueue;
+	deque<clock_t> controlQueueTimestamps;
+
+	bool process = true;
+
+	void endThreadPool();
+	void worker();
+	void controlWorker();
 
 	public:
-		static SendingThreadPool* GetInstance();
-		void scheduleToSend(sendingStruct ss);
+	static SendingThreadPool* GetInstance();
+	void scheduleToSend(sendingStruct ss);
+	void scheduleToSendControl(sendingStruct ss); // Schedules to send control sequence, if data in queue is older than 10 ms it is dropped
 };
 
-class ProcessingThreadPool{
+class ProcessingThreadPool {
 	private:
-		ProcessingThreadPool();
-		static ProcessingThreadPool* threadPool;
+	ProcessingThreadPool();
+	static ProcessingThreadPool* threadPool;
 
-		vector<thread> threads;
- 		condition_variable_any workQueueUpdate;
-		mutex workQueueMutex;
-		queue<processingStuct> workQueue;
-		bool process = true;
+	vector<thread> threads;
+	condition_variable_any workQueueUpdate;
+	mutex workQueueMutex;
+	queue<processingStuct> workQueue;
+	bool process = true;
 
-		void endThreadPool();
-		void worker();
+	void endThreadPool();
+	void worker();
 
 	public:
+	static ProcessingThreadPool* GetInstance();
 
-		static ProcessingThreadPool* GetInstance();
-
-		void addJob(processingStuct j);
-
+	void addJob(processingStuct j);
 };
 
 #endif /* !COMMUNICATION_INTERFACE_H */

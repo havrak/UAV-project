@@ -113,3 +113,7 @@ double GPSInterface::getAltitude(){
 bool GPSInterface::getGPSStatus(){
 	return gpsUp;
 }
+
+int GPSInterface::getNOS(){
+	return numberOfSatelites;
+}

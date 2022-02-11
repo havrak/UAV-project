@@ -51,6 +51,7 @@ class GPSInterface {
 	double getLon();
 	double getAltitude();
 	bool getGPSStatus();
+	int getNOS();
 
 };
 
