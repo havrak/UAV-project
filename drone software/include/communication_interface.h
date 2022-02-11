@@ -141,13 +141,24 @@ class ProcessingThreadPool{
 		queue<processingStruct> workQueue;
 		bool process = true;
 
+		mutex controlQueueMutex;
+		condition_variable_any controlQueueUpdate;
+		thread controlThread;
+		deque<processingStruct> controlQueue;
+		deque<clock_t> controlQueueTimestamps;
+
+
+
 		void endThreadPool();
 		void worker();
+		void controlWorker();
+		void processControlCommands();
 
 	public:
 		static ProcessingThreadPool* GetInstance();
 
 		void addJob(processingStruct j);
+		void addJobControl(processingStruct j);
 };
 
 

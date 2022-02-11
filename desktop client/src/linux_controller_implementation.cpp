@@ -68,7 +68,7 @@ void LinuxControllerImplementation::eventLoop()
 							continue;
 						}
 					} else {
-						notifyObserverEvent(cs, axisStates[index]);
+						notifyObserverEvent(cs, axisStates[index],0);
 						continue;
 					}
 				}

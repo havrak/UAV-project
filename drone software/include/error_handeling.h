@@ -5,8 +5,8 @@
  * Distributed under terms of the MIT license.
  */
 
-#ifndef ERRORHANDELING_H
-#define ERRORHANDELING_H
+#ifndef ERROR_HANDELING_H
+#define ERROR_HANDELING_H
 
 #include "protocol_spec.h"
 #include "communication_interface.h"
@@ -19,18 +19,11 @@
 static mutex logFileMutex;
 const bool log = false;
 
-int errMessageAll(int code, string message){
-	if(log){
+// -> err -> sendingStruct -> SendingThreadPool -> sendToAll
+int errMessageAll(unsigned char code, string message);
 
-	}
-	// -> err -> sendingStruct -> SendingThreadPool -> sendToAll
 
-};
+// -> err -> sendingStruct
+int errMessageCli(client *cli , unsigned char code, string message);
 
-int errMessageCli(client *cli , int code, string message){
-	if(log){
-	}
-	// -> err -> sendingStruct
-}
-
-#endif /* !ERRORHANDELING_H */
+#endif /* !ERROR_HANDELING_H */

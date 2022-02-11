@@ -6,6 +6,7 @@
  */
 
 #include "communication_interface.h"
+#include "protocol_spec.h"
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <cerrno>
@@ -49,6 +50,7 @@ ProcessingThreadPool::ProcessingThreadPool()
 {
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
+	controlThread = thread(&ProcessingThreadPool::controlWorker, this);
 }
 
 ProcessingThreadPool* ProcessingThreadPool::GetInstance()
@@ -187,8 +189,10 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 				j.messagePriority = cli.curMessagePriority;
 				j.messageSize = cli.curMessageSize;
 				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize);
-
-				ProcessingThreadPool::GetInstance()->addJob(j);
+				if (j.messageType == P_CON_STR)
+					ProcessingThreadPool::GetInstance()->addJobControl(j);
+				else
+					ProcessingThreadPool::GetInstance()->addJob(j);
 
 				clearClientStruct(cli);
 				return true;
@@ -243,11 +247,12 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss)
 	return false;
 }
 
-bool CommunicationInterface::sendDataToAll(sendingStruct ss){
+bool CommunicationInterface::sendDataToAll(sendingStruct ss)
+{
 	bool toReturn = true;
-	for(client c : clients){
+	for (client c : clients) {
 		ss.cli = &c;
-		if(!sendDataToClient(ss))
+		if (!sendDataToClient(ss))
 			toReturn = false;
 	}
 	return toReturn;
@@ -350,6 +355,30 @@ void ProcessingThreadPool::worker()
 		}
 		// here we process the request;
 	}
+}
+
+void ProcessingThreadPool::controlWorker(){
+	while(process){
+			processingStruct ps;
+			{
+				unique_lock<mutex> mutex(controlQueueMutex);
+				controlQueueUpdate.wait(mutex, [&]{
+					return ! workQueue.empty() || !process;
+				});
+			}
+	}
+}
+
+void ProcessingThreadPool::addJobControl(processingStruct ps)
+{
+	if ((((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+		controlQueueTimestamps.pop_back();
+		controlQueue.pop_back();
+	}
+	lock_guard<mutex> mutex(controlQueueMutex);
+	controlQueue.push_front(ps);
+	controlQueueTimestamps.push_front(clock());
+	controlQueueUpdate.notify_all();
 }
 
 void ProcessingThreadPool::addJob(processingStruct ps)

@@ -35,14 +35,14 @@ void ControllerInterface::notifyObserverEvent(ControlSurface cs, int val)
 
 void ControllerInterface::notifyObserverEvent(ControlSurface cs, int x, int y)
 {
-	cout << x << " " << y<< endl;
+	cout << x << " " << y << endl;
 	list<ControlInterpreter*>::iterator iterator = observers.begin();
 	while (iterator != observers.end()) {
-		(*iterator)->update(cs, x,y);
+		(*iterator)->update(cs, x, y);
 		++iterator;
 	}
-
 }
+
 
 ControlSurface getControlSurfaceFor(bool button, int id)
 {

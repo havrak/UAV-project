@@ -8,6 +8,11 @@
 #ifndef PROTOCOL_SPEC_H
 #define PROTOCOL_SPEC_H
 
+#define BUT_A 0x01
+#define BUT_B 0x02
+#define BUT_X 0x03
+#define BUT_Y 0x04
+
 #include <cstring>
 #include <string>
 
@@ -23,21 +28,17 @@ struct pSetCamera {
 };
 
 struct pConStr {
-	int lAnalogX;
-	int lAnalogY;
+	pair<int,int> lAnalog;
 	int lTrigger;
 	int lBumber;
-	int rAnalogX;
-	int rAnalogY;
+	pair<int,int> rAnalog;
 	int rTrigger;
 	int rBumber;
+	pair<int,int> dpad;
 };
 
 struct pConSpc {
-	bool A;
-	bool B;
-	bool X;
-	bool Y;
+	unsigned char button;
 };
 
 struct pTeleIOStat {
@@ -100,7 +101,7 @@ struct pTeleGet {
 };
 
 struct pTeleErr {
-	byte code;
+	unsigned char code;
 	string message;
 };
 

@@ -6,8 +6,12 @@
  */
 
 #include "communication_interface.h"
+#include "control_interpreter.h"
 #include "gtkmm/enums.h"
+#include "protocol_spec.h"
+#include <cstring>
 #include <ctime>
+#include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <thread>
@@ -24,14 +28,22 @@ ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
 /*-----------------------------------
 // Declaring singleton logic
 -----------------------------------*/
+
+ControllerDroneBridge::ControllerDroneBridge()
+{
+	sendControlComandThread = std::thread(&ControllerDroneBridge::sendControlComand, this);
+}
+
 ControllerDroneBridge* ControllerDroneBridge::GetInstance()
 {
 	if (controllerDroneBridge == nullptr) {
 		mutexControllerDroneBridge.lock();
-		if (controllerDroneBridge == nullptr)
+		if (controllerDroneBridge == nullptr) {
 			controllerDroneBridge = new ControllerDroneBridge();
+		}
 		mutexControllerDroneBridge.unlock();
 	}
+
 	return controllerDroneBridge;
 }
 
@@ -380,8 +392,8 @@ void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
 	lock_guard<mutex> mutex(controlQueueMutex);
 	// with each add we will check how old is the oldest element in queue if it is older than delete it
 	if ((((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
-			controlQueueTimestamps.pop_back();
-			controlQueue.pop_back();
+		controlQueueTimestamps.pop_back();
+		controlQueue.pop_back();
 	}
 	controlQueue.push_front(ss);
 	controlQueueTimestamps.push_front(clock());
@@ -399,6 +411,68 @@ void SendingThreadPool::scheduleToSend(sendingStruct ss)
 // ControllerDroneBridge
 -----------------------------------*/
 
+int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
+{
+	// this will only
+	controllerStateMutex.lock();
+	switch (cs) {
+	case L_TRIGGER:
+		controllerState.lTrigger = x;
+		break;
+	case L_ANALOG:
+		controllerState.lAnalog.first = x;
+		controllerState.lAnalog.second = y;
+		break;
+	case R_ANALOG:
+		controllerState.rAnalog.first = x;
+		controllerState.rAnalog.second = y;
+		break;
+	case R_TRIGGER:
+		controllerState.lTrigger = x;
+		break;
+	case D_PAD:
+		controllerState.dpad.first = x;
+		controllerState.dpad.second = y;
+		break;
+	}
+	controllerStateMutex.unlock();
+	return 1;
+}
 
+int ControllerDroneBridge::update(ControlSurface cs, int val)
+{
+	if (cs == L_BUMPER) {
+		controllerStateMutex.lock();
+		controllerState.lBumber = val;
+		controllerStateMutex.unlock();
+	} else if (cs == R_BUMPER) {
+		controllerStateMutex.lock();
+		controllerState.rBumber = val;
+		controllerStateMutex.unlock();
+	} else if (active) {
+		sendingStruct ss;
+		pConSpc pcs;
+		pcs.button = cs;
+		pcs.state = val;
+		ss.MessagePriority = 0x01;
+		ss.MessageType = P_CON_SPC;
+		memcpy(&pcs, &ss, sizeof(pcs));
+		SendingThreadPool::GetInstance()->scheduleToSend(ss);
 
+	}
+	return 1;
+}
 
+void ControllerDroneBridge::sendControlComand()
+{
+	while (true) {
+		sendingStruct ss;
+		ss.MessageType= P_CON_STR;
+		ss.MessagePriority = 0x02;
+		controllerStateMutex.lock();
+		memcpy(&controllerState, &ss.messageBuffer, sizeof(controllerState));
+		controllerStateMutex.unlock();
+		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
+		this_thread::sleep_for(chrono::milliseconds(10));
+	}
+}

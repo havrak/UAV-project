@@ -17,13 +17,13 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <time.h>
 #include <condition_variable>
 #include <cstring>
 #include <iostream>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <time.h>
 #include <vector>
 
 #define SERVERPORT 8066
@@ -61,11 +61,21 @@ class ControllerDroneBridge : ControlInterpreter {
 	private:
 	static ControllerDroneBridge* controllerDroneBridge;
 	static mutex mutexControllerDroneBridge;
+	ControllerDroneBridge();
+
+	thread sendControlComandThread;
 
 	bool active = true;
 
+	mutex controllerStateMutex;
+	pConStr controllerState;
+
+	void sendControlComand();
 
 	public:
+	int update(ControlSurface cs, int x, int y);
+	int update(ControlSurface cs, int val);
+
 	void getActive();
 	void setActive(bool active);
 	static ControllerDroneBridge* GetInstance();
