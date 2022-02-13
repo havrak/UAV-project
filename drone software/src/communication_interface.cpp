@@ -7,6 +7,7 @@
 
 #include "communication_interface.h"
 #include "protocol_spec.h"
+#include "telemetry.h"
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <cerrno>
@@ -122,6 +123,14 @@ void CommunicationInterface::clearClientStruct(client cli)
 	cli.curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
 	memset(&cli.curMessageBuffer, 0, MAX_MESSAGE_SIZE + 5);
+}
+
+void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
+{
+	close(cli.fd);
+	cli.fd = 0;
+
+	clearClientStruct(cli);
 }
 
 // NOTE: will only move socket to last sequence of terminator and valid header data
@@ -251,9 +260,11 @@ bool CommunicationInterface::sendDataToAll(sendingStruct ss)
 {
 	bool toReturn = true;
 	for (client c : clients) {
-		ss.cli = &c;
-		if (!sendDataToClient(ss))
-			toReturn = false;
+		if (c.fd != 0) {
+			ss.cli = &c;
+			if (!sendDataToClient(ss))
+				toReturn = false;
+		}
 	}
 	return toReturn;
 }
@@ -353,19 +364,59 @@ void ProcessingThreadPool::worker()
 			ps = workQueue.front();
 			workQueue.pop();
 		}
+		switch (ps.messageType) {
+		case P_PING: // ping
+			break;
+		case P_SET_RESTART: // resart of system
+			CommunicationInterface::GetInstance()->restart();
+			break;
+		case P_SET_SHUTDOW: // shutdown
+			CommunicationInterface::GetInstance()->shutdown();
+			break;
+		case P_SET_DISCONNECT: // disconnect client
+			CommunicationInterface::GetInstance()->removeClient(*(ps.cli));
+			break;
+		case P_SET_CAMERA: // camera settings
+		{
+			CameraStreamer* cs = new CameraStreamer();
+			cs->setUpCamera(ps);
+		} break;
+		case P_CON_SPC: // spacial control
+			break;
+		case P_TELE_IOSTAT: // io status
+			Telemetry::GetInstance()->processIORequest(ps.cli);
+			break;
+		case P_TELE_GEN: // general information
+			Telemetry::GetInstance()->processGeneralTelemetryRequest(ps.cli);
+			break;
+		case P_TELE_ATTGPS: // attitude sensors
+			Telemetry::GetInstance()->processAttGPSRequest(ps.cli);
+			break;
+		case P_TELE_BATT: // battery status
+			Telemetry::GetInstance()->processBatteryRequest(ps.cli);
+			break;
+		case P_TELE_PWM: // pwm settings
+			Telemetry::GetInstance()->processPWMRequest(ps.cli);
+			break;
+		case P_TELE_ERR: // general error message
+			// NOTE: do we care if clients sends an error,
+			cerr << "ProcessingThreadPool | worker | client send an error \n";
+			break;
+		}
 		// here we process the request;
 	}
 }
 
-void ProcessingThreadPool::controlWorker(){
-	while(process){
-			processingStruct ps;
-			{
-				unique_lock<mutex> mutex(controlQueueMutex);
-				controlQueueUpdate.wait(mutex, [&]{
-					return ! workQueue.empty() || !process;
-				});
-			}
+void ProcessingThreadPool::controlWorker()
+{
+	while (process) {
+		processingStruct ps;
+		{
+			unique_lock<mutex> mutex(controlQueueMutex);
+			controlQueueUpdate.wait(mutex, [&] {
+				return !workQueue.empty() || !process;
+			});
+		}
 	}
 }
 

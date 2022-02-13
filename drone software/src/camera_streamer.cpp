@@ -6,15 +6,29 @@
  */
 
 #include "camera_streamer.h"
+#include "communication_interface.h"
+#include "protocol_spec.h"
+#include <cstring>
 
-
-bool CameraStreamer::setupStream(){
-	string command = "gst-launch-1.0 -v v4l2src device=/dev/video"+to_string(cameraIndex)+" ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host="+ipadd+" port="+to_string(port)+" &";
+bool CameraStreamer::setupStream()
+{
+	string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " &";
 
 	system(command.c_str());
 
-	if(debug) cout << "CAMERA_STREAMER | setupStream | resutl: " << endl;
+	if (debug)
+		cout << "CAMERA_STREAMER | setupStream | resutl: " << endl;
 	return true;
 }
 
-
+int CameraStreamer::setUpCamera(processingStruct ps)
+{
+	pSetCamera pc;
+	memcpy(&pc, &ps.messageBuffer, ps.messageSize);
+	port = pc.port;
+	for(int i = 0; i < 4 ; i++){
+		ipaddr+= (int) pc.ip[i];
+		if(i != 3) ipaddr+=".";
+	}
+	return setupStream();
+}

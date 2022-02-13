@@ -10,7 +10,7 @@
 #include "protocol_spec.h"
 
 int errMessageAll(unsigned char code, string message){
-	if(log){
+	if(logOn){
 		// TODO: log errors into file
 	}
 	sendingStruct ss;
@@ -21,10 +21,11 @@ int errMessageAll(unsigned char code, string message){
 	ss.MessageType = 0x81;
 	ss.cli = nullptr;
 	memcpy(&errmsg, &ss.messageBuffer, sizeof(errmsg));
+	CommunicationInterface::GetInstance()->sendDataToAll(ss);
 }
 
 int errMessageCli(client *cli, unsigned char code, string message){
-	if(log){
+	if(logOn){
 		// TODO: log errors into file
 	}
 	sendingStruct ss;
@@ -33,8 +34,9 @@ int errMessageCli(client *cli, unsigned char code, string message){
 	errmsg.message = message;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = 0x81;
-	ss.cli = nullptr;
+	ss.cli = cli;
 	memcpy(&errmsg, &ss.messageBuffer, sizeof(errmsg));
+	CommunicationInterface::GetInstance()->sendDataToClient(ss);
 
 }
 

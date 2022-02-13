@@ -8,10 +8,15 @@
 #ifndef PROTOCOL_SPEC_H
 #define PROTOCOL_SPEC_H
 
+#include <mutex>
+#include <netinet/in.h>
 #define BUT_A 0x01
 #define BUT_B 0x02
 #define BUT_X 0x03
 #define BUT_Y 0x04
+#define MAX_SEND_MESSAGE_SIZE 255
+#define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
+// 500 bytes for message, 10 for metadata
 
 #include <cstring>
 #include <string>
@@ -19,6 +24,44 @@
 using namespace std;
 
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
+
+struct client{
+	int fd = -1 ;
+	mutex *cMutex;
+	sockaddr_in adress;
+	bool readyToSend = true;
+	int noTriesToFix = 0;
+
+
+	int curIndexInBuffer=0; // position where we have left off, first not filled index
+	unsigned char curMessageType = 0;
+	unsigned char curMessagePriority = 0;
+	unsigned int short curMessageSize = 0;
+	// NOTE: cannot store data here as we should be process multiple request from client at the same time
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+};
+
+struct sendingStruct{
+	client *cli;
+
+	unsigned char MessageType = 0;
+	unsigned char MessagePriority = 0;
+	unsigned char *messageBuffer;
+
+};
+
+
+struct processingStruct{ // info about message isn't stored two times, as info in clinet struct is only for processing
+	client *cli; // we need the client to know if he is ready to receive data
+
+	unsigned char messageType;
+	unsigned char messagePriority;
+	unsigned int short messageSize;
+	char messageBuffer[MAX_MESSAGE_SIZE];
+};
+
+
+
 
 // Settings
 

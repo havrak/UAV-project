@@ -11,6 +11,7 @@
 #include "battery_interface.h"
 #include "gps_interface.h"
 #include "imu_interface.h"
+#include "protocol_spec.h"
 
 using namespace std;
 
@@ -22,9 +23,21 @@ class Telemetry{
 		static mutex telemetryMutex;
 		Telemetry();
 
+		pTeleATT createTeleAttStruct();
+		pTeleGPS createTeleGPSStruct();
+		pTeleBATT createTeleBattStuct();
+		pTeleIOStat createTeleIOStatStruct();
+		pTelePWM createTelePWMStruct();
+
 	public:
 		static Telemetry* GetInstance();
 		int setUpSensors();
+		int processGeneralTelemetryRequest(client *cli);
+		int processAttGPSRequest(client *cli);
+		int processBatteryRequest(client *cli);
+		int processPWMRequest(client *cli);
+		int processIORequest(client *cli);
+
 
 };
 

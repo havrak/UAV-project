@@ -6,9 +6,9 @@
  */
 
 #include "bcm2835.h"
-#include "camera_streamer.h"
 #include "communication_interface.h"
 #include "servo_control.h"
+#include "telemetry.h"
 #include <cstring>
 #include <iostream>
 #include <csignal>
@@ -40,13 +40,14 @@ int main(int argc, char** argv)
 	} else {
 		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
 	}
+	ServoControl::GetInstance();
 	/* cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl; */
 	/* CameraStreamer *cs1 = new CameraStreamer(0, 5000, "192.168.6.11"); */
 	/* cs1->setupStream(); */
 	/* cout << "MAIN | main | CAMERA_STREAMER setted up" << endl; */
 
 	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
-	ServoControl::GetInstance();
+	Telemetry::GetInstance()->setUpSensors();
 	// cout << "MAIN | main | ServoControl created" << endl;
 
 	// cout << "MAIN | main | servo Calibrating"

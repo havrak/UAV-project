@@ -7,6 +7,7 @@
 
 //#include "opencv2/videoio.hpp"
 //#include <opencv2/core/core.hpp>
+#include "protocol_spec.h"
 #include <string>
 #include <iostream>
 
@@ -16,19 +17,21 @@ using namespace std;
 #ifndef CAMERA_STREAMER_H
 #define CAMERA_STREAMER_H
 
-// TODO:: don't rely on calling external command
+// TODO: rewrite it into a object that remembers each stream, not rely on setup and forget
 class CameraStreamer{
 	private:
 
 		const bool debug = true;
-		const int cameraIndex;
-		const int port;
-		const string ipadd;
+		const int cameraIndex = 0;
+		int port;
+		string ipaddr = "";
 
 
 	public:
-		CameraStreamer(const int cameraIndex, const int port, const string ipadd):cameraIndex(cameraIndex),port(port),ipadd(ipadd){};
+		CameraStreamer(const int port, const string ipaddr):port(port),ipaddr(ipaddr){};
+		CameraStreamer();
 		bool setupStream();
+		int setUpCamera(processingStruct ps);
 };
 
 #endif /* !CAMERA_STREAMER_H */

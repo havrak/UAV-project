@@ -17,6 +17,34 @@
 #include <cstring>
 #include <string>
 
+#define MAX_SEND_MESSAGE_SIZE 255
+#define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
+
+struct sendingStruct {
+
+	unsigned char MessageType = 0;
+	unsigned char MessagePriority = 0;
+	unsigned char* messageBuffer;
+};
+
+struct serverStruct {
+	int curIndexInBuffer = 0; // position where we have left off, first not filled index
+	unsigned char curMessageType = 0;
+	unsigned char curMessagePriority = 0;
+	unsigned int short curMessageSize = 0;
+	// NOTE: cannot store data here as we should be process multiple request from client at the same time
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+};
+
+struct processingStuct { // info about message isn't stored two times, as info in clinet struct is only for processing
+	unsigned char messageType;
+	unsigned char messagePriority;
+	unsigned int short messageSize;
+	char messageBuffer[MAX_MESSAGE_SIZE];
+};
+
+
+
 using namespace std;
 
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };

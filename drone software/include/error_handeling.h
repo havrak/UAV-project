@@ -17,7 +17,7 @@
 
 
 static mutex logFileMutex;
-const bool log = false;
+const bool logOn = false;
 
 // -> err -> sendingStruct -> SendingThreadPool -> sendToAll
 int errMessageAll(unsigned char code, string message);
