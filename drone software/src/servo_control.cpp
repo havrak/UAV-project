@@ -22,6 +22,7 @@ mutex ServoControl::mutexServoControl;
 
 ServoControl::ServoControl()
 {
+	pca9685Up = true;
 	servo.SetFrequency(60);
 	servo.SetLeftUs(MIN_PULSE_LENGTH);
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
@@ -57,19 +58,15 @@ ServoControl* ServoControl::GetInstance()
 bool ServoControl::calibrateESC()
 {
 	int b;
-	/* servo.Set(CHANNEL(0), servo.GetRightUs()); */
-	/* cout << "SERVOCONTROL | calibrateESC | Press key" << endl; */
-	/* cin >> b; */
-	/* servo.Set(CHANNEL(0), servo.GetLeftUs()); */
-
-	//servo.Set(CHANNEL(0), servo.GetRightUs());
 	cout << "SERVOCONTROL | calibrateESC | setting max" << endl;
 	servo.Set(CHANNEL(0), servo.GetRightUs());
+	mainMotorMS = servo.GetRightUs();
 	cout << "SERVOCONTROL | calibrateESC | press key to set min" << endl;
 	cin >> b;
 
 	cout << "SERVOCONTROL | calibrateESC | setting min" << endl;
 	servo.Set(CHANNEL(0), servo.GetLeftUs());
+	mainMotorMS = servo.GetLeftUs();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 
 
@@ -86,37 +83,66 @@ bool ServoControl::armESC()
 
 
 void ServoControl::slowDownToMin(){
-	uint16_t min = MIN_PULSE_LENGTH;
-	servo.Set(CHANNEL(0), min);
+	mainMotorMS = MIN_PULSE_LENGTH;
+	servo.Set(CHANNEL(0), mainMotorMS);
 }
 
 void ServoControl::testServo()
 {
 	cout << "SERVOCONTROL | testServo | reaching max speed on motor" << endl;
-	for (uint16_t i = MIN_PULSE_LENGTH; i <= MAX_PULSE_LENGTH; i += 10) {
-		cout << i << endl;
-		servo.Set(CHANNEL(0), i);
+	for (mainMotorMS = MIN_PULSE_LENGTH; mainMotorMS <= MAX_PULSE_LENGTH; mainMotorMS += 10) {
+		cout << mainMotorMS << endl;
+		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
 	cout << "SERVOCONTROL | testServo | max speed reached" << endl;
 	nanosleep((const struct timespec[]) { { 3, 0L } }, NULL);
 	cout << "SERVOCONTROL | testServo | slowing down motor motor" << endl;
-	for (uint16_t i = MAX_PULSE_LENGTH; i >= MIN_PULSE_LENGTH; i -= 10) {
-		cout << i << endl;
-		servo.Set(CHANNEL(0), i);
+	for (mainMotorMS = MAX_PULSE_LENGTH; mainMotorMS >= MIN_PULSE_LENGTH; mainMotorMS -= 10) {
+		cout << mainMotorMS << endl;
+		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
 	cout << "SERVOCONTROL | testServo | ZERO" << endl;
 
 	nanosleep((const struct timespec[]) { { 5, 0L } }, NULL);
 
-	/* cout  << "SERVOCONTROL | testServo | testing servos" << endl; */
-	/* for (int i = 1; i < 5; i++) { */
-	/* 	for (int j = 0; j < 360; j++) { */
-	/* 		servo.SetAngle(CHANNEL(1), ANGLE(j)); */
-	/* 		servo.SetAngle(CHANNEL(2), ANGLE(j)); */
-	/* 		nanosleep((const struct timespec[]) { { 0, 5000000L } }, NULL); */
-	/* 	} */
-	/* 	nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL); */
-	/* } */
+}
+
+bool ServoControl::getPCA9865Status(){
+	return pca9685Up;
+}
+
+
+pair<int,unsigned int short*> ServoControl::getControlSurfaceConfiguration(){
+	pair<int, unsigned int short*> toReturn;
+	toReturn.second = new unsigned int short[16];
+	switch(configuration){
+		case V_SHAPE_TAIL_WING:
+			toReturn.first = V_SHAPE_TAIL_WING;
+			toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
+			toReturn.second[vTail.rightFlapIndex] = vTail.leftFlap;
+			toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftFlap;
+			toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftFlap;
+			break;
+	}
+	return toReturn;
+}
+
+int ServoControl::processMovementForVTail(processingStruct ps){
+
+}
+
+int ServoControl::processControl(processingStruct ps){
+	switch(configuration){
+			case V_SHAPE_TAIL_WING:
+				return processMovementForVTail(ps);
+			break;
+	}
+	return 0;
+}
+
+
+unsigned int short ServoControl::getMainMotorMS(){
+	return mainMotorMS;
 }

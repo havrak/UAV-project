@@ -18,6 +18,8 @@
 #include <thread>
 #include <iostream>
 
+#define INA_I2C_ADDRESS 0x44
+
 using namespace std;
 
 class BatteryInterface {
@@ -32,6 +34,7 @@ class BatteryInterface {
 	char buffer[80];
 	int trig=1;
 
+	bool inaUp = false;
 	int pollingDelay = 1000;
 	const bool debug = true;
 
@@ -46,7 +49,7 @@ class BatteryInterface {
 
 	public:
 	static BatteryInterface* GetInstance();
-	bool attachINA226(int i2cAddress);
+	bool attachINA226();
 	void startLoop();
 	int getPollingDelay();
 	void setPollingDelay(int pollingDelay);
@@ -56,7 +59,7 @@ class BatteryInterface {
 	float getPower();
 	float getShunt();
 	float getEnergy();
-
+	bool getINAStatus();
 
 };
 

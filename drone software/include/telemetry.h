@@ -16,7 +16,7 @@
 using namespace std;
 
 
-// will handle prepping of all telemetry -- especialy prepearing packets to send
+// will handle prepping of all telemetry -- especially prepearing packets to send
 class Telemetry{
 	private:
 		static Telemetry* telemetry;

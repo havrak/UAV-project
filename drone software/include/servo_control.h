@@ -8,6 +8,7 @@
 #ifndef SERVO_CONTROL_H
 #define SERVO_CONTROL_H
 
+#include "protocol_spec.h"
 #define MIXING_GAIN 0.5
 
 #define MIN_PULSE_LENGTH 200 // Minimum pulse length in µs1
@@ -25,7 +26,9 @@
 
 using namespace std;
 
-
+enum wingSurfaceConfiguration{
+	V_SHAPE_TAIL_WING = 1,
+};
 
 class ServoControl {
 private:
@@ -33,7 +36,26 @@ private:
   const bool debug = true;
   static ServoControl *servoControl;
   static mutex mutexServoControl;
+
+	wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
+	bool pca9685Up = false;
+	unsigned int short mainMotorMS;
+
 	PCA9685Servo servo;
+	int currentMotorPulse;
+
+	struct VShapeTailWingConfiguration{
+		int leftFlapIndex = 1;
+		int rightFlapIndex = 2;
+		int leftRuddervatorIndex = 3;
+		int rightRuddervatorIndex = 4;
+		unsigned int short leftFlap;
+		unsigned int short rightFlap;
+		unsigned int short leftRuddervator;
+		unsigned int short rightRuddervator;
+	};
+
+	VShapeTailWingConfiguration vTail;
 
 protected:
   ServoControl();
@@ -44,6 +66,12 @@ public:
 	bool armESC();
 	void slowDownToMin();
 	void testServo();
+	bool getPCA9865Status();
+	unsigned int short getMainMotorMS();
+	pair<int,unsigned int short*> getControlSurfaceConfiguration();
+	int processControl(processingStruct ps);
+	int processMovementForVTail(processingStruct ps);
 };
+
 
 #endif /* !SERVOCONTROL_H */

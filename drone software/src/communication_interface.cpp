@@ -6,22 +6,7 @@
  */
 
 #include "communication_interface.h"
-#include "protocol_spec.h"
-#include "telemetry.h"
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <cerrno>
-#include <chrono>
-#include <cstdint>
-#include <cstring>
-#include <mutex>
-#include <netinet/in.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <thread>
-#include <unistd.h>
-#include <vector>
+#include "servo_control.h"
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
@@ -416,7 +401,11 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
+			ps = controlQueue.front();
+			controlQueue.pop_front();
+
 		}
+		ServoControl::GetInstance()->processControl(ps);
 	}
 }
 

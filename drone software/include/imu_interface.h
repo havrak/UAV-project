@@ -20,6 +20,7 @@ class ImuInterface {
 	private:
 	const bool debug = true;
 	CJY901 JY901;
+	bool imuUp = false;
   static ImuInterface* imuInterface;
   static mutex mutexImuInterface;
 
@@ -60,6 +61,7 @@ class ImuInterface {
 	short getMagRawX();					 // get X-axis raw magnetic field data
 	short getMagRawY();					 // get Y-axis raw magnetic field data
 	short getMagRawZ();					 // get Z-axis raw magnetic field data
+	bool getIMUStatus();
 };
 
 #endif /* !IMUINTERFACE_H */

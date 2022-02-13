@@ -27,14 +27,16 @@ BatteryInterface* BatteryInterface::GetInstance()
 	return batteryInterface;
 }
 
-bool BatteryInterface::attachINA226(int i2cAddress)
+bool BatteryInterface::attachINA226()
 {
-	if (ina226.attach(0x44)) {
+	if (ina226.attach(INA_I2C_ADDRESS)) {
 		ina226.ina226_calibrate(0.1, 1.0);
 		ina226.ina226_configure(ina226.INA226_TIME_8MS, ina226.INA226_TIME_8MS, ina226.INA226_AVERAGES_16, ina226.INA226_MODE_SHUNT_BUS_CONTINUOUS);
+		inaUp = true;
 		return true;
 	} else {
 		if(debug) cout << "BATTERYINTERFACE | attachINA226 | Failed to attach unit" << endl;
+		inaUp = false;
 		return false;
 	}
 }
@@ -92,4 +94,8 @@ float BatteryInterface::getShunt()
 float BatteryInterface::getEnergy()
 {
 	return energy;
+}
+
+bool BatteryInterface::getINAStatus(){
+	return inaUp;
 }

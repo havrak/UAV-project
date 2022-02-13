@@ -114,7 +114,8 @@ struct pTeleBATT {
 };
 
 struct pTelePWM {
-	int motorMS;
+	unsigned char configuration;
+	unsigned int short motorMS;
 	unsigned int short angle[16];
 };
 
@@ -123,8 +124,8 @@ struct pTeleATTGPS{
 	pTeleGPS gps;
 };
 
-struct pTeleGet {
-	pTeleIOStat is;
+struct pTeleGen {
+	pTeleIOStat io;
 	pTeleATT att;
 	pTeleGPS gps;
 	pTeleBATT batt;

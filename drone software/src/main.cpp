@@ -5,6 +5,9 @@
  * Distributed under terms of the MIT license.
  */
 
+#include <wiringPi.h>
+#define BCM2835_NO_DELAY_COMPATIBILITY
+
 #include "bcm2835.h"
 #include "communication_interface.h"
 #include "servo_control.h"
