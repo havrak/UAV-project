@@ -28,6 +28,7 @@ using namespace std;
 
 enum wingSurfaceConfiguration{
 	V_SHAPE_TAIL_WING = 1,
+	STANDARD_TAIL_WING = 2,
 };
 
 class ServoControl {
@@ -44,6 +45,19 @@ private:
 	PCA9685Servo servo;
 	int currentMotorPulse;
 
+	struct StandardTailWingConfiguration{
+		int leftFlapIndex = 1;
+		int rightFlapIndex = 2;
+		int leftElevatorIndex = 3;
+		int rightElevatorIndex = 4;
+		int rudderIndex = 5;
+		unsigned int short leftFlap;
+		unsigned int short rightFlap;
+		unsigned int short leftElevator;
+		unsigned int short rightElevator;
+		unsigned int short rudder;
+
+	};
 	struct VShapeTailWingConfiguration{
 		int leftFlapIndex = 1;
 		int rightFlapIndex = 2;
@@ -56,6 +70,7 @@ private:
 	};
 
 	VShapeTailWingConfiguration vTail;
+	StandardTailWingConfiguration standard;
 
 protected:
   ServoControl();
@@ -70,7 +85,8 @@ public:
 	unsigned int short getMainMotorMS();
 	pair<int,unsigned int short*> getControlSurfaceConfiguration();
 	int processControl(processingStruct ps);
-	int processMovementForVTail(processingStruct ps);
+	int processMovementForVTail(pConStr ps);
+	int processMovementForStandart(pConStr  ps);
 };
 
 

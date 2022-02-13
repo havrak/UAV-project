@@ -10,6 +10,7 @@
 
 #include "control_interpreter.h"
 #include "protocol_spec.h"
+#include "drone_telemetry.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -29,6 +30,8 @@
 #define SERVERPORT 8066
 #define NUMBER_OF_THREADS 5
 
+
+void sendConfigurationOfCamera();
 
 using namespace std;
 
@@ -65,6 +68,8 @@ class CommunicationInterface {
 	fd_set read_fds;
 	fd_set write_fds;
 	fd_set except_fds;
+
+	clock_t lastTimeDataReceived;
 
 	string serverIp = "192.168.6.1";
 	int sockfd;

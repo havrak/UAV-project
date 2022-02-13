@@ -69,8 +69,7 @@ bool ServoControl::calibrateESC()
 	mainMotorMS = servo.GetLeftUs();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 
-
-return true;
+	return true;
 }
 
 bool ServoControl::armESC()
@@ -81,8 +80,8 @@ bool ServoControl::armESC()
 	return true;
 }
 
-
-void ServoControl::slowDownToMin(){
+void ServoControl::slowDownToMin()
+{
 	mainMotorMS = MIN_PULSE_LENGTH;
 	servo.Set(CHANNEL(0), mainMotorMS);
 }
@@ -106,43 +105,61 @@ void ServoControl::testServo()
 	cout << "SERVOCONTROL | testServo | ZERO" << endl;
 
 	nanosleep((const struct timespec[]) { { 5, 0L } }, NULL);
-
 }
 
-bool ServoControl::getPCA9865Status(){
+bool ServoControl::getPCA9865Status()
+{
 	return pca9685Up;
 }
 
-
-pair<int,unsigned int short*> ServoControl::getControlSurfaceConfiguration(){
+pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
+{
 	pair<int, unsigned int short*> toReturn;
 	toReturn.second = new unsigned int short[16];
-	switch(configuration){
-		case V_SHAPE_TAIL_WING:
-			toReturn.first = V_SHAPE_TAIL_WING;
-			toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
-			toReturn.second[vTail.rightFlapIndex] = vTail.leftFlap;
-			toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftFlap;
-			toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftFlap;
-			break;
+	switch (configuration) {
+	case V_SHAPE_TAIL_WING:
+		toReturn.first = V_SHAPE_TAIL_WING;
+		toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
+		toReturn.second[vTail.rightFlapIndex] = vTail.leftFlap;
+		toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftRuddervator;
+		toReturn.second[vTail.leftRuddervatorIndex] = vTail.rightRuddervator;
+		break;
+	case STANDARD_TAIL_WING:
+		break;
+		toReturn.first = STANDARD_TAIL_WING;
+		toReturn.second[standard.leftFlapIndex] = standard.leftFlap;
+		toReturn.second[standard.rightFlapIndex] = standard.leftFlap;
+		toReturn.second[standard.leftElevatorIndex] = standard.leftElevator;
+		toReturn.second[standard.rightElevatorIndex] = standard.rightElevator;
+		toReturn.second[standard.rudderIndex] = standard.rudder;
 	}
 	return toReturn;
 }
 
-int ServoControl::processMovementForVTail(processingStruct ps){
-
+int ServoControl::processMovementForVTail(pConStr ps)
+{
 }
 
-int ServoControl::processControl(processingStruct ps){
-	switch(configuration){
-			case V_SHAPE_TAIL_WING:
-				return processMovementForVTail(ps);
-			break;
+int ServoControl::processMovementForStandart(pConStr ps)
+{
+}
+
+int ServoControl::processControl(processingStruct ps)
+{
+	pConStr control;
+	memcpy(&control, &ps.messageBuffer, ps.messageSize);
+	switch (configuration) {
+	case V_SHAPE_TAIL_WING:
+		return processMovementForVTail(control);
+		break;
+	case STANDARD_TAIL_WING:
+		return processMovementForStandart(control);
+		break;
 	}
 	return 0;
 }
 
-
-unsigned int short ServoControl::getMainMotorMS(){
+unsigned int short ServoControl::getMainMotorMS()
+{
 	return mainMotorMS;
 }

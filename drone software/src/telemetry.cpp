@@ -106,32 +106,70 @@ pTelePWM Telemetry::createTelePWMStruct()
 	pair<int, unsigned int short*> tmp = instance->getControlSurfaceConfiguration();
 	toReturn.configuration = tmp.first;
 	memcpy(&toReturn.angle, &tmp.second, 16);
+	return toReturn;
 }
 
 int Telemetry::processGeneralTelemetryRequest(client* cli)
 {
-	pTeleGen toSend;
-	toSend.att = createTeleAttStruct();
-	toSend.gps = createTeleGPSStruct();
-	toSend.batt = createTeleBattStuct();
-	toSend.io = createTeleIOStatStruct();
+	pTeleGen data;
+	data.att = createTeleAttStruct();
+	data.gps = createTeleGPSStruct();
+	data.batt = createTeleBattStuct();
+	data.io = createTeleIOStatStruct();
+	data.pwm = createTelePWMStruct();
 	sendingStruct ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_GEN;
 	ss.cli = cli;
+	memcpy(ss.messageBuffer, &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }
 
 int Telemetry::processAttGPSRequest(client* cli)
 {
+	pTeleATTGPS data;
+	data.att = createTeleAttStruct();
+	data.gps = createTeleGPSStruct();
+	sendingStruct ss;
+	ss.MessagePriority = 0x01;
+	ss.MessageType = P_TELE_ATTGPS;
+	ss.cli = cli;
+	memcpy(ss.messageBuffer, &data, sizeof(data));
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }
 int Telemetry::processBatteryRequest(client* cli)
 {
+	pTeleBATT data = createTeleBattStuct();
+	sendingStruct ss;
+	ss.MessagePriority = 0x01;
+	ss.MessageType = P_TELE_BATT;
+	ss.cli = cli;
+	memcpy(ss.messageBuffer, &data, sizeof(data));
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }
 
 int Telemetry::processPWMRequest(client* cli)
 {
+	pTelePWM data = createTelePWMStruct();
+	sendingStruct ss;
+	ss.MessagePriority = 0x01;
+	ss.MessageType = P_TELE_PWM;
+	ss.cli = cli;
+	memcpy(ss.messageBuffer, &data, sizeof(data));
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }
 int Telemetry::processIORequest(client* cli)
 {
+	pTeleIOStat data = createTeleIOStatStruct();
+	sendingStruct ss;
+	ss.MessagePriority = 0x01;
+	ss.MessageType = P_TELE_PWM;
+	ss.cli = cli;
+	memcpy(ss.messageBuffer, &data, sizeof(data));
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }

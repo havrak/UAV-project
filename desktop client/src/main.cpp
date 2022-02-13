@@ -5,9 +5,12 @@
  * Distributed under terms of the MIT license.
  */
 
+#include "communication_interface.h"
+#include "control_interpreter.h"
 #include "main_window.h"
 #include "controller_interface.h"
 #include "linux_controller_implementation.h"
+#include "protocol_spec.h"
 #include <gtkmm.h>
 #include <iostream>
 #include <stdio.h>
@@ -43,8 +46,15 @@ int main(int argc, char** argv)
 	// ControllerInterface* ci = dynamic_cast<ControllerInterface*>(new LinuxControllerImplementation());
 
 	LinuxControllerImplementation lci = LinuxControllerImplementation();
+	ControllerDroneBridge::GetInstance();
+	ControlInterpreter* ci = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
+	lci.addObserver(ci);
+	lci.generateEventForEveryButton();
 
+	CommunicationInterface::GetInstance()->setupSocket();
+	CommunicationInterface::GetInstance()->establishConnectionToDrone();
 	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
+
 		dispatcher.connect([&]() {
 			imageMutex.lock();
 			mainWindow->updateImage(frame);

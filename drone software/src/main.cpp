@@ -51,6 +51,8 @@ int main(int argc, char** argv)
 
 	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
 	Telemetry::GetInstance()->setUpSensors();
+	CommunicationInterface::GetInstance()->setupSocket();
+
 	// cout << "MAIN | main | ServoControl created" << endl;
 
 	// cout << "MAIN | main | servo Calibrating"

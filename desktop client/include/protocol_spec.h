@@ -129,10 +129,11 @@ struct pTeleGen {
 	pTeleATT att;
 	pTeleGPS gps;
 	pTeleBATT batt;
+	pTelePWM pwm;
 };
 
 struct pTeleErr {
-	unsigned char code;
+	unsigned int code;
 	string message;
 };
 

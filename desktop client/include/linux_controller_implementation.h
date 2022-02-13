@@ -11,7 +11,7 @@
 
 #include "control_interpreter.h"
 #include "controller_interface.h"
-#include "return_error_message.h"
+#include "error_message.h"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -60,7 +60,8 @@ class LinuxControllerImplementation : public ControllerInterface {
 		vector<int> axisStates;
 	public:
 		LinuxControllerImplementation();
-		ReturnErrorMessage setupController();
+		ErrorMessage setupController();
+		void generateEventForEveryButton() override;
 };
 
 #endif /* !LINUX_CONTROLLER_IMPLEMENTATION_H */

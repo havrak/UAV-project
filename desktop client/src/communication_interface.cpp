@@ -163,7 +163,7 @@ bool CommunicationInterface::receiveDataFromServer()
 				j.messagePriority = server.curMessagePriority;
 				j.messageSize = server.curMessageSize;
 				memcpy(&j.messageBuffer, &server.curMessageBuffer, j.messageSize);
-
+				lastTimeDataReceived =clock();
 				ProcessingThreadPool::GetInstance()->addJob(j);
 
 				clearServerStruct();
@@ -280,6 +280,7 @@ bool CommunicationInterface::establishConnectionToDrone()
 
 		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
 			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established" << endl;
+			sendConfigurationOfCamera();
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
 
 			break;
@@ -328,7 +329,38 @@ void ProcessingThreadPool::worker()
 			ps = workQueue.front();
 			workQueue.pop();
 		}
-		// here we process the request;
+		switch (ps.messageType) {
+		case P_PING: // ping
+			break;
+		case P_SET_RESTART: // resart of system
+			break;
+		case P_SET_SHUTDOW: // shutdown
+			break;
+		case P_SET_DISCONNECT: // disconnect client
+			break;
+		case P_SET_CAMERA: // camera settings
+		 break;
+		case P_CON_SPC: // spacial control
+			break;
+		case P_TELE_IOSTAT: // io status
+			DroneTelemetry::GetInstance()->processIO(ps);
+			break;
+		case P_TELE_GEN: // general information
+			DroneTelemetry::GetInstance()->processIO(ps);
+			break;
+		case P_TELE_ATTGPS: // attitude sensors
+			DroneTelemetry::GetInstance()->processIO(ps);
+			break;
+		case P_TELE_BATT: // battery status
+			DroneTelemetry::GetInstance()->processIO(ps);
+			break;
+		case P_TELE_PWM: // pwm settings
+			DroneTelemetry::GetInstance()->processIO(ps);
+			break;
+		case P_TELE_ERR: // general error message
+			cerr << "ProcessingThreadPool | worker | server send an error \n";
+			break;
+		}
 	}
 }
 
@@ -476,3 +508,25 @@ void ControllerDroneBridge::sendControlComand()
 		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 }
+
+/*-----------------------------------
+// Other
+-----------------------------------*/
+
+
+void sendConfigurationOfCamera(){
+	pSetCamera cameraSetup;
+	cameraSetup.ip[0] = 192;
+	cameraSetup.ip[1] = 192;
+	cameraSetup.ip[2] = 1;
+	cameraSetup.ip[3] = 6;
+	cameraSetup.port = 5000;
+	sendingStruct ss;
+	ss.MessageType = P_SET_CAMERA;
+	ss.MessagePriority = 0x02;
+	memcpy(&ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
+	CommunicationInterface::GetInstance()->sendData(ss);
+
+}
+
+

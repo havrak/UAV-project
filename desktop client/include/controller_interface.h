@@ -41,6 +41,7 @@ class ControllerInterface{
 		ControllerInterface();
 		void addObserver(ControlInterpreter *v);
 		void removeObserver(ControlInterpreter *v);
+		virtual void generateEventForEveryButton(){};
 
 };
 
