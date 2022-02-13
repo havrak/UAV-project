@@ -23,7 +23,7 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 
-	this->drawingImage->set("../images/image_not_found.png");
+	this->drawingImage->set("images/image_not_found.png");
 }
 
 MainWindow::~MainWindow()
@@ -32,8 +32,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::pauseResumeCamera()
 {
-	if (!cameraInitialized) setupCamera();
-
 	this->paused = !this->paused;
 	if (this->paused) {
 		this->resumePauseButton->set_label("resume");
@@ -57,16 +55,18 @@ void MainWindow::updateImage(cv::Mat& frame)
 
 bool setupCamera()
 {
-	cout << "MAINWINDOW | setupCamera | setting up camera" << endl;
-	cameraInitialized = initializeCamera();
-	if (cameraInitialized) {
-		captureVideoFromCamera = true;
-		cameraThread = thread(&cameraLoop);
+	while (true) {
+		cout << "MAINWINDOW | setupCamera | setting up camera\n";
+		cameraInitialized = initializeCamera();
+		if (cameraInitialized) {
+			captureVideoFromCamera = true;
+			cameraThread = thread(&cameraLoop);
 
-
-	} else {
-		cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
-		mainWindow->resumePauseButton->set_label("start cam");
+		} else {
+			cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
+			/* mainWindow->resumePauseButton->set_label("start cam"); */
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	return cameraInitialized;
 }
@@ -98,8 +98,8 @@ void cameraLoop()
 
 bool initializeCamera()
 {
-
 	bool result = camera.open("udpsrc port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
+	cout << "Camera was initialized\n";
 
 	if (result) {
 		for (int i = 0; i < 3; i++) {
@@ -108,9 +108,9 @@ bool initializeCamera()
 		for (int i = 0; result && i < 3; i++) { // calculate checksum
 			result = result && camera.read(frameBGR);
 		}
-		imageSize = cv::Size(frameBGR.cols,frameBGR.rows);
-	}else{
-		cerr << "MAINWINDOW | initializeCamera | Camera failed to initialize" << endl;
+		imageSize = cv::Size(frameBGR.cols, frameBGR.rows);
+	} else {
+		cerr << "MAINWINDOW | initializeCamera | Camera failed to initialize\n";
 	}
 
 	return result;

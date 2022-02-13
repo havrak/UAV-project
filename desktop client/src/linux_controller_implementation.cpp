@@ -18,7 +18,7 @@ ErrorMessage LinuxControllerImplementation::setupController()
 	if ((fd = open(JOY_DEV, O_RDONLY)) < 0) {
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
-							"open device";
+							"open device \n";
 		return *new ErrorMessage(true, 1, "Failed to open device");
 	}
 
@@ -37,6 +37,7 @@ ErrorMessage LinuxControllerImplementation::setupController()
 	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
 	return *new ErrorMessage(false, 0, "");
 }
+
 void LinuxControllerImplementation::eventLoop()
 {
 	js_event js;
@@ -89,21 +90,22 @@ void LinuxControllerImplementation::eventLoop()
 	}
 }
 
-
 void LinuxControllerImplementation::generateEventForEveryButton()
 {
-	for (int i = 0; i + 1 < sizeof(axisStates) / sizeof(axisStates[0]); i++) {
-		ControlSurface cs = getControlSurfaceFor(false, i);
-		if (cs != L_TRIGGER && cs != R_TRIGGER) {
-			notifyObserverEvent(cs, axisStates[i], axisStates[i + 1]);
-			i++;
-			continue;
-		} else {
-			notifyObserverEvent(cs, axisStates[i], 0);
-			continue;
+	if (fd > 0) {
+		for (int i = 0; i + 1 < sizeof(axisStates) / sizeof(axisStates[0]); i++) {
+			ControlSurface cs = getControlSurfaceFor(false, i);
+			if (cs != L_TRIGGER && cs != R_TRIGGER) {
+				notifyObserverEvent(cs, axisStates[i], axisStates[i + 1]);
+				i++;
+				continue;
+			} else {
+				notifyObserverEvent(cs, axisStates[i], 0);
+				continue;
+			}
 		}
-	}
-	for (int i = 0; i < sizeof(buttonsStates) / sizeof(buttonsStates[0]); i++) {
-		notifyObserverEvent(getControlSurfaceFor(true, i), buttonsStates[i]);
+		for (int i = 0; i < sizeof(buttonsStates) / sizeof(buttonsStates[0]); i++) {
+			notifyObserverEvent(getControlSurfaceFor(true, i), buttonsStates[i]);
+		}
 	}
 }

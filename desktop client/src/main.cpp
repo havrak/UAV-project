@@ -11,9 +11,11 @@
 #include "controller_interface.h"
 #include "linux_controller_implementation.h"
 #include "protocol_spec.h"
+#include <csignal>
 #include <gtkmm.h>
 #include <iostream>
 #include <stdio.h>
+#include <thread>
 
 using namespace std;
 
@@ -27,9 +29,15 @@ thread cameraThread;
 MainWindow* mainWindow = nullptr;
 bool cameraInitialized;
 
+void signalHandler( int sigNum){
+	CommunicationInterface::GetInstance()->cleanUp();
+	exit(127);
+}
+
 int main(int argc, char** argv)
 {
-
+	signal(SIGABRT, signalHandler);
+	signal(SIGKILL, signalHandler);
 
 	Gtk::Main app(argc, argv); // stupstíme gtk okno
 	Glib::RefPtr<Gtk::Builder> builder;
@@ -38,21 +46,25 @@ int main(int argc, char** argv)
 	} catch (const std::exception& p_exception) {
 		cerr << p_exception.what();
 	}
-	cout << "MAIN | main | GTK window created" << endl;
+	cout << "MAIN | main | GTK window created\n";
 
 	builder->get_widget_derived("MainWindow", mainWindow); // vytvoří widget cameraGrabberWindow, který pracuje s GTK třídami
-	cout << "MAIN | main | cameraGrabberWindow created" << endl;
-
-	// ControllerInterface* ci = dynamic_cast<ControllerInterface*>(new LinuxControllerImplementation());
-
-	LinuxControllerImplementation lci = LinuxControllerImplementation();
-	ControllerDroneBridge::GetInstance();
-	ControlInterpreter* ci = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
-	lci.addObserver(ci);
-	lci.generateEventForEveryButton();
+	cout << "MAIN | main | cameraGrabberWindow created\n";
 
 	CommunicationInterface::GetInstance()->setupSocket();
-	CommunicationInterface::GetInstance()->establishConnectionToDrone();
+	cout << "MAIN | main | socket setted up \n";
+
+	LinuxControllerImplementation lci = LinuxControllerImplementation();
+	cout << "MAIN | main | controller setted up \n";
+
+	ControllerDroneBridge::GetInstance();
+	cout << "MAIN | main | drone bridge setted up \n";
+	ControlInterpreter* ci = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
+
+	lci.addObserver(ci);
+	lci.generateEventForEveryButton();
+	cout << "MAIN | main | drone bridge setted up \n";
+
 	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
 
 		dispatcher.connect([&]() {
@@ -61,8 +73,9 @@ int main(int argc, char** argv)
 			imageMutex.unlock();
 		});
 
+		thread cameraThread = thread(&setupCamera);
 
-		setupCamera();
+		//setupCamera();
 
 		Gtk::Main::run(*mainWindow);
 

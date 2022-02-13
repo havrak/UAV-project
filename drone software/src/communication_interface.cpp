@@ -401,8 +401,10 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
+			controlQueueMutex.lock();
 			ps = controlQueue.front();
 			controlQueue.pop_front();
+			controlQueueMutex.unlock();
 
 		}
 		ServoControl::GetInstance()->processControl(ps);
@@ -411,7 +413,7 @@ void ProcessingThreadPool::controlWorker()
 
 void ProcessingThreadPool::addJobControl(processingStruct ps)
 {
-	if ((((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	if ( controlQueueTimestamps.size() !=0 && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}

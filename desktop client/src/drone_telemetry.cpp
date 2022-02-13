@@ -11,6 +11,8 @@
 DroneTelemetry* DroneTelemetry::telemetry = nullptr;
 mutex DroneTelemetry::telemetryMutex;
 
+DroneTelemetry::DroneTelemetry(){}
+
 DroneTelemetry* DroneTelemetry::GetInstance()
 {
 	if (telemetry == nullptr) {

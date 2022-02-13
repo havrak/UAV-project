@@ -76,6 +76,7 @@ class CommunicationInterface {
 	sockaddr_in serverAddress;
 	serverStruct server;
 
+	bool connectionEstablished = false;;
 	thread establishConnectionToDroneThread;
 	thread checkForNewDataThread;
 
@@ -91,6 +92,7 @@ class CommunicationInterface {
 	bool setupSocket();
 	bool establishConnectionToDrone();
 	bool sendData(sendingStruct ss);
+	void cleanUp();
 };
 
 // we don't want thing to hang up on waiting to send something

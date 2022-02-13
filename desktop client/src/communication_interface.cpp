@@ -31,6 +31,7 @@ ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
 
 ControllerDroneBridge::ControllerDroneBridge()
 {
+	memset(&controllerState, 0, sizeof(controllerState));
 	sendControlComandThread = std::thread(&ControllerDroneBridge::sendControlComand, this);
 }
 
@@ -103,6 +104,11 @@ void CommunicationInterface::clearServerStruct()
 	memset(&server.curMessageBuffer, 0, MAX_MESSAGE_SIZE + 5);
 }
 
+void CommunicationInterface::cleanUp(){
+	cout << "COMMUNICATION_INTERFACE | cleanUp | killing communicationInterface\n";
+	close(sockfd);
+}
+
 bool CommunicationInterface::fixReceiveData()
 {
 	unsigned char buffer[5];
@@ -163,7 +169,7 @@ bool CommunicationInterface::receiveDataFromServer()
 				j.messagePriority = server.curMessagePriority;
 				j.messageSize = server.curMessageSize;
 				memcpy(&j.messageBuffer, &server.curMessageBuffer, j.messageSize);
-				lastTimeDataReceived =clock();
+				lastTimeDataReceived = clock();
 				ProcessingThreadPool::GetInstance()->addJob(j);
 
 				clearServerStruct();
@@ -224,6 +230,8 @@ int CommunicationInterface::buildFdSets()
 
 bool CommunicationInterface::sendData(sendingStruct ss)
 {
+	if (!connectionEstablished)
+		return false;
 	if (sizeof(ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
@@ -272,21 +280,24 @@ bool CommunicationInterface::establishConnectionToDrone()
 	serverAddress.sin_family = AF_INET;
 	while (true) {
 		// NOTE; user will be able to change parameters, thus sockaddr_in in needs to be recreated on each iteration
+		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | setting up structure \n";
 		serverMutex.lock();
 		serverAddress.sin_port = SERVERPORT;
 		inet_aton(serverIp.c_str(), (struct in_addr*)&serverAddress.sin_addr.s_addr);
 		clearServerStruct();
 		serverMutex.unlock();
+		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | trying to connect\n";
 
-		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
+		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) > 0) {
 			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established" << endl;
+			connectionEstablished = true;
 			sendConfigurationOfCamera();
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
-
 			break;
 		} else {
 			cerr << "CONTROLLER_INTERFACE | establishConnectionToDrone | failed to establish connection" << endl;
 		}
+		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 	return true;
 }
@@ -298,7 +309,7 @@ bool CommunicationInterface::setupSocket()
 		cerr << "COMMUNICATION_INTERFACE | setupSocket | failed to setup socket" << endl;
 		return false;
 	}
-
+	cout << "COMMUNICATION_INTERFACE | setupSocket | socket was successfully setted up \n";
 	establishConnectionToDroneThread = thread(&CommunicationInterface::establishConnectionToDrone, this);
 	return true;
 }
@@ -339,7 +350,7 @@ void ProcessingThreadPool::worker()
 		case P_SET_DISCONNECT: // disconnect client
 			break;
 		case P_SET_CAMERA: // camera settings
-		 break;
+			break;
 		case P_CON_SPC: // spacial control
 			break;
 		case P_TELE_IOSTAT: // io status
@@ -394,11 +405,14 @@ void SendingThreadPool::controlWorker()
 			});
 			if (!process)
 				break;
+			controlQueueMutex.lock();
 			ss = controlQueue.front();
 			controlQueue.pop_front();
+			controlQueueMutex.unlock();
 		}
 		CommunicationInterface::GetInstance()->sendData(ss);
 	}
+	cout << "Ending this thread \n";
 }
 
 void SendingThreadPool::worker()
@@ -422,14 +436,17 @@ void SendingThreadPool::worker()
 void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
+
+	cerr << "SendingThreadPool | scheduleToSendControl | got here \n";
 	// with each add we will check how old is the oldest element in queue if it is older than delete it
-	if ((((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	if (controlQueueTimestamps.size() != 0 && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
 	controlQueue.push_front(ss);
 	controlQueueTimestamps.push_front(clock());
 	controlQueueUpdate.notify_all();
+	cerr << "SendingThreadPool | scheduleToSendControl | got here 2\n";
 }
 
 void SendingThreadPool::scheduleToSend(sendingStruct ss)
@@ -490,16 +507,15 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		ss.MessageType = P_CON_SPC;
 		memcpy(&pcs, &ss, sizeof(pcs));
 		SendingThreadPool::GetInstance()->scheduleToSend(ss);
-
 	}
 	return 1;
 }
 
 void ControllerDroneBridge::sendControlComand()
 {
+	sendingStruct ss;
 	while (true) {
-		sendingStruct ss;
-		ss.MessageType= P_CON_STR;
+		ss.MessageType = P_CON_STR;
 		ss.MessagePriority = 0x02;
 		controllerStateMutex.lock();
 		memcpy(&controllerState, &ss.messageBuffer, sizeof(controllerState));
@@ -513,20 +529,18 @@ void ControllerDroneBridge::sendControlComand()
 // Other
 -----------------------------------*/
 
-
-void sendConfigurationOfCamera(){
+void sendConfigurationOfCamera()
+{
+	cout << "COMMUNICATION_INTERFACE | sendConfigurationOfCamera | sending the configuration of the camera\n";
 	pSetCamera cameraSetup;
 	cameraSetup.ip[0] = 192;
 	cameraSetup.ip[1] = 192;
-	cameraSetup.ip[2] = 1;
-	cameraSetup.ip[3] = 6;
+	cameraSetup.ip[2] = 6;
+	cameraSetup.ip[3] = 11;
 	cameraSetup.port = 5000;
 	sendingStruct ss;
 	ss.MessageType = P_SET_CAMERA;
 	ss.MessagePriority = 0x02;
 	memcpy(&ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
 	CommunicationInterface::GetInstance()->sendData(ss);
-
 }
-
-
