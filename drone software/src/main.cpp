@@ -1,6 +1,6 @@
 /*
  * main.cpp
- * Copyright (C) 2021 havra <krystof@havrak.xyz>
+ * Copyright (C) 2021 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
@@ -20,8 +20,9 @@ using namespace std;
 
 void signalHandler( int sigNum){
 	cout << "MAIN | signalHandler | caught signal slowing down" << endl;
-	ServoControl::GetInstance()->slowDownToMin();
 	CommunicationInterface::GetInstance()->cleanUp();
+	ServoControl::GetInstance()->slowDownToMin();
+	this_thread::sleep_for(chrono::milliseconds(10));
 	exit(127);
 }
 
@@ -38,12 +39,12 @@ int main(int argc, char** argv)
 	/* } */
 
 
-	if (!bcm2835_init()) {
-		cerr << "MAIN | main | failed to open I2C device" << endl;
-	} else {
-		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
-	}
-	ServoControl::GetInstance();
+	/* if (!bcm2835_init()) { */
+	/* 	cerr << "MAIN | main | failed to open I2C device" << endl; */
+	/* } else { */
+	/* 	cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl; */
+	/* } */
+	//ServoControl::GetInstance();
 	/* cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl; */
 	/* CameraStreamer *cs1 = new CameraStreamer(0, 5000, "192.168.6.11"); */
 	/* cs1->setupStream(); */
@@ -58,23 +59,8 @@ int main(int argc, char** argv)
 	// cout << "MAIN | main | servo Calibrating"
 	//ServoControl::GetInstance()->calibrateESC();
 	cout << "MAIN | main | entering main loop" << endl;
-	nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL);
-
 	while (true) {
 
-		/* 	cout << "MAIN | main | GPS Lan: " << GPSInterface::GetInstance()->getLan() << endl; */
-		/* 	cout << "MAIN | main | GPS Lon: " << GPSInterface::GetInstance()->getLon() << endl; */
-
-		/* 	cout << "MAIN | main | ACC X: " << ImuInterface::GetInstance()->getAccX() << endl; */
-		/* 	cout << "MAIN | main | ACC Y: " << ImuInterface::GetInstance()->getAccY() << endl; */
-		/* 	cout << "MAIN | main | ACC Z: " << ImuInterface::GetInstance()->getAccZ() << endl; */
-
-		/* 	cout << "MAIN | main | GYRO X: " << ImuInterface::GetInstance()->getGyroX() << endl; */
-		/* cout << "MAIN | main | GYRO Y: " << ImuInterface::GetInstance()->getGyroY() << endl; */
-		/* 	cout << "MAIN | main | GYRO Z: " << ImuInterface::GetInstance()->getGyroZ() << endl; */
-		/* 	cout << endl; */
-
-		ServoControl::GetInstance()->testServo();
 		nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL);
 	}
 	return 1;

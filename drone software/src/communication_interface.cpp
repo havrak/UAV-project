@@ -208,8 +208,8 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss)
 	char message[sizeof(*ss.messageBuffer) + 10];
 
 	// setup metadata
-	message[0] = ss.MessageType;
-	message[1] = ss.MessagePriority;
+	message[0] = ss.messageType;
+	message[1] = ss.messagePriority;
 	message[2] = ((uint16_t)sizeof(*ss.messageBuffer)) >> 8;
 	message[3] = ((uint16_t)sizeof(*ss.messageBuffer)) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
@@ -353,10 +353,10 @@ void ProcessingThreadPool::worker()
 		case P_PING: // ping
 			break;
 		case P_SET_RESTART: // resart of system
-			CommunicationInterface::GetInstance()->restart();
+			/* CommunicationInterface::GetInstance()->restart(); */
 			break;
 		case P_SET_SHUTDOW: // shutdown
-			CommunicationInterface::GetInstance()->shutdown();
+			/* CommunicationInterface::GetInstance()->shutdown(); */
 			break;
 		case P_SET_DISCONNECT: // disconnect client
 			CommunicationInterface::GetInstance()->removeClient(*(ps.cli));
@@ -401,10 +401,10 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
-			controlQueueMutex.lock();
+			/* controlQueueMutex.lock(); */
 			ps = controlQueue.front();
 			controlQueue.pop_front();
-			controlQueueMutex.unlock();
+			/* controlQueueMutex.unlock(); */
 
 		}
 		ServoControl::GetInstance()->processControl(ps);
@@ -413,11 +413,11 @@ void ProcessingThreadPool::controlWorker()
 
 void ProcessingThreadPool::addJobControl(processingStruct ps)
 {
-	if ( controlQueueTimestamps.size() !=0 && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	lock_guard<mutex> mutex(controlQueueMutex);
+	if ( controlQueueTimestamps.size() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
-	lock_guard<mutex> mutex(controlQueueMutex);
 	controlQueue.push_front(ps);
 	controlQueueTimestamps.push_front(clock());
 	controlQueueUpdate.notify_all();

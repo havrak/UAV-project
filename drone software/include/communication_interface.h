@@ -104,6 +104,7 @@ class SendingThreadPool{
 		vector<thread> threads;
  		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
+
 		queue<sendingStruct> workQueue;
 		bool process = true;
 
@@ -112,8 +113,10 @@ class SendingThreadPool{
 
 	public:
 		static SendingThreadPool* GetInstance();
+
 		void scheduleToSend(sendingStruct ss);
-		void scheduleToSendAll(sendingStruct ss);
+
+		void	scheduleToSendAll(sendingStruct ss);
 };
 
 class ProcessingThreadPool{

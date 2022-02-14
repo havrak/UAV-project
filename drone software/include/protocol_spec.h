@@ -25,34 +25,32 @@ using namespace std;
 
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
 
-struct client{
-	int fd = -1 ;
-	mutex *cMutex;
+struct client {
+	int fd = -1;
+	mutex* cMutex;
 	sockaddr_in adress;
 	bool readyToSend = true;
 	int noTriesToFix = 0;
 
-
-	int curIndexInBuffer=0; // position where we have left off, first not filled index
+	int curIndexInBuffer = 0; // position where we have left off, first not filled index
 	unsigned char curMessageType = 0;
 	unsigned char curMessagePriority = 0;
 	unsigned int short curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE+5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
+	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
-struct sendingStruct{
-	client *cli;
+struct sendingStruct {
+	client* cli;
 
-	unsigned char MessageType = 0;
-	unsigned char MessagePriority = 0;
-	unsigned char *messageBuffer;
-
+	unsigned char messageType = 0;
+	unsigned char messagePriority = 0;
+	unsigned int short messageSize = 0;
+	unsigned char* messageBuffer[MAX_MESSAGE_SIZE];
 };
 
-
-struct processingStruct{ // info about message isn't stored two times, as info in clinet struct is only for processing
-	client *cli; // we need the client to know if he is ready to receive data
+struct processingStruct { // info about message isn't stored two times, as info in clinet struct is only for processing
+	client* cli;						// we need the client to know if he is ready to receive data
 
 	unsigned char messageType;
 	unsigned char messagePriority;
@@ -60,8 +58,23 @@ struct processingStruct{ // info about message isn't stored two times, as info i
 	char messageBuffer[MAX_MESSAGE_SIZE];
 };
 
+// struct are nice, but i would end up wasting a lot of space
+class ProccessingStructure {
+	public:
+	client* cli; // we need the client to know if he is ready to receive data
+	unsigned char messageType = 0;
+	unsigned char messagePriority = 0;
+	unsigned char* messageBuffer;
+};
 
-
+class SendingStructure {
+	public:
+	client* cli;
+	unsigned char messageType = 0;
+	unsigned char messagePriority = 0;
+	unsigned int short messageSize;
+	unsigned char* messageBuffer;
+};
 
 // Settings
 
@@ -71,13 +84,13 @@ struct pSetCamera {
 };
 
 struct pConStr {
-	pair<int,int> lAnalog;
+	pair<int, int> lAnalog;
 	int lTrigger;
 	int lBumber;
-	pair<int,int> rAnalog;
+	pair<int, int> rAnalog;
 	int rTrigger;
 	int rBumber;
-	pair<int,int> dpad;
+	pair<int, int> dpad;
 };
 
 struct pConSpc {
@@ -132,7 +145,7 @@ struct pTelePWM {
 	unsigned int short angle[16];
 };
 
-struct pTeleATTGPS{
+struct pTeleATTGPS {
 	pTeleATT att;
 	pTeleGPS gps;
 };

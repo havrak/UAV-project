@@ -138,6 +138,8 @@ pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
 
 int ServoControl::processMovementForVTail(pConStr ps)
 {
+	// left trigger -> slow down
+	// right trigger -> speed up
 }
 
 int ServoControl::processMovementForStandart(pConStr ps)

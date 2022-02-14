@@ -10,6 +10,11 @@
 #include "protocol_spec.h"
 #include <cstring>
 
+
+CameraStreamer::CameraStreamer(){
+
+}
+
 bool CameraStreamer::setupStream()
 {
 	string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " &";

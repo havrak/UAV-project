@@ -104,7 +104,8 @@ void CommunicationInterface::clearServerStruct()
 	memset(&server.curMessageBuffer, 0, MAX_MESSAGE_SIZE + 5);
 }
 
-void CommunicationInterface::cleanUp(){
+void CommunicationInterface::cleanUp()
+{
 	cout << "COMMUNICATION_INTERFACE | cleanUp | killing communicationInterface\n";
 	close(sockfd);
 }
@@ -164,6 +165,7 @@ bool CommunicationInterface::receiveDataFromServer()
 
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
 				processingStuct j;
+				ProccessingStructure ps;
 
 				j.messageType = server.curMessageType;
 				j.messagePriority = server.curMessagePriority;
@@ -280,13 +282,11 @@ bool CommunicationInterface::establishConnectionToDrone()
 	serverAddress.sin_family = AF_INET;
 	while (true) {
 		// NOTE; user will be able to change parameters, thus sockaddr_in in needs to be recreated on each iteration
-		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | setting up structure \n";
 		serverMutex.lock();
 		serverAddress.sin_port = SERVERPORT;
 		inet_aton(serverIp.c_str(), (struct in_addr*)&serverAddress.sin_addr.s_addr);
 		clearServerStruct();
 		serverMutex.unlock();
-		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | trying to connect\n";
 
 		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) > 0) {
 			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established" << endl;
@@ -295,7 +295,7 @@ bool CommunicationInterface::establishConnectionToDrone()
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
 			break;
 		} else {
-			cerr << "CONTROLLER_INTERFACE | establishConnectionToDrone | failed to establish connection" << endl;
+			cerr << "COMMUNICATION_INTERFACE | establishConnectionToDrone | failed to establish connection" << endl;
 		}
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
@@ -405,11 +405,14 @@ void SendingThreadPool::controlWorker()
 			});
 			if (!process)
 				break;
-			controlQueueMutex.lock();
-			ss = controlQueue.front();
+		/* lock_guard<mutex> mutex(controlQueueMutex); */
+			cout << "size: " << controlQueue.size() << endl;
+			ss = controlQueue.back();
 			controlQueue.pop_front();
-			controlQueueMutex.unlock();
 		}
+		/* { */
+		/* } */
+
 		CommunicationInterface::GetInstance()->sendData(ss);
 	}
 	cout << "Ending this thread \n";
@@ -436,17 +439,16 @@ void SendingThreadPool::worker()
 void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
-
-	cerr << "SendingThreadPool | scheduleToSendControl | got here \n";
 	// with each add we will check how old is the oldest element in queue if it is older than delete it
-	if (controlQueueTimestamps.size() != 0 && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	if (!controlQueueTimestamps.empty() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
+	cout << "size of sendingStruct " << sizeof(sendingStruct) << endl;
+	cout << "Size before adding " << controlQueue.size() << endl;
 	controlQueue.push_front(ss);
 	controlQueueTimestamps.push_front(clock());
 	controlQueueUpdate.notify_all();
-	cerr << "SendingThreadPool | scheduleToSendControl | got here 2\n";
 }
 
 void SendingThreadPool::scheduleToSend(sendingStruct ss)
@@ -462,7 +464,6 @@ void SendingThreadPool::scheduleToSend(sendingStruct ss)
 
 int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 {
-	// this will only
 	controllerStateMutex.lock();
 	switch (cs) {
 	case L_TRIGGER:
@@ -499,13 +500,13 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerState.rBumber = val;
 		controllerStateMutex.unlock();
 	} else if (active) {
-		sendingStruct ss;
 		pConSpc pcs;
+		sendingStruct ss;
 		pcs.button = cs;
 		pcs.state = val;
 		ss.MessagePriority = 0x01;
 		ss.MessageType = P_CON_SPC;
-		memcpy(&pcs, &ss, sizeof(pcs));
+		memcpy(&pcs, &ss.messageBuffer, sizeof(pcs));
 		SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	}
 	return 1;
@@ -514,14 +515,19 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 void ControllerDroneBridge::sendControlComand()
 {
 	sendingStruct ss;
+
 	while (true) {
 		ss.MessageType = P_CON_STR;
 		ss.MessagePriority = 0x02;
 		controllerStateMutex.lock();
 		memcpy(&controllerState, &ss.messageBuffer, sizeof(controllerState));
+		for(int i = 0; i < sizeof(controllerState); i++){
+			cout << ((int) ss.messageBuffer[i]) << " ";
+		}
+		cout << endl;
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
-		this_thread::sleep_for(chrono::milliseconds(10));
+		this_thread::sleep_for(chrono::milliseconds(50));
 	}
 }
 
@@ -538,7 +544,7 @@ void sendConfigurationOfCamera()
 	cameraSetup.ip[2] = 6;
 	cameraSetup.ip[3] = 11;
 	cameraSetup.port = 5000;
-	sendingStruct ss;
+	sendingStruct<sizeof(cameraSetup)> ss;
 	ss.MessageType = P_SET_CAMERA;
 	ss.MessagePriority = 0x02;
 	memcpy(&ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));

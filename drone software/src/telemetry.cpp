@@ -17,6 +17,9 @@
 Telemetry* Telemetry::telemetry = nullptr;
 mutex Telemetry::telemetryMutex;
 
+Telemetry::Telemetry(){
+}
+
 Telemetry* Telemetry::GetInstance()
 {
 	if (telemetry == nullptr) {
@@ -117,7 +120,7 @@ int Telemetry::processGeneralTelemetryRequest(client* cli)
 	data.batt = createTeleBattStuct();
 	data.io = createTeleIOStatStruct();
 	data.pwm = createTelePWMStruct();
-	sendingStruct ss;
+	sendingStruct<sizeof(data)> ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_GEN;
 	ss.cli = cli;
@@ -131,7 +134,7 @@ int Telemetry::processAttGPSRequest(client* cli)
 	pTeleATTGPS data;
 	data.att = createTeleAttStruct();
 	data.gps = createTeleGPSStruct();
-	sendingStruct ss;
+	sendingStruct<sizeof(data)> ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_ATTGPS;
 	ss.cli = cli;
@@ -142,7 +145,7 @@ int Telemetry::processAttGPSRequest(client* cli)
 int Telemetry::processBatteryRequest(client* cli)
 {
 	pTeleBATT data = createTeleBattStuct();
-	sendingStruct ss;
+	sendingStruct<sizeof(data)> ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_BATT;
 	ss.cli = cli;
@@ -154,7 +157,7 @@ int Telemetry::processBatteryRequest(client* cli)
 int Telemetry::processPWMRequest(client* cli)
 {
 	pTelePWM data = createTelePWMStruct();
-	sendingStruct ss;
+	sendingStruct<sizeof(data)> ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_PWM;
 	ss.cli = cli;
@@ -165,7 +168,7 @@ int Telemetry::processPWMRequest(client* cli)
 int Telemetry::processIORequest(client* cli)
 {
 	pTeleIOStat data = createTeleIOStatStruct();
-	sendingStruct ss;
+	sendingStruct<sizeof(data)> ss;
 	ss.MessagePriority = 0x01;
 	ss.MessageType = P_TELE_PWM;
 	ss.cli = cli;

@@ -24,7 +24,7 @@ struct sendingStruct {
 
 	unsigned char MessageType = 0;
 	unsigned char MessagePriority = 0;
-	unsigned char* messageBuffer;
+	unsigned char messageBuffer[MAX_MESSAGE_SIZE];
 };
 
 struct serverStruct {
@@ -43,6 +43,22 @@ struct processingStuct { // info about message isn't stored two times, as info i
 	char messageBuffer[MAX_MESSAGE_SIZE];
 };
 
+// struct are nice, but i would end up wasting a lot of space
+class ProccessingStructure{
+	public:
+		unsigned char messageType = 0;
+		unsigned char messagePriority = 0;
+		unsigned char *messageBuffer;
+};
+
+class SendingStructure{
+	public:
+		unsigned char messageType = 0;
+		unsigned char messagePriority = 0;
+		unsigned int short messageSize;
+		unsigned char *messageBuffer;
+
+};
 
 
 using namespace std;

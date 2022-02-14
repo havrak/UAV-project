@@ -17,11 +17,13 @@ int errMessageAll(unsigned char code, string message){
 	pTeleErr errmsg;
 	errmsg.code = code;
 	errmsg.message = message;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = 0x81;
+	ss.messagePriority = 0x01;
+	ss.messageType = 0x81;
 	ss.cli = nullptr;
+	ss.messageSize = sizeof(errmsg);
 	memcpy(&errmsg, &ss.messageBuffer, sizeof(errmsg));
-	CommunicationInterface::GetInstance()->sendDataToAll(ss);
+	SendingThreadPool::GetInstance()->scheduleToSendAll(ss);
+	return 1;
 }
 
 int errMessageCli(client *cli, unsigned char code, string message){
@@ -32,12 +34,13 @@ int errMessageCli(client *cli, unsigned char code, string message){
 	pTeleErr errmsg;
 	errmsg.code = code;
 	errmsg.message = message;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = 0x81;
+	ss.messagePriority = 0x01;
+	ss.messageType = 0x81;
 	ss.cli = cli;
+	ss.messageSize = sizeof(errmsg);
 	memcpy(&errmsg, &ss.messageBuffer, sizeof(errmsg));
-	CommunicationInterface::GetInstance()->sendDataToClient(ss);
-
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+	return 1;
 }
 
 
