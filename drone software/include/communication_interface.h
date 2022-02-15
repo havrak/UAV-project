@@ -87,8 +87,8 @@ class CommunicationInterface{
 		void checkForNewData(); // -> calls callback if new data is found, that processes it (needs to be really fast, will not start new thread just for processing)
 		void cleanUp();
 		void removeClient(client cli);
-		bool sendDataToClient(sendingStruct ss);
-		bool sendDataToAll(sendingStruct ss);
+		bool sendDataToClient(SendingStructure);
+		bool sendDataToAll(SendingStructure);
 
 		//Destructive
 
@@ -105,7 +105,7 @@ class SendingThreadPool{
  		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
 
-		queue<sendingStruct> workQueue;
+		queue<SendingStructure> workQueue;
 		bool process = true;
 
 		void endThreadPool();
@@ -114,9 +114,9 @@ class SendingThreadPool{
 	public:
 		static SendingThreadPool* GetInstance();
 
-		void scheduleToSend(sendingStruct ss);
+		void scheduleToSend(SendingStructure ss);
 
-		void	scheduleToSendAll(sendingStruct ss);
+		void	scheduleToSendAll(SendingStructure  ss);
 };
 
 class ProcessingThreadPool{
@@ -127,13 +127,13 @@ class ProcessingThreadPool{
 		vector<thread> threads;
  		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
-		queue<processingStruct> workQueue;
+		queue<ProccessingStructure> workQueue;
 		bool process = true;
 
 		mutex controlQueueMutex;
 		condition_variable_any controlQueueUpdate;
 		thread controlThread;
-		deque<processingStruct> controlQueue;
+		deque<ProccessingStructure> controlQueue;
 		deque<clock_t> controlQueueTimestamps;
 
 
@@ -146,8 +146,8 @@ class ProcessingThreadPool{
 	public:
 		static ProcessingThreadPool* GetInstance();
 
-		void addJob(processingStruct j);
-		void addJobControl(processingStruct j);
+		void addJob(ProccessingStructure ps);
+		void addJobControl(ProccessingStructure ps);
 };
 
 

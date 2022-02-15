@@ -146,10 +146,10 @@ int ServoControl::processMovementForStandart(pConStr ps)
 {
 }
 
-int ServoControl::processControl(processingStruct ps)
+int ServoControl::processControl(ProccessingStructure ps)
 {
 	pConStr control;
-	memcpy(&control, &ps.messageBuffer, ps.messageSize);
+	memcpy(&control, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	switch (configuration) {
 	case V_SHAPE_TAIL_WING:
 		return processMovementForVTail(control);

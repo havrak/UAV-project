@@ -6,7 +6,9 @@
  */
 
 #include "communication_interface.h"
+#include "protocol_spec.h"
 #include "servo_control.h"
+#include <utility>
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
@@ -178,15 +180,21 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer] == terminator[4]) {
 				processingStruct j;
-				j.cli = &cli;
-				j.messageType = cli.curMessageType;
-				j.messagePriority = cli.curMessagePriority;
-				j.messageSize = cli.curMessageSize;
-				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize);
-				if (j.messageType == P_CON_STR)
-					ProcessingThreadPool::GetInstance()->addJobControl(j);
+
+
+				ProccessingStructure ps(&cli,cli.curMessageType, cli.curMessagePriority, cli.curMessageSize);
+				memcpy(&ps.messageBuffer, &cli.curMessageBuffer, cli.curMessageSize);
+
+
+/* 				j.cli = &cli; */
+/* 				j.messageType = cli.curMessageType; */
+/* 				j.messagePriority = cli.curMessagePriority; */
+/* 				j.messageSize = cli.curMessageSize; */
+/* 				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize); */
+				if (ps.messageType == P_CON_STR)
+					ProcessingThreadPool::GetInstance()->addJobControl(ps);
 				else
-					ProcessingThreadPool::GetInstance()->addJob(j);
+					ProcessingThreadPool::GetInstance()->addJob(ps);
 
 				clearClientStruct(cli);
 				return true;
@@ -199,7 +207,7 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 	return true;
 }
 
-bool CommunicationInterface::sendDataToClient(sendingStruct ss)
+bool CommunicationInterface::sendDataToClient(SendingStructure  ss)
 {
 	if (sizeof(*ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
@@ -241,7 +249,7 @@ bool CommunicationInterface::sendDataToClient(sendingStruct ss)
 	return false;
 }
 
-bool CommunicationInterface::sendDataToAll(sendingStruct ss)
+bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 {
 	bool toReturn = true;
 	for (client c : clients) {
@@ -338,7 +346,7 @@ void ProcessingThreadPool::endThreadPool()
 void ProcessingThreadPool::worker()
 {
 	while (process) {
-		processingStruct ps;
+		ProccessingStructure *ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -346,10 +354,10 @@ void ProcessingThreadPool::worker()
 			});
 			if (!process)
 				break;
-			ps = workQueue.front();
+			ps = &workQueue.front();
 			workQueue.pop();
 		}
-		switch (ps.messageType) {
+		switch (ps->messageType) {
 		case P_PING: // ping
 			break;
 		case P_SET_RESTART: // resart of system
@@ -359,29 +367,29 @@ void ProcessingThreadPool::worker()
 			/* CommunicationInterface::GetInstance()->shutdown(); */
 			break;
 		case P_SET_DISCONNECT: // disconnect client
-			CommunicationInterface::GetInstance()->removeClient(*(ps.cli));
+			CommunicationInterface::GetInstance()->removeClient(*(ps->cli));
 			break;
 		case P_SET_CAMERA: // camera settings
 		{
 			CameraStreamer* cs = new CameraStreamer();
-			cs->setUpCamera(ps);
+			cs->setUpCamera(*ps);
 		} break;
 		case P_CON_SPC: // spacial control
 			break;
 		case P_TELE_IOSTAT: // io status
-			Telemetry::GetInstance()->processIORequest(ps.cli);
+			Telemetry::GetInstance()->processIORequest(ps->cli);
 			break;
 		case P_TELE_GEN: // general information
-			Telemetry::GetInstance()->processGeneralTelemetryRequest(ps.cli);
+			Telemetry::GetInstance()->processGeneralTelemetryRequest(ps->cli); //sex tvoje máma
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			Telemetry::GetInstance()->processAttGPSRequest(ps.cli);
+			Telemetry::GetInstance()->processAttGPSRequest(ps->cli);
 			break;
 		case P_TELE_BATT: // battery status
-			Telemetry::GetInstance()->processBatteryRequest(ps.cli);
+			Telemetry::GetInstance()->processBatteryRequest(ps->cli);
 			break;
 		case P_TELE_PWM: // pwm settings
-			Telemetry::GetInstance()->processPWMRequest(ps.cli);
+			Telemetry::GetInstance()->processPWMRequest(ps->cli);
 			break;
 		case P_TELE_ERR: // general error message
 			// NOTE: do we care if clients sends an error,
@@ -395,23 +403,23 @@ void ProcessingThreadPool::worker()
 void ProcessingThreadPool::controlWorker()
 {
 	while (process) {
-		processingStruct ps;
+		ProccessingStructure *ps;
 		{
 			unique_lock<mutex> mutex(controlQueueMutex);
 			controlQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
 			/* controlQueueMutex.lock(); */
-			ps = controlQueue.front();
+			ps = &controlQueue.front();
 			controlQueue.pop_front();
 			/* controlQueueMutex.unlock(); */
 
 		}
-		ServoControl::GetInstance()->processControl(ps);
+		ServoControl::GetInstance()->processControl(*ps);
 	}
 }
 
-void ProcessingThreadPool::addJobControl(processingStruct ps)
+void ProcessingThreadPool::addJobControl(ProccessingStructure ps)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
 	if ( controlQueueTimestamps.size() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
@@ -423,7 +431,7 @@ void ProcessingThreadPool::addJobControl(processingStruct ps)
 	controlQueueUpdate.notify_all();
 }
 
-void ProcessingThreadPool::addJob(processingStruct ps)
+void ProcessingThreadPool::addJob(ProccessingStructure ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ps);
@@ -444,7 +452,7 @@ void SendingThreadPool::endThreadPool()
 
 void SendingThreadPool::worker()
 {
-	sendingStruct ss;
+	SendingStructure *ss;
 	while (process) {
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
@@ -453,27 +461,27 @@ void SendingThreadPool::worker()
 			});
 			if (!process)
 				break;
-			ss = workQueue.front();
+			ss = &workQueue.front();
 			workQueue.pop();
 		}
-		if (ss.cli == nullptr) {
-			CommunicationInterface::GetInstance()->sendDataToAll(ss);
+		if (ss->cli == nullptr) {
+			CommunicationInterface::GetInstance()->sendDataToAll(*ss);
 		} else
-			CommunicationInterface::GetInstance()->sendDataToClient(ss);
+			CommunicationInterface::GetInstance()->sendDataToClient(*ss);
 	}
 }
 
-void SendingThreadPool::scheduleToSend(sendingStruct ss)
+void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
 
-void SendingThreadPool::scheduleToSendAll(sendingStruct ss)
-{
-	lock_guard<mutex> mutex(workQueueMutex);
-	ss.cli = nullptr;
-	workQueue.push(ss);
-	workQueueUpdate.notify_all();
-}
+/* void SendingThreadPool::scheduleToSendAll(SendingStructure ss) */
+/* { */
+/* 	lock_guard<mutex> mutex(workQueueMutex); */
+/* 	ss.cli = nullptr; */
+/* 	workQueue.push(ss); */
+/* 	workQueueUpdate.notify_all(); */
+/* } */

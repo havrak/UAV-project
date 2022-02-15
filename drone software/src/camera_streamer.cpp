@@ -26,10 +26,10 @@ bool CameraStreamer::setupStream()
 	return true;
 }
 
-int CameraStreamer::setUpCamera(processingStruct ps)
+int CameraStreamer::setUpCamera(ProccessingStructure ps)
 {
 	pSetCamera pc;
-	memcpy(&pc, &ps.messageBuffer, ps.messageSize);
+	memcpy(&pc, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	port = pc.port;
 	for(int i = 0; i < 4 ; i++){
 		ipaddr+= (int) pc.ip[i];

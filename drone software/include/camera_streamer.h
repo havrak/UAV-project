@@ -31,7 +31,7 @@ class CameraStreamer{
 		CameraStreamer(const int port, const string ipaddr):port(port),ipaddr(ipaddr){};
 		CameraStreamer();
 		bool setupStream();
-		int setUpCamera(processingStruct ps);
+		int setUpCamera(ProccessingStructure ps);
 };
 
 #endif /* !CAMERA_STREAMER_H */

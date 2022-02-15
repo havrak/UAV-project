@@ -112,7 +112,7 @@ pTelePWM Telemetry::createTelePWMStruct()
 	return toReturn;
 }
 
-int Telemetry::processGeneralTelemetryRequest(client* cli)
+int Telemetry::processGeneralTelemetryRequest(const client* cli)
 {
 	pTeleGen data;
 	data.att = createTeleAttStruct();
@@ -120,58 +120,46 @@ int Telemetry::processGeneralTelemetryRequest(client* cli)
 	data.batt = createTeleBattStuct();
 	data.io = createTeleIOStatStruct();
 	data.pwm = createTelePWMStruct();
-	sendingStruct<sizeof(data)> ss;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = P_TELE_GEN;
-	ss.cli = cli;
-	memcpy(ss.messageBuffer, &data, sizeof(data));
+	SendingStructure ss(cli, P_TELE_GEN, 0x01, sizeof(data));
+	/* ss.MessagePriority = 0x01; */
+	/* ss.MessageType = P_TELE_GEN; */
+	/* ss.cli = cli; */
+	/* memcpy(ss.messageBuffer, &data, sizeof(data)); */
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
 }
 
-int Telemetry::processAttGPSRequest(client* cli)
+int Telemetry::processAttGPSRequest(const client* cli)
 {
 	pTeleATTGPS data;
 	data.att = createTeleAttStruct();
 	data.gps = createTeleGPSStruct();
-	sendingStruct<sizeof(data)> ss;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = P_TELE_ATTGPS;
-	ss.cli = cli;
+	SendingStructure ss(cli, P_TELE_ATTGPS, 0x01, sizeof(data));
 	memcpy(ss.messageBuffer, &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
 }
-int Telemetry::processBatteryRequest(client* cli)
+int Telemetry::processBatteryRequest(const client* cli)
 {
 	pTeleBATT data = createTeleBattStuct();
-	sendingStruct<sizeof(data)> ss;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = P_TELE_BATT;
-	ss.cli = cli;
+	SendingStructure ss(cli, P_TELE_BATT, 0x01, sizeof(data));
 	memcpy(ss.messageBuffer, &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
 }
 
-int Telemetry::processPWMRequest(client* cli)
+int Telemetry::processPWMRequest(const client* cli)
 {
 	pTelePWM data = createTelePWMStruct();
-	sendingStruct<sizeof(data)> ss;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = P_TELE_PWM;
-	ss.cli = cli;
+	SendingStructure ss(cli, P_TELE_PWM, 0x01, sizeof(data));
 	memcpy(ss.messageBuffer, &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
 }
-int Telemetry::processIORequest(client* cli)
+int Telemetry::processIORequest(const client* cli)
 {
 	pTeleIOStat data = createTeleIOStatStruct();
-	sendingStruct<sizeof(data)> ss;
-	ss.MessagePriority = 0x01;
-	ss.MessageType = P_TELE_PWM;
-	ss.cli = cli;
+	SendingStructure ss(cli, P_TELE_IOSTAT, 0x01, sizeof(data));
 	memcpy(ss.messageBuffer, &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
