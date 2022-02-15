@@ -74,10 +74,13 @@ int main(int argc, char** argv)
 		});
 
 		thread cameraThread = thread(&setupCamera);
-
+		while(true){
+			asm("nop");
+		this_thread::sleep_for(chrono::milliseconds(100));
+		}
 		//setupCamera();
 
-		Gtk::Main::run(*mainWindow);
+		/* Gtk::Main::run(*mainWindow); */
 
 		// NOTE: cleanup after window is closed
 		captureVideoFromCamera = false; // stop capturing video

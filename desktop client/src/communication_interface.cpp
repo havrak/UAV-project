@@ -14,6 +14,7 @@
 #include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <thread>
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
@@ -325,7 +326,7 @@ void ProcessingThreadPool::endThreadPool()
 void ProcessingThreadPool::worker()
 {
 	while (process) {
-		ProccessingStructure *ps;
+		ProccessingStructure* ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -390,34 +391,10 @@ void SendingThreadPool::endThreadPool()
 		t.join();
 }
 
-void SendingThreadPool::controlWorker()
-{
-	while (process) {
-		SendingStructure *ss;
-		{
-			unique_lock<mutex> mutex(controlQueueMutex);
-			controlQueueUpdate.wait(mutex, [&] {
-				return !controlQueue.empty() || !process;
-			});
-			if (!process)
-				break;
-		/* lock_guard<mutex> mutex(controlQueueMutex); */
-			cout << "size: " << controlQueue.size() << endl;
-			ss = &workQueue.front();
-			controlQueue.pop_front();
-		}
-		/* { */
-		/* } */
-
-		CommunicationInterface::GetInstance()->sendData(*ss);
-	}
-	cout << "Ending this thread \n";
-}
-
 void SendingThreadPool::worker()
 {
 	while (process) {
-		SendingStructure *ss;
+		SendingStructure* ss;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -432,16 +409,39 @@ void SendingThreadPool::worker()
 	}
 }
 
+void SendingThreadPool::controlWorker()
+{
+	while (process) {
+		SendingStructure* ss;
+		{
+			cout << "We are waiting here " << process << endl;
+			unique_lock<mutex> mutex(controlQueueMutex);
+			controlQueueUpdate.wait(mutex, [&] {
+				cout << !controlQueue.empty() << "         " << !process << endl;
+				return !controlQueue.empty() || !process;
+			});
+			cout << "We are done waiting, sizeof: " << controlQueue.size() << endl;
+			if (!process)
+				break;
+			ss = &controlQueue.back();
+			controlQueue.pop_back();
+			controlQueueTimestamps.pop_back();
+		}
+
+		cout << "Trying to send data" << endl;
+		CommunicationInterface::GetInstance()->sendData(*ss);
+	}
+	cout << "Ending this thread \n";
+}
+
 void SendingThreadPool::scheduleToSendControl(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
 	// with each add we will check how old is the oldest element in queue if it is older than delete it
-	if (!controlQueueTimestamps.empty() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	if (!controlQueueTimestamps.empty() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.03) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
-	cout << "size of sendingStruct " << sizeof(sendingStruct) << endl;
-	cout << "Size before adding " << controlQueue.size() << endl;
 	controlQueue.push_front(ss);
 	controlQueueTimestamps.push_front(clock());
 	controlQueueUpdate.notify_all();
@@ -530,7 +530,7 @@ void sendConfigurationOfCamera()
 	cameraSetup.ip[2] = 6;
 	cameraSetup.ip[3] = 11;
 	cameraSetup.port = 5000;
-	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup)) ;
+	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
 	CommunicationInterface::GetInstance()->sendData(ss);
 }

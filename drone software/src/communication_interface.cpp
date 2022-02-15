@@ -409,10 +409,9 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !workQueue.empty() || !process;
 			});
-			/* controlQueueMutex.lock(); */
-			ps = &controlQueue.front();
-			controlQueue.pop_front();
-			/* controlQueueMutex.unlock(); */
+			ps = &controlQueue.back();
+			controlQueueTimestamps.pop_back();
+			controlQueue.pop_back();
 
 		}
 		ServoControl::GetInstance()->processControl(*ps);
