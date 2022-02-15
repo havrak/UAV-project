@@ -91,7 +91,7 @@ class CommunicationInterface {
 	static CommunicationInterface* GetInstance();
 	bool setupSocket();
 	bool establishConnectionToDrone();
-	bool sendData(sendingStruct ss);
+	bool sendData(SendingStructure ss);
 	void cleanUp();
 };
 
@@ -105,13 +105,13 @@ class SendingThreadPool {
 	condition_variable_any workQueueUpdate;
 
 	mutex workQueueMutex;
-	queue<sendingStruct> workQueue;
+	queue<SendingStructure> workQueue;
 
 	// to prevent stacking up control in queue we will stack them here and control the queue size more easily
 	mutex controlQueueMutex;
 	condition_variable_any controlQueueUpdate;
 	thread controlThread;
-	deque<sendingStruct> controlQueue;
+	deque<SendingStructure> controlQueue;
 	deque<clock_t> controlQueueTimestamps;
 
 	bool process = true;
@@ -122,8 +122,8 @@ class SendingThreadPool {
 
 	public:
 	static SendingThreadPool* GetInstance();
-	void scheduleToSend(sendingStruct ss);
-	void scheduleToSendControl(sendingStruct ss); // Schedules to send control sequence, if data in queue is older than 10 ms it is dropped
+	void scheduleToSend(SendingStructure ss);
+	void scheduleToSendControl(SendingStructure ss); // Schedules to send control sequence, if data in queue is older than 10 ms it is dropped
 };
 
 class ProcessingThreadPool {
@@ -134,7 +134,7 @@ class ProcessingThreadPool {
 	vector<thread> threads;
 	condition_variable_any workQueueUpdate;
 	mutex workQueueMutex;
-	queue<processingStuct> workQueue;
+	queue<ProccessingStructure> workQueue;
 	bool process = true;
 
 	void endThreadPool();
@@ -143,7 +143,7 @@ class ProcessingThreadPool {
 	public:
 	static ProcessingThreadPool* GetInstance();
 
-	void addJob(processingStuct j);
+	void addJob(ProccessingStructure ps);
 };
 
 #endif /* !COMMUNICATION_INTERFACE_H */

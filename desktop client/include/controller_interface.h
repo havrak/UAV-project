@@ -30,7 +30,7 @@ class ControllerInterface{
 		void notifyObserverEvent(ControlSurface, int val);
 		void notifyObserverEvent(ControlSurface, int x, int y);
 		thread loopThread;
-		virtual void eventLoop(){}; // get's started by constuctor
+		virtual void eventLoop(){}; // get's started by constructor
 
 	private:
     list<ControlInterpreter *> observers;

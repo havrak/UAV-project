@@ -8,7 +8,6 @@
 #ifndef PROTOCOL_SPEC_H
 #define PROTOCOL_SPEC_H
 
-
 #define BUT_A 0x01
 #define BUT_B 0x02
 #define BUT_X 0x03
@@ -44,22 +43,28 @@ struct processingStuct { // info about message isn't stored two times, as info i
 };
 
 // struct are nice, but i would end up wasting a lot of space
-class ProccessingStructure{
+class ProccessingStructure {
 	public:
-		unsigned char messageType = 0;
-		unsigned char messagePriority = 0;
-		unsigned char *messageBuffer;
+	unsigned char messageType = 0;
+	unsigned char messagePriority = 0;
+	unsigned char* messageBuffer;
+	ProccessingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
+			: messageType(messageType)
+			, messagePriority(messagePriority)
+			, messageBuffer(new unsigned char[messageBufferSize]) {};
 };
 
-class SendingStructure{
+class SendingStructure {
 	public:
-		unsigned char messageType = 0;
-		unsigned char messagePriority = 0;
-		unsigned int short messageSize;
-		unsigned char *messageBuffer;
-
+	unsigned char messageType = 0;
+	unsigned char messagePriority = 0;
+	unsigned int short messageSize;
+	unsigned char* messageBuffer;
+	SendingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
+			: messageType(messageType)
+			, messagePriority(messagePriority)
+			, messageBuffer(new unsigned char[messageBufferSize]) {};
 };
-
 
 using namespace std;
 
@@ -73,13 +78,13 @@ struct pSetCamera {
 };
 
 struct pConStr {
-	pair<int,int> lAnalog;
+	pair<int, int> lAnalog;
 	int lTrigger;
 	int lBumber;
-	pair<int,int> rAnalog;
+	pair<int, int> rAnalog;
 	int rTrigger;
 	int rBumber;
-	pair<int,int> dpad;
+	pair<int, int> dpad;
 };
 
 struct pConSpc {
@@ -135,7 +140,7 @@ struct pTelePWM {
 	unsigned int short angle[16];
 };
 
-struct pTeleATTGPS{
+struct pTeleATTGPS {
 	pTeleATT att;
 	pTeleGPS gps;
 };

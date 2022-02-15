@@ -66,7 +66,11 @@ class ProccessingStructure {
 	const unsigned char messagePriority = 0;
 	unsigned char* messageBuffer;
 
-	ProccessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize):cli(cli),messageType(messageType), messagePriority(messagePriority), messageBuffer(new unsigned char[messageBufferSize]){};
+	ProccessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
+			: cli(cli)
+			, messageType(messageType)
+			, messagePriority(messagePriority)
+			, messageBuffer(new unsigned char[messageBufferSize]) {};
 };
 
 class SendingStructure {
@@ -76,7 +80,11 @@ class SendingStructure {
 	const unsigned char messageType = 0;
 	const unsigned char messagePriority = 0;
 	unsigned char* messageBuffer;
-	SendingStructure(const client* cli, const unsigned char messageType, const unsigned char messagePriority, unsigned int short messageBufferSize):cli(cli),messageType(messageType), messagePriority(messagePriority), messageBuffer(new unsigned char[messageBufferSize]){};
+	SendingStructure(const client* cli, const unsigned char messageType, const unsigned char messagePriority, unsigned int short messageBufferSize)
+			: cli(cli)
+			, messageType(messageType)
+			, messagePriority(messagePriority)
+			, messageBuffer(new unsigned char[messageBufferSize]) {};
 };
 
 // Settings

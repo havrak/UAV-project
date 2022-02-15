@@ -76,12 +76,12 @@ class DroneTelemetry{
 	public:
 		static DroneTelemetry* GetInstance();
 		int setUpSensors();
-		int processGeneralTelemetry(processingStuct ps);
-		int processAttGPS(processingStuct ps);
-		int processBattery(processingStuct ps);
-		int processPWM(processingStuct ps);
-		int processIO(processingStuct ps);
-		int processError(processingStuct ps);
+		int processGeneralTelemetry(ProccessingStructure ps);
+		int processAttGPS(ProccessingStructure ps);
+		int processBattery(ProccessingStructure ps);
+		int processPWM(ProccessingStructure ps);
+		int processIO(ProccessingStructure ps);
+		int processError(ProccessingStructure ps);
 
 };
 

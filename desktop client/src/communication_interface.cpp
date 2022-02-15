@@ -164,15 +164,11 @@ bool CommunicationInterface::receiveDataFromServer()
 		if (server.curIndexInBuffer == server.curMessageSize + 4) {
 
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
-				processingStuct j;
-				ProccessingStructure ps;
+				ProccessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
-				j.messageType = server.curMessageType;
-				j.messagePriority = server.curMessagePriority;
-				j.messageSize = server.curMessageSize;
-				memcpy(&j.messageBuffer, &server.curMessageBuffer, j.messageSize);
+				memcpy(&ps.messageBuffer, &server.curMessageBuffer, server.curMessageSize);
 				lastTimeDataReceived = clock();
-				ProcessingThreadPool::GetInstance()->addJob(j);
+				ProcessingThreadPool::GetInstance()->addJob(ps);
 
 				clearServerStruct();
 				return true;
@@ -230,7 +226,7 @@ int CommunicationInterface::buildFdSets()
 	return 0;
 }
 
-bool CommunicationInterface::sendData(sendingStruct ss)
+bool CommunicationInterface::sendData(SendingStructure ss)
 {
 	if (!connectionEstablished)
 		return false;
@@ -242,8 +238,8 @@ bool CommunicationInterface::sendData(sendingStruct ss)
 	char message[sizeof(*ss.messageBuffer) + 10];
 
 	// setup metadata
-	message[0] = ss.MessageType;
-	message[1] = ss.MessagePriority;
+	message[0] = ss.messageType;
+	message[1] = ss.messagePriority;
 	message[2] = ((uint16_t)sizeof(*ss.messageBuffer)) >> 8;
 	message[3] = ((uint16_t)sizeof(*ss.messageBuffer)) - (message[2] << 8);
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
@@ -329,7 +325,7 @@ void ProcessingThreadPool::endThreadPool()
 void ProcessingThreadPool::worker()
 {
 	while (process) {
-		processingStuct ps;
+		ProccessingStructure *ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -337,10 +333,10 @@ void ProcessingThreadPool::worker()
 			});
 			if (!process)
 				break;
-			ps = workQueue.front();
+			ps = &workQueue.front();
 			workQueue.pop();
 		}
-		switch (ps.messageType) {
+		switch (ps->messageType) {
 		case P_PING: // ping
 			break;
 		case P_SET_RESTART: // resart of system
@@ -354,19 +350,19 @@ void ProcessingThreadPool::worker()
 		case P_CON_SPC: // spacial control
 			break;
 		case P_TELE_IOSTAT: // io status
-			DroneTelemetry::GetInstance()->processIO(ps);
+			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_GEN: // general information
-			DroneTelemetry::GetInstance()->processIO(ps);
+			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			DroneTelemetry::GetInstance()->processIO(ps);
+			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_BATT: // battery status
-			DroneTelemetry::GetInstance()->processIO(ps);
+			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_PWM: // pwm settings
-			DroneTelemetry::GetInstance()->processIO(ps);
+			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_ERR: // general error message
 			cerr << "ProcessingThreadPool | worker | server send an error \n";
@@ -375,7 +371,7 @@ void ProcessingThreadPool::worker()
 	}
 }
 
-void ProcessingThreadPool::addJob(processingStuct ps)
+void ProcessingThreadPool::addJob(ProccessingStructure ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ps);
@@ -397,7 +393,7 @@ void SendingThreadPool::endThreadPool()
 void SendingThreadPool::controlWorker()
 {
 	while (process) {
-		sendingStruct ss;
+		SendingStructure *ss;
 		{
 			unique_lock<mutex> mutex(controlQueueMutex);
 			controlQueueUpdate.wait(mutex, [&] {
@@ -407,13 +403,13 @@ void SendingThreadPool::controlWorker()
 				break;
 		/* lock_guard<mutex> mutex(controlQueueMutex); */
 			cout << "size: " << controlQueue.size() << endl;
-			ss = controlQueue.back();
+			ss = &workQueue.front();
 			controlQueue.pop_front();
 		}
 		/* { */
 		/* } */
 
-		CommunicationInterface::GetInstance()->sendData(ss);
+		CommunicationInterface::GetInstance()->sendData(*ss);
 	}
 	cout << "Ending this thread \n";
 }
@@ -421,7 +417,7 @@ void SendingThreadPool::controlWorker()
 void SendingThreadPool::worker()
 {
 	while (process) {
-		sendingStruct ss;
+		SendingStructure *ss;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -429,14 +425,14 @@ void SendingThreadPool::worker()
 			});
 			if (!process)
 				break;
-			ss = workQueue.front();
+			ss = &workQueue.front();
 			workQueue.pop();
 		}
-		CommunicationInterface::GetInstance()->sendData(ss);
+		CommunicationInterface::GetInstance()->sendData(*ss);
 	}
 }
 
-void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
+void SendingThreadPool::scheduleToSendControl(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
 	// with each add we will check how old is the oldest element in queue if it is older than delete it
@@ -451,7 +447,7 @@ void SendingThreadPool::scheduleToSendControl(sendingStruct ss)
 	controlQueueUpdate.notify_all();
 }
 
-void SendingThreadPool::scheduleToSend(sendingStruct ss)
+void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ss);
@@ -501,12 +497,8 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerStateMutex.unlock();
 	} else if (active) {
 		pConSpc pcs;
-		sendingStruct ss;
-		pcs.button = cs;
-		pcs.state = val;
-		ss.MessagePriority = 0x01;
-		ss.MessageType = P_CON_SPC;
-		memcpy(&pcs, &ss.messageBuffer, sizeof(pcs));
+		SendingStructure ss(P_CON_SPC, 0x01, sizeof(pcs));
+		memcpy(ss.messageBuffer, &pcs, sizeof(pcs));
 		SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	}
 	return 1;
@@ -514,17 +506,11 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 
 void ControllerDroneBridge::sendControlComand()
 {
-	sendingStruct ss;
 
 	while (true) {
-		ss.MessageType = P_CON_STR;
-		ss.MessagePriority = 0x02;
+		SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
 		controllerStateMutex.lock();
-		memcpy(&controllerState, &ss.messageBuffer, sizeof(controllerState));
-		for(int i = 0; i < sizeof(controllerState); i++){
-			cout << ((int) ss.messageBuffer[i]) << " ";
-		}
-		cout << endl;
+		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
 		this_thread::sleep_for(chrono::milliseconds(50));
@@ -544,9 +530,7 @@ void sendConfigurationOfCamera()
 	cameraSetup.ip[2] = 6;
 	cameraSetup.ip[3] = 11;
 	cameraSetup.port = 5000;
-	sendingStruct<sizeof(cameraSetup)> ss;
-	ss.MessageType = P_SET_CAMERA;
-	ss.MessagePriority = 0x02;
-	memcpy(&ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
+	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup)) ;
+	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
 	CommunicationInterface::GetInstance()->sendData(ss);
 }

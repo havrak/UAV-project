@@ -6,7 +6,9 @@
  */
 
 #include "drone_telemetry.h"
+#include "protocol_spec.h"
 #include <cstring>
+#include <iterator>
 
 DroneTelemetry* DroneTelemetry::telemetry = nullptr;
 mutex DroneTelemetry::telemetryMutex;
@@ -24,11 +26,11 @@ DroneTelemetry* DroneTelemetry::GetInstance()
 	}
 	return telemetry;
 }
-int DroneTelemetry::processGeneralTelemetry(processingStuct ps)
+int DroneTelemetry::processGeneralTelemetry(ProccessingStructure ps)
 {
 	telemetryMutex.lock();
 	pTeleGen tmp;
-	memcpy(&tmp, &ps.messageBuffer,  ps.messageSize);
+	memcpy(&tmp, &ps.messageBuffer,  sizeof(ps.messageBuffer));
 	attitude = tmp.att;
 	gps = tmp.gps;
 	battery = tmp.batt;
@@ -42,45 +44,45 @@ int DroneTelemetry::processGeneralTelemetry(processingStuct ps)
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processAttGPS(processingStuct ps)
+int DroneTelemetry::processAttGPS(ProccessingStructure ps)
 {
-	pTeleATTGPS tmp;
+	pTeleATTGPS attgps;
 	telemetryMutex.lock();
-	memcpy(&tmp, &ps.messageBuffer,  ps.messageSize);
-	attitude = tmp.att;
-	gps = tmp.gps;
+	memcpy(&attgps, &ps.messageBuffer,  sizeof(ps.messageBuffer));
+	attitude = attgps.att;
+	gps = attgps.gps;
 	gpsLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processBattery(processingStuct ps)
+int DroneTelemetry::processBattery(ProccessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&battery, &ps.messageBuffer, ps.messageSize);
+	memcpy(&battery, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	batteryLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processPWM(processingStuct ps)
+int DroneTelemetry::processPWM(ProccessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&pwm, &ps.messageBuffer, ps.messageSize);
+	memcpy(&pwm, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	pwmLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processIO(processingStuct ps)
+int DroneTelemetry::processIO(ProccessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&ioStat, &ps.messageBuffer, ps.messageSize);
+	memcpy(&ioStat, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	ioLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	return 1;
 }
 
-int DroneTelemetry::processError(processingStuct ps){
+int DroneTelemetry::processError(ProccessingStructure ps){
 	pTeleErr tmp;
-	memcpy(&tmp, &ps.messageBuffer, ps.messageSize);
+	memcpy(&tmp, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	errorStackMutex.lock();
 	errors.push(*(new ErrorMessage(true, tmp.code, tmp.message)));
 	errorStackMutex.unlock();
