@@ -40,37 +40,23 @@ struct client {
 	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
-struct sendingStruct {
-	client* cli;
-
-	unsigned char messageType = 0;
-	unsigned char messagePriority = 0;
-	unsigned int short messageSize = 0;
-	unsigned char* messageBuffer[MAX_MESSAGE_SIZE];
-};
-
-struct processingStruct { // info about message isn't stored two times, as info in clinet struct is only for processing
-	client* cli;						// we need the client to know if he is ready to receive data
-
-	unsigned char messageType;
-	unsigned char messagePriority;
-	unsigned int short messageSize;
-	char messageBuffer[MAX_MESSAGE_SIZE];
-};
-
 // struct are nice, but i would end up wasting a lot of space
-class ProccessingStructure {
+class ProcessingStructure {
 	public:
 	const client* cli; // we need the client to know if he is ready to receive data
 	const unsigned char messageType = 0;
 	const unsigned char messagePriority = 0;
 	unsigned char* messageBuffer;
 
-	ProccessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
+	ProcessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: cli(cli)
 			, messageType(messageType)
 			, messagePriority(messagePriority)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
+
+	unsigned char* getMessageBuffer(){
+		return (unsigned char*) messageBuffer;
+	};
 };
 
 class SendingStructure {
@@ -85,6 +71,10 @@ class SendingStructure {
 			, messageType(messageType)
 			, messagePriority(messagePriority)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
+
+	unsigned char* getMessageBuffer(){
+		return (unsigned char*) messageBuffer;
+	};
 };
 
 // Settings

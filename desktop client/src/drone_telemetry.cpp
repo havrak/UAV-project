@@ -26,7 +26,7 @@ DroneTelemetry* DroneTelemetry::GetInstance()
 	}
 	return telemetry;
 }
-int DroneTelemetry::processGeneralTelemetry(ProccessingStructure ps)
+int DroneTelemetry::processGeneralTelemetry(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
 	pTeleGen tmp;
@@ -44,7 +44,7 @@ int DroneTelemetry::processGeneralTelemetry(ProccessingStructure ps)
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processAttGPS(ProccessingStructure ps)
+int DroneTelemetry::processAttGPS(ProcessingStructure ps)
 {
 	pTeleATTGPS attgps;
 	telemetryMutex.lock();
@@ -55,7 +55,7 @@ int DroneTelemetry::processAttGPS(ProccessingStructure ps)
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processBattery(ProccessingStructure ps)
+int DroneTelemetry::processBattery(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
 	memcpy(&battery, &ps.messageBuffer, sizeof(ps.messageBuffer));
@@ -63,7 +63,7 @@ int DroneTelemetry::processBattery(ProccessingStructure ps)
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processPWM(ProccessingStructure ps)
+int DroneTelemetry::processPWM(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
 	memcpy(&pwm, &ps.messageBuffer, sizeof(ps.messageBuffer));
@@ -71,7 +71,7 @@ int DroneTelemetry::processPWM(ProccessingStructure ps)
 	telemetryMutex.unlock();
 	return 1;
 }
-int DroneTelemetry::processIO(ProccessingStructure ps)
+int DroneTelemetry::processIO(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
 	memcpy(&ioStat, &ps.messageBuffer, sizeof(ps.messageBuffer));
@@ -80,7 +80,7 @@ int DroneTelemetry::processIO(ProccessingStructure ps)
 	return 1;
 }
 
-int DroneTelemetry::processError(ProccessingStructure ps){
+int DroneTelemetry::processError(ProcessingStructure ps){
 	pTeleErr tmp;
 	memcpy(&tmp, &ps.messageBuffer, sizeof(ps.messageBuffer));
 	errorStackMutex.lock();

@@ -127,13 +127,13 @@ class ProcessingThreadPool{
 		vector<thread> threads;
  		condition_variable_any workQueueUpdate;
 		mutex workQueueMutex;
-		queue<ProccessingStructure> workQueue;
+		queue<ProcessingStructure> workQueue;
 		bool process = true;
 
 		mutex controlQueueMutex;
 		condition_variable_any controlQueueUpdate;
 		thread controlThread;
-		deque<ProccessingStructure> controlQueue;
+		deque<ProcessingStructure> controlQueue;
 		deque<clock_t> controlQueueTimestamps;
 
 
@@ -146,8 +146,8 @@ class ProcessingThreadPool{
 	public:
 		static ProcessingThreadPool* GetInstance();
 
-		void addJob(ProccessingStructure ps);
-		void addJobControl(ProccessingStructure ps);
+		void addJob(ProcessingStructure ps);
+		void addJobControl(ProcessingStructure ps);
 };
 
 

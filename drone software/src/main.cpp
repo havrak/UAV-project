@@ -6,7 +6,7 @@
  */
 
 #include <wiringPi.h>
-#define BCM2835_NO_DELAY_COMPATIBILITY
+//#define BCM2835_NO_DELAY_COMPATIBILITY
 
 #include "bcm2835.h"
 #include "communication_interface.h"
@@ -39,11 +39,11 @@ int main(int argc, char** argv)
 	/* } */
 
 
-	/* if (!bcm2835_init()) { */
-	/* 	cerr << "MAIN | main | failed to open I2C device" << endl; */
-	/* } else { */
-	/* 	cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl; */
-	/* } */
+	if (!bcm2835_init()) {
+		cerr << "MAIN | main | failed to open I2C device" << endl;
+	} else {
+		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
+	}
 	//ServoControl::GetInstance();
 	/* cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl; */
 	/* CameraStreamer *cs1 = new CameraStreamer(0, 5000, "192.168.6.11"); */

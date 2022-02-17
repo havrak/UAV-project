@@ -27,7 +27,8 @@
 #include <time.h>
 #include <vector>
 
-#define SERVERPORT 8066
+#define SERVER_PORT 8066
+#define SERVER_IPV4_ADDR "192.168.6.1"
 #define NUMBER_OF_THREADS 5
 
 
@@ -71,7 +72,7 @@ class CommunicationInterface {
 
 	clock_t lastTimeDataReceived;
 
-	string serverIp = "192.168.6.1";
+	string serverIP = "192.168.6.1";
 	int sockfd;
 	sockaddr_in serverAddress;
 	serverStruct server;
@@ -134,7 +135,7 @@ class ProcessingThreadPool {
 	vector<thread> threads;
 	condition_variable_any workQueueUpdate;
 	mutex workQueueMutex;
-	queue<ProccessingStructure> workQueue;
+	queue<ProcessingStructure> workQueue;
 	bool process = true;
 
 	void endThreadPool();
@@ -143,7 +144,7 @@ class ProcessingThreadPool {
 	public:
 	static ProcessingThreadPool* GetInstance();
 
-	void addJob(ProccessingStructure ps);
+	void addJob(ProcessingStructure ps);
 };
 
 #endif /* !COMMUNICATION_INTERFACE_H */

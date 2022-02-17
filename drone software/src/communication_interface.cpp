@@ -8,6 +8,7 @@
 #include "communication_interface.h"
 #include "protocol_spec.h"
 #include "servo_control.h"
+#include <netinet/in.h>
 #include <utility>
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
@@ -179,18 +180,8 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 		if (cli.curIndexInBuffer == cli.curMessageSize + 4) {
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer] == terminator[4]) {
-				processingStruct j;
-
-
-				ProccessingStructure ps(&cli,cli.curMessageType, cli.curMessagePriority, cli.curMessageSize);
+				ProcessingStructure ps(&cli,cli.curMessageType, cli.curMessagePriority, cli.curMessageSize);
 				memcpy(&ps.messageBuffer, &cli.curMessageBuffer, cli.curMessageSize);
-
-
-/* 				j.cli = &cli; */
-/* 				j.messageType = cli.curMessageType; */
-/* 				j.messagePriority = cli.curMessagePriority; */
-/* 				j.messageSize = cli.curMessageSize; */
-/* 				memcpy(&j.messageBuffer, &cli.curMessageBuffer, j.messageSize); */
 				if (ps.messageType == P_CON_STR)
 					ProcessingThreadPool::GetInstance()->addJobControl(ps);
 				else
@@ -264,10 +255,17 @@ bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 
 void CommunicationInterface::checkActivityOnSocket()
 {
-	int state;
+	int state, tmpfd;
 	while (true) {
+
+    tmpfd = sockfd;
+		for (client c : clients) {
+			if(c.fd > tmpfd) tmpfd = c.fd;
+		}
+		cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | waiting for activity\n";
 		buildFdSets();
-		state = select(sockfd, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoretically poll() is better option
+    state = select(tmpfd + 1, &read_fds, &write_fds, &except_fds, NULL);
+		cout << "Waiting here";
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
@@ -275,6 +273,7 @@ void CommunicationInterface::checkActivityOnSocket()
 		case 0:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
 		default:
+			cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | we have an activity \n";
 			if (FD_ISSET(sockfd, &read_fds))
 				newClientConnect();
 			for (client c : clients) {
@@ -292,8 +291,9 @@ int CommunicationInterface::newClientConnect()
 {
 	while (true) {
 		struct sockaddr_in clientAddress;
+
 		int clientfd = accept(sockfd, (struct sockaddr*)&clientAddress, &clientLength);
-		if (clientfd <= 0) // we will end the loop once all clients waiting have been accepter
+		if (clientfd != 0) // we will end the loop once all clients waiting have been accepter
 			break;
 
 		char clientIPV4Address[INET_ADDRSTRLEN];
@@ -320,11 +320,12 @@ bool CommunicationInterface::setupSocket()
 	}
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = SERVER_PORT;
+	serv_addr.sin_port = htons(SERVER_PORT);
 	if (bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
 		cerr << "COMMUNICATION_INTERFACE | setupSocket | error with binding" << endl;
 		return false;
 	}
+	cout << "COMMUNICATION_INTERFACE | setupSocket | socket created successfully\n";
 	listen(sockfd, 8);
 	clientLength = sizeof(serv_addr); // same structure so no problem
 	checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
@@ -346,7 +347,7 @@ void ProcessingThreadPool::endThreadPool()
 void ProcessingThreadPool::worker()
 {
 	while (process) {
-		ProccessingStructure *ps;
+		ProcessingStructure *ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -403,7 +404,7 @@ void ProcessingThreadPool::worker()
 void ProcessingThreadPool::controlWorker()
 {
 	while (process) {
-		ProccessingStructure *ps;
+		ProcessingStructure *ps;
 		{
 			unique_lock<mutex> mutex(controlQueueMutex);
 			controlQueueUpdate.wait(mutex, [&] {
@@ -418,7 +419,7 @@ void ProcessingThreadPool::controlWorker()
 	}
 }
 
-void ProcessingThreadPool::addJobControl(ProccessingStructure ps)
+void ProcessingThreadPool::addJobControl(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
 	if ( controlQueueTimestamps.size() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
@@ -430,7 +431,7 @@ void ProcessingThreadPool::addJobControl(ProccessingStructure ps)
 	controlQueueUpdate.notify_all();
 }
 
-void ProcessingThreadPool::addJob(ProccessingStructure ps)
+void ProcessingThreadPool::addJob(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ps);

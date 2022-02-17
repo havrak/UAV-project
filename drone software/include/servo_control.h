@@ -84,7 +84,7 @@ public:
 	bool getPCA9865Status();
 	unsigned int short getMainMotorMS();
 	pair<int,unsigned int short*> getControlSurfaceConfiguration();
-	int processControl(ProccessingStructure ps);
+	int processControl(ProcessingStructure ps);
 	int processMovementForVTail(pConStr ps);
 	int processMovementForStandart(pConStr  ps);
 };

@@ -8,6 +8,7 @@
 #ifndef PROTOCOL_SPEC_H
 #define PROTOCOL_SPEC_H
 
+#include <vector>
 #define BUT_A 0x01
 #define BUT_B 0x02
 #define BUT_X 0x03
@@ -15,16 +16,10 @@
 
 #include <cstring>
 #include <string>
+#include <array>
 
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
-
-struct sendingStruct {
-
-	unsigned char MessageType = 0;
-	unsigned char MessagePriority = 0;
-	unsigned char messageBuffer[MAX_MESSAGE_SIZE];
-};
 
 struct serverStruct {
 	int curIndexInBuffer = 0; // position where we have left off, first not filled index
@@ -35,23 +30,20 @@ struct serverStruct {
 	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
 };
 
-struct processingStuct { // info about message isn't stored two times, as info in clinet struct is only for processing
-	unsigned char messageType;
-	unsigned char messagePriority;
-	unsigned int short messageSize;
-	char messageBuffer[MAX_MESSAGE_SIZE];
-};
-
 // struct are nice, but i would end up wasting a lot of space
-class ProccessingStructure {
+class ProcessingStructure {
 	public:
 	unsigned char messageType = 0;
 	unsigned char messagePriority = 0;
 	unsigned char* messageBuffer;
-	ProccessingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
+	ProcessingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: messageType(messageType)
 			, messagePriority(messagePriority)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
+
+	unsigned char* getMessageBuffer(){
+		return (unsigned char*) messageBuffer;
+	};
 };
 
 class SendingStructure {
@@ -63,12 +55,31 @@ class SendingStructure {
 	SendingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: messageType(messageType)
 			, messagePriority(messagePriority)
-			, messageBuffer(new unsigned char[messageBufferSize]) {};
+			, messageBuffer(new unsigned char[messageBufferSize])
+			{};
+
+	unsigned char* getMessageBuffer(){
+		return (unsigned char*) messageBuffer;
+	};
 };
+
+/* class SendingStructure { */
+/* 	public: */
+/* 	unsigned char messageType = 0; */
+/* 	unsigned char messagePriority = 0; */
+/* 	unsigned int short messageSize; */
+/* 	/1* unsigned char messageBuffer[]; *1/ */
+/* 	std::vector<unsigned char> messageBuffer; */
+/* 	SendingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize) */
+/* 			: messageType(messageType) */
+/* 			, messagePriority(messagePriority) */
+/* 			{messageBuffer.reserve(messageBufferSize);}; */
+/* }; */
 
 using namespace std;
 
-const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
+//const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
+const unsigned char terminator[5] = { 0, 0, 255, 255, 255};
 
 // Settings
 

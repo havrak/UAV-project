@@ -9,8 +9,10 @@
 #include "control_interpreter.h"
 #include "gtkmm/enums.h"
 #include "protocol_spec.h"
+#include <arpa/inet.h>
 #include <cstring>
 #include <ctime>
+#include <ios>
 #include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -165,7 +167,7 @@ bool CommunicationInterface::receiveDataFromServer()
 		if (server.curIndexInBuffer == server.curMessageSize + 4) {
 
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
-				ProccessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
+				ProcessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
 				memcpy(&ps.messageBuffer, &server.curMessageBuffer, server.curMessageSize);
 				lastTimeDataReceived = clock();
@@ -187,7 +189,7 @@ void CommunicationInterface::checkActivityOnSocket()
 	int state;
 	while (true) {
 		buildFdSets();
-		state = select(sockfd, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoretically poll() is better option
+		state = select(sockfd + 1, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoretically poll() is better option
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
@@ -236,63 +238,74 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 		return false;
 	}
 
-	char message[sizeof(*ss.messageBuffer) + 10];
+	unsigned char message[sizeof(ss.messageBuffer) + 10];
+	cout << "CONTROLLER_INTERFACE | sendData | message: ";
+	cout << "   message Type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) <<"\n   essage size: "<< sizeof(ss.messageBuffer) << "\n   message: ";
+
+	for(int i=0; i < sizeof(ss.messageBuffer); i++){
+		 cout << int(ss.messageBuffer[i]) << " ";
+	}
+	/* for (unsigned char c : ss.getMessageBuffer()) */
+	cout << "\n";
 
 	// setup metadata
 	message[0] = ss.messageType;
 	message[1] = ss.messagePriority;
-	message[2] = ((uint16_t)sizeof(*ss.messageBuffer)) >> 8;
-	message[3] = ((uint16_t)sizeof(*ss.messageBuffer)) - (message[2] << 8);
+	message[2] = ((uint16_t)sizeof(ss.messageBuffer)) >> 8;
+	message[3] = ((uint16_t)sizeof(ss.messageBuffer)) - ((message[2] << 8));
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
-	memcpy(message + 5, ss.messageBuffer, sizeof(*ss.messageBuffer)); // NOTE: clang gives waringing
+	memcpy(message + 5, ss.getMessageBuffer(), sizeof(ss.messageBuffer));
 
 	// setup terminator
-	int li = sizeof(ss.messageBuffer) + 4;
-	message[li + 1] = terminator[0];
-	message[li + 2] = terminator[1];
-	message[li + 3] = terminator[2];
-	message[li + 4] = terminator[3];
-	message[li + 5] = terminator[4];
+	memcpy(message+5+sizeof(ss.messageBuffer), &terminator, 5);
 
-	serverMutex.lock();
+	/* cout << "Whole message: "; */
+	/* for (unsigned char c : message) */
+	/* 	cout << int(c) << " "; */
+	/* cout << "\n"; */
+
+	cout << "COMMUNICATION_INTERFACE | sendData | message is ready waiting to send it\n";
+	lock_guard<mutex> mutex(serverMutex);
+	/* serverMutex.lock(); */
+	cout << "COMMUNICATION_INTERFACE | sendData | got mutex\n";
 	ssize_t bytesSend = 0;
 	bool sending = true;
 	while (sending) {
 		ssize_t sCount = send(sockfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(*message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(*message) - bytesSend), 0);
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
-			serverMutex.unlock();
-		return false;
+			return false;
 		bytesSend += sCount;
 		if (bytesSend == sizeof(*message)) {
-			serverMutex.unlock();
 			return true;
 		}
 	}
-	serverMutex.unlock();
+	/* serverMutex.unlock(); */
+	cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 	return false;
 }
 
 bool CommunicationInterface::establishConnectionToDrone()
 {
+	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
+
 	while (true) {
 		// NOTE; user will be able to change parameters, thus sockaddr_in in needs to be recreated on each iteration
-		serverMutex.lock();
-		serverAddress.sin_port = SERVERPORT;
-		inet_aton(serverIp.c_str(), (struct in_addr*)&serverAddress.sin_addr.s_addr);
-		clearServerStruct();
-		serverMutex.unlock();
-
-		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) > 0) {
-			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established" << endl;
+		/* serverMutex.lock(); */
+		serverAddress.sin_port = htons(SERVER_PORT);
+		serverAddress.sin_addr.s_addr = inet_addr(SERVER_IPV4_ADDR);
+		/* serverMutex.unlock(); */
+		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | trying to connect\n";
+		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == 0) {
+			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established\n";
 			connectionEstablished = true;
-			sendConfigurationOfCamera();
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
+			sendConfigurationOfCamera();
 			break;
 		} else {
-			cerr << "COMMUNICATION_INTERFACE | establishConnectionToDrone | failed to establish connection" << endl;
+			cerr << "COMMUNICATION_INTERFACE | establishConnectionToDrone | failed to establish connection\n";
 		}
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
@@ -326,7 +339,7 @@ void ProcessingThreadPool::endThreadPool()
 void ProcessingThreadPool::worker()
 {
 	while (process) {
-		ProccessingStructure* ps;
+		ProcessingStructure* ps;
 		{
 			unique_lock<mutex> mutex(workQueueMutex);
 			workQueueUpdate.wait(mutex, [&] {
@@ -372,7 +385,7 @@ void ProcessingThreadPool::worker()
 	}
 }
 
-void ProcessingThreadPool::addJob(ProccessingStructure ps)
+void ProcessingThreadPool::addJob(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ps);
@@ -414,13 +427,10 @@ void SendingThreadPool::controlWorker()
 	while (process) {
 		SendingStructure* ss;
 		{
-			cout << "We are waiting here " << process << endl;
 			unique_lock<mutex> mutex(controlQueueMutex);
 			controlQueueUpdate.wait(mutex, [&] {
-				cout << !controlQueue.empty() << "         " << !process << endl;
 				return !controlQueue.empty() || !process;
 			});
-			cout << "We are done waiting, sizeof: " << controlQueue.size() << endl;
 			if (!process)
 				break;
 			ss = &controlQueue.back();
@@ -428,10 +438,8 @@ void SendingThreadPool::controlWorker()
 			controlQueueTimestamps.pop_back();
 		}
 
-		cout << "Trying to send data" << endl;
 		CommunicationInterface::GetInstance()->sendData(*ss);
 	}
-	cout << "Ending this thread \n";
 }
 
 void SendingThreadPool::scheduleToSendControl(SendingStructure ss)
@@ -450,6 +458,7 @@ void SendingThreadPool::scheduleToSendControl(SendingStructure ss)
 void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
+	cout << "SIEZ: " << workQueue.size() << endl;
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
@@ -479,6 +488,8 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 	case D_PAD:
 		controllerState.dpad.first = x;
 		controllerState.dpad.second = y;
+		break;
+	default:
 		break;
 	}
 	controllerStateMutex.unlock();
@@ -512,7 +523,7 @@ void ControllerDroneBridge::sendControlComand()
 		controllerStateMutex.lock();
 		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
-		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
+		/* SendingThreadPool::GetInstance()->scheduleToSendControl(ss); */
 		this_thread::sleep_for(chrono::milliseconds(50));
 	}
 }
@@ -532,5 +543,10 @@ void sendConfigurationOfCamera()
 	cameraSetup.port = 5000;
 	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
+	cout << "message set to object: ";
+	for(int i=0; i < sizeof(ss.messageBuffer); i++){
+		 cout << int(ss.messageBuffer[i]) << " ";
+	}
+	cout << "SENDING DATA TO CAMERA" << endl;
 	CommunicationInterface::GetInstance()->sendData(ss);
 }

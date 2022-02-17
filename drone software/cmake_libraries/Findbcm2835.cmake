@@ -9,7 +9,7 @@ include(FindPackageHandleStandardArgs)
 # if all listed variables are TRUE
 find_package_handle_standard_args(bcm2835 DEFAULT_MSG
                                   BCM2835_LIBRARY BCM2835_INCLUDE_DIR)
-#find_package_handle_standard_args(BCM2835 DEFAULT_MSG
-# BCM2835_LIBRARY BCM2835_INCLUDE_DIR)
+# find_package_handle_standard_args(BCM2835 DEFAULT_MSG
+#  BCM2835_LIBRARY BCM2835_INCLUDE_DIR)
 
 mark_as_advanced (BCM2835_INCLUDE_DIR BCM2835_LIBRARY )

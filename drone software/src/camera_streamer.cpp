@@ -26,7 +26,7 @@ bool CameraStreamer::setupStream()
 	return true;
 }
 
-int CameraStreamer::setUpCamera(ProccessingStructure ps)
+int CameraStreamer::setUpCamera(ProcessingStructure ps)
 {
 	pSetCamera pc;
 	memcpy(&pc, &ps.messageBuffer, sizeof(ps.messageBuffer));

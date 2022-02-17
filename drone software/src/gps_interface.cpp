@@ -61,7 +61,7 @@ void GPSInterface::updateFunction()
 
 				if (parts.at(0).compare("$GPGGA") == 0) {
 					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string " << endl;
-					cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << endl;
+					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << endl;
 					numberOfSatelites = stoi(parts.at(7));
 					if(numberOfSatelites > 0 ){
 						gpsUp = true;
@@ -70,7 +70,7 @@ void GPSInterface::updateFunction()
 						altitude = stod(parts.at(9));
 					}else{
 						gpsUp = false;
-						cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
+						if(debug) cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
 					}
 				}
 			}

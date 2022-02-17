@@ -146,7 +146,7 @@ int ServoControl::processMovementForStandart(pConStr ps)
 {
 }
 
-int ServoControl::processControl(ProccessingStructure ps)
+int ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, &ps.messageBuffer, sizeof(ps.messageBuffer));
