@@ -15,6 +15,8 @@ LinuxControllerImplementation::LinuxControllerImplementation()
 
 ErrorMessage LinuxControllerImplementation::setupController()
 {
+	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
+
 	if ((fd = open(JOY_DEV, O_RDONLY)) < 0) {
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
@@ -34,7 +36,6 @@ ErrorMessage LinuxControllerImplementation::setupController()
 			 << "  buttons: " << num_of_buttons << endl;
 
 	fcntl(fd, F_SETFL, O_NONBLOCK); // using non-blocking mode
-	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
 	return *new ErrorMessage(false, 0, "");
 }
 
@@ -43,7 +44,13 @@ void LinuxControllerImplementation::eventLoop()
 	js_event js;
 	unsigned int long index;
 
-	while (true) {
+	while (process) {
+		if (fd == -1) {
+			setupController();
+			this_thread::sleep_for(chrono::milliseconds(500));
+			continue;
+		}
+
 		read(fd, &js, sizeof(js_event));
 		switch (js.type & ~JS_EVENT_INIT) {
 		case JS_EVENT_AXIS:
@@ -86,13 +93,13 @@ void LinuxControllerImplementation::eventLoop()
 			}
 		}
 
-		usleep(50);
+		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 }
 
 void LinuxControllerImplementation::generateEventForEveryButton()
 {
-	if (fd > 0) {
+	if (fd != -1) {
 		for (int i = 0; i + 1 < sizeof(axisStates) / sizeof(axisStates[0]); i++) {
 			ControlSurface cs = getControlSurfaceFor(false, i);
 			if (cs != L_TRIGGER && cs != R_TRIGGER) {

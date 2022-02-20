@@ -28,9 +28,12 @@ cv::Size imageSize;
 thread cameraThread;
 MainWindow* mainWindow = nullptr;
 bool cameraInitialized;
+LinuxControllerImplementation lci;
 
 void signalHandler( int sigNum){
 	CommunicationInterface::GetInstance()->cleanUp();
+	lci.process = false;
+	captureVideoFromCamera = false;
 	exit(127);
 }
 

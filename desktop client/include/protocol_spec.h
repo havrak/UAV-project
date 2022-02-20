@@ -35,10 +35,12 @@ class ProcessingStructure {
 	public:
 	unsigned char messageType = 0;
 	unsigned char messagePriority = 0;
+	unsigned int short messageSize;
 	unsigned char* messageBuffer;
 	ProcessingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: messageType(messageType)
 			, messagePriority(messagePriority)
+			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
 
 	unsigned char* getMessageBuffer(){
@@ -55,6 +57,7 @@ class SendingStructure {
 	SendingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: messageType(messageType)
 			, messagePriority(messagePriority)
+			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize])
 			{};
 

@@ -89,6 +89,7 @@ class CommunicationInterface{
 		void removeClient(client cli);
 		bool sendDataToClient(SendingStructure);
 		bool sendDataToAll(SendingStructure);
+		void pingClient(client cli);
 
 		//Destructive
 

@@ -19,7 +19,7 @@
 using namespace std;
 
 void signalHandler( int sigNum){
-	cout << "MAIN | signalHandler | caught signal slowing down" << endl;
+	cout << "MAIN | signalHandler | caught signal slowing down\n";
 	CommunicationInterface::GetInstance()->cleanUp();
 	ServoControl::GetInstance()->slowDownToMin();
 	this_thread::sleep_for(chrono::milliseconds(10));
@@ -40,9 +40,9 @@ int main(int argc, char** argv)
 
 
 	if (!bcm2835_init()) {
-		cerr << "MAIN | main | failed to open I2C device" << endl;
+		cerr << "MAIN | main | failed to open I2C device\n";
 	} else {
-		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << endl;
+		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << "\n";
 	}
 	//ServoControl::GetInstance();
 	/* cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl; */
@@ -58,10 +58,7 @@ int main(int argc, char** argv)
 
 	// cout << "MAIN | main | servo Calibrating"
 	//ServoControl::GetInstance()->calibrateESC();
-	cout << "MAIN | main | entering main loop" << endl;
-	while (true) {
-
-		nanosleep((const struct timespec[]) { { 0, 500000000L } }, NULL);
-	}
+	cout << "MAIN | main | entering main loop\n";
+	while (true) this_thread::sleep_for(chrono::milliseconds(1000));
 	return 1;
 }

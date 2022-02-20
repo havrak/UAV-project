@@ -46,12 +46,13 @@ class ProcessingStructure {
 	const client* cli; // we need the client to know if he is ready to receive data
 	const unsigned char messageType = 0;
 	const unsigned char messagePriority = 0;
+	unsigned int short messageSize;
 	unsigned char* messageBuffer;
-
 	ProcessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: cli(cli)
 			, messageType(messageType)
 			, messagePriority(messagePriority)
+			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
 
 	unsigned char* getMessageBuffer(){
@@ -65,11 +66,13 @@ class SendingStructure {
 
 	const unsigned char messageType = 0;
 	const unsigned char messagePriority = 0;
+	unsigned int short messageSize;
 	unsigned char* messageBuffer;
 	SendingStructure(const client* cli, const unsigned char messageType, const unsigned char messagePriority, unsigned int short messageBufferSize)
 			: cli(cli)
 			, messageType(messageType)
 			, messagePriority(messagePriority)
+			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
 
 	unsigned char* getMessageBuffer(){

@@ -104,13 +104,15 @@ void CommunicationInterface::clearServerStruct()
 	server.curMessageType = 0;
 	server.curMessagePriority = 0;
 	server.curMessageSize = 0;
-	memset(&server.curMessageBuffer, 0, MAX_MESSAGE_SIZE + 5);
+	memset(&server.curMessageBuffer, 0, sizeof(server.curMessageBuffer));
 }
 
 void CommunicationInterface::cleanUp()
 {
 	cout << "COMMUNICATION_INTERFACE | cleanUp | killing communicationInterface\n";
 	close(sockfd);
+	process = false;
+	checkForNewDataThread.join();
 }
 
 bool CommunicationInterface::fixReceiveData()
@@ -187,9 +189,9 @@ bool CommunicationInterface::receiveDataFromServer()
 void CommunicationInterface::checkActivityOnSocket()
 {
 	int state;
-	while (true) {
+	while (process) {
 		buildFdSets();
-		state = select(sockfd + 1, &read_fds, &write_fds, &except_fds, NULL); // NOTE: theoretically poll() is better option
+		state = select(sockfd + 1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
@@ -200,6 +202,10 @@ void CommunicationInterface::checkActivityOnSocket()
 			if (FD_ISSET(sockfd, &read_fds)) {
 				receiveDataFromServer();
 			}
+			if (FD_ISSET(sockfd, &except_fds)) {
+				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | server failed with exception\n";
+				//close(sockfd);
+			}
 		}
 	}
 	this_thread::sleep_for(chrono::milliseconds(10));
@@ -207,24 +213,18 @@ void CommunicationInterface::checkActivityOnSocket()
 
 int CommunicationInterface::buildFdSets()
 {
-	FD_SET(STDIN_FILENO, &read_fds);
-	FD_SET(sockfd, &read_fds);
+	if (sockfd == -1)
+		return -1;
 
 	FD_ZERO(&read_fds);
-	if (sockfd != -1)
-		FD_SET(sockfd, &read_fds);
-
 	FD_ZERO(&write_fds);
-
-	if (sockfd != -1)
-		FD_SET(sockfd, &write_fds);
-
 	FD_ZERO(&except_fds);
+	FD_SET(STDIN_FILENO, &read_fds);
 	FD_SET(STDIN_FILENO, &except_fds);
-	FD_SET(sockfd, &except_fds);
 
-	if (sockfd != -1)
-		FD_SET(sockfd, &except_fds);
+	FD_SET(sockfd, &except_fds);
+	FD_SET(sockfd, &read_fds);
+	FD_SET(sockfd, &write_fds);
 
 	return 0;
 }
@@ -233,17 +233,17 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 {
 	if (!connectionEstablished)
 		return false;
-	if (sizeof(ss.messageBuffer) + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
+	if (ss.messageSize + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
 		cerr << "CONTROLLER_INTERFACE | sendData | data is over the size limit (0.5KB)" << endl;
 		return false;
 	}
 
-	unsigned char message[sizeof(ss.messageBuffer) + 10];
+	unsigned char message[ss.messageSize + 10];
 	cout << "CONTROLLER_INTERFACE | sendData | message: ";
-	cout << "   message Type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) <<"\n   essage size: "<< sizeof(ss.messageBuffer) << "\n   message: ";
+	cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
 
-	for(int i=0; i < sizeof(ss.messageBuffer); i++){
-		 cout << int(ss.messageBuffer[i]) << " ";
+	for (int i = 0; i < ss.messageSize; i++) {
+		cout << int(ss.messageBuffer[i]) << " ";
 	}
 	/* for (unsigned char c : ss.getMessageBuffer()) */
 	cout << "\n";
@@ -251,20 +251,20 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	// setup metadata
 	message[0] = ss.messageType;
 	message[1] = ss.messagePriority;
-	message[2] = ((uint16_t)sizeof(ss.messageBuffer)) >> 8;
-	message[3] = ((uint16_t)sizeof(ss.messageBuffer)) - ((message[2] << 8));
+	message[2] = ((uint16_t)ss.messageSize) >> 8;
+	message[3] = ((uint16_t)ss.messageSize) - ((message[2] << 8));
 	message[4] = 7 - ((message[0] + message[1] + message[2] + message[3]) % 7);
 
 	// load message
-	memcpy(message + 5, ss.getMessageBuffer(), sizeof(ss.messageBuffer));
+	memcpy(message + 5, ss.getMessageBuffer(), ss.messageSize);
 
 	// setup terminator
-	memcpy(message+5+sizeof(ss.messageBuffer), &terminator, 5);
+	memcpy(message + 5 + ss.messageSize, &terminator, 5);
 
-	/* cout << "Whole message: "; */
-	/* for (unsigned char c : message) */
-	/* 	cout << int(c) << " "; */
-	/* cout << "\n"; */
+	cout << "   whole message: ";
+	for (unsigned char c : message)
+		cout << int(c) << " ";
+	cout << "\n";
 
 	cout << "COMMUNICATION_INTERFACE | sendData | message is ready waiting to send it\n";
 	lock_guard<mutex> mutex(serverMutex);
@@ -273,11 +273,14 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	ssize_t bytesSend = 0;
 	bool sending = true;
 	while (sending) {
-		ssize_t sCount = send(sockfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(*message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(*message) - bytesSend), 0);
+		/* cout << "MAX_MESSAGE_SIZE: " << MAX_MESSAGE_SIZE << "\nbytesend: " << bytesSend << "\nsizeof message: " << sizeof(message) << "\nstatement: "<< (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend)<< "\n"; */
+
+		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
+		cout << "send: " << sCount << "\n";
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
 			return false;
 		bytesSend += sCount;
-		if (bytesSend == sizeof(*message)) {
+		if (bytesSend == sizeof(message)) {
 			return true;
 		}
 	}
@@ -302,6 +305,7 @@ bool CommunicationInterface::establishConnectionToDrone()
 			cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | connection established\n";
 			connectionEstablished = true;
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
+			pingServer();
 			sendConfigurationOfCamera();
 			break;
 		} else {
@@ -322,6 +326,12 @@ bool CommunicationInterface::setupSocket()
 	cout << "COMMUNICATION_INTERFACE | setupSocket | socket was successfully setted up \n";
 	establishConnectionToDroneThread = thread(&CommunicationInterface::establishConnectionToDrone, this);
 	return true;
+}
+
+void CommunicationInterface::pingServer()
+{
+	SendingStructure ss(P_PING, 0x01, 1);
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
 /*-----------------------------------
@@ -458,7 +468,6 @@ void SendingThreadPool::scheduleToSendControl(SendingStructure ss)
 void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
-	cout << "SIEZ: " << workQueue.size() << endl;
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
@@ -544,8 +553,8 @@ void sendConfigurationOfCamera()
 	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
 	cout << "message set to object: ";
-	for(int i=0; i < sizeof(ss.messageBuffer); i++){
-		 cout << int(ss.messageBuffer[i]) << " ";
+	for (int i = 0; i < sizeof(ss.messageBuffer); i++) {
+		cout << int(ss.messageBuffer[i]) << " ";
 	}
 	cout << "SENDING DATA TO CAMERA" << endl;
 	CommunicationInterface::GetInstance()->sendData(ss);

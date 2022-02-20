@@ -32,10 +32,10 @@ GPSInterface* GPSInterface::GetInstance()
 
 bool GPSInterface::attachGPS()
 {
-	fd = serialOpen("/dev/ttyS0", 9600);
+	fd = serialOpen("/dev/serial0", 9600);
 
 	if (debug)
-		cout << "GPSINTERFACE | attachGPS | Status of GPS: " << (fd >= 0) << endl;
+		cout << "GPSINTERFACE | attachGPS | Status of GPS: " << (fd >= 0) << "\n";
 	return fd >= 0;
 }
 
@@ -52,7 +52,7 @@ void GPSInterface::updateFunction()
 				data = "";
 			} else if (c == '\n') {
 				readingLine = false;
-				if(debug) cout << "GPS_INTERFACE | updateFunction | Processing: " << data << endl;
+				if(debug) cout << "GPS_INTERFACE | updateFunction | Processing: " << data << "\n";
 				vector<string> parts;
 				stringstream ss(data);
 				string item;
@@ -60,8 +60,8 @@ void GPSInterface::updateFunction()
 					parts.push_back(item);
 
 				if (parts.at(0).compare("$GPGGA") == 0) {
-					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string " << endl;
-					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << endl;
+					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
+					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
 					numberOfSatelites = stoi(parts.at(7));
 					if(numberOfSatelites > 0 ){
 						gpsUp = true;

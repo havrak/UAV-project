@@ -37,19 +37,19 @@ ServoControl::ServoControl()
 	servo.SetAngle(CHANNEL(6), ANGLE(90));
 
 	if (debug)
-		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed" << endl;
+		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
 }
 
 ServoControl* ServoControl::GetInstance()
 {
 
 	if (servoControl == nullptr) {
-		cout << "SERVOCONTROL | GetInstance | ServoControl creation" << endl;
+		cout << "SERVOCONTROL | GetInstance | ServoControl creation\n";
 		mutexServoControl.lock();
 		if (servoControl == nullptr)
 			servoControl = new ServoControl();
 		mutexServoControl.unlock();
-		cout << "SERVOCONTROL | GetInstance | ServoControl created" << endl;
+		cout << "SERVOCONTROL | GetInstance | ServoControl created\n";
 	}
 
 	return servoControl;
@@ -58,13 +58,13 @@ ServoControl* ServoControl::GetInstance()
 bool ServoControl::calibrateESC()
 {
 	int b;
-	cout << "SERVOCONTROL | calibrateESC | setting max" << endl;
+	cout << "SERVOCONTROL | calibrateESC | setting max\n";
 	servo.Set(CHANNEL(0), servo.GetRightUs());
 	mainMotorMS = servo.GetRightUs();
-	cout << "SERVOCONTROL | calibrateESC | press key to set min" << endl;
+	cout << "SERVOCONTROL | calibrateESC | press key to set min\n";
 	cin >> b;
 
-	cout << "SERVOCONTROL | calibrateESC | setting min" << endl;
+	cout << "SERVOCONTROL | calibrateESC | setting min\n";
 	servo.Set(CHANNEL(0), servo.GetLeftUs());
 	mainMotorMS = servo.GetLeftUs();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
@@ -74,7 +74,7 @@ bool ServoControl::calibrateESC()
 
 bool ServoControl::armESC()
 {
-	cout << "SERVOCONTROL | armESC | arming ESC" << endl;
+	cout << "SERVOCONTROL | armESC | arming ESC\n";
 	slowDownToMin();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 	return true;
@@ -88,21 +88,21 @@ void ServoControl::slowDownToMin()
 
 void ServoControl::testServo()
 {
-	cout << "SERVOCONTROL | testServo | reaching max speed on motor" << endl;
+	cout << "SERVOCONTROL | testServo | reaching max speed on motor\n";
 	for (mainMotorMS = MIN_PULSE_LENGTH; mainMotorMS <= MAX_PULSE_LENGTH; mainMotorMS += 10) {
-		cout << mainMotorMS << endl;
+		cout << mainMotorMS << "\n";
 		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
-	cout << "SERVOCONTROL | testServo | max speed reached" << endl;
+	cout << "SERVOCONTROL | testServo | max speed reached\n";
 	nanosleep((const struct timespec[]) { { 3, 0L } }, NULL);
-	cout << "SERVOCONTROL | testServo | slowing down motor motor" << endl;
+	cout << "SERVOCONTROL | testServo | slowing down motor motor\n";
 	for (mainMotorMS = MAX_PULSE_LENGTH; mainMotorMS >= MIN_PULSE_LENGTH; mainMotorMS -= 10) {
-		cout << mainMotorMS << endl;
+		cout << mainMotorMS << "\n";
 		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
-	cout << "SERVOCONTROL | testServo | ZERO" << endl;
+	cout << "SERVOCONTROL | testServo | ZERO\n";
 
 	nanosleep((const struct timespec[]) { { 5, 0L } }, NULL);
 }

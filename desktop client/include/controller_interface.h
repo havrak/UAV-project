@@ -30,6 +30,7 @@ class ControllerInterface{
 		void notifyObserverEvent(ControlSurface, int val);
 		void notifyObserverEvent(ControlSurface, int x, int y);
 		thread loopThread;
+
 		virtual void eventLoop(){}; // get's started by constructor
 
 	private:
@@ -42,6 +43,7 @@ class ControllerInterface{
 		void addObserver(ControlInterpreter *v);
 		void removeObserver(ControlInterpreter *v);
 		virtual void generateEventForEveryButton(){};
+		bool process = true;
 
 };
 
