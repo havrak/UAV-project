@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 	}
 	cout << "MAIN | main | GTK window created\n";
 
-	builder->get_widget_derived("MainWindow", mainWindow); // vytvoří widget cameraGrabberWindow, který pracuje s GTK třídami
+	builder->get_widget_derived("MainWindow", mainWindow);
 	cout << "MAIN | main | cameraGrabberWindow created\n";
 
 	CommunicationInterface::GetInstance()->setupSocket();

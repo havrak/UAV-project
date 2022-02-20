@@ -245,7 +245,6 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	for (int i = 0; i < ss.messageSize; i++) {
 		cout << int(ss.messageBuffer[i]) << " ";
 	}
-	/* for (unsigned char c : ss.getMessageBuffer()) */
 	cout << "\n";
 
 	// setup metadata
@@ -261,22 +260,15 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	// setup terminator
 	memcpy(message + 5 + ss.messageSize, &terminator, 5);
 
-	cout << "   whole message: ";
-	for (unsigned char c : message)
-		cout << int(c) << " ";
-	cout << "\n";
-
 	cout << "COMMUNICATION_INTERFACE | sendData | message is ready waiting to send it\n";
+
 	lock_guard<mutex> mutex(serverMutex);
-	/* serverMutex.lock(); */
 	cout << "COMMUNICATION_INTERFACE | sendData | got mutex\n";
 	ssize_t bytesSend = 0;
 	bool sending = true;
 	while (sending) {
-		/* cout << "MAX_MESSAGE_SIZE: " << MAX_MESSAGE_SIZE << "\nbytesend: " << bytesSend << "\nsizeof message: " << sizeof(message) << "\nstatement: "<< (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend)<< "\n"; */
-
 		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
-		cout << "send: " << sCount << "\n";
+
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
 			return false;
 		bytesSend += sCount;
@@ -284,7 +276,6 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 			return true;
 		}
 	}
-	/* serverMutex.unlock(); */
 	cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 	return false;
 }
@@ -532,7 +523,7 @@ void ControllerDroneBridge::sendControlComand()
 		controllerStateMutex.lock();
 		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
-		/* SendingThreadPool::GetInstance()->scheduleToSendControl(ss); */
+		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
 		this_thread::sleep_for(chrono::milliseconds(50));
 	}
 }

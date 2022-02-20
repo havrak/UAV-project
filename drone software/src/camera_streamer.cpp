@@ -8,6 +8,7 @@
 #include "camera_streamer.h"
 #include "communication_interface.h"
 #include "protocol_spec.h"
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -18,7 +19,7 @@ CameraStreamer::CameraStreamer(){
 
 bool CameraStreamer::setupStream()
 {
-	string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " > /dev/null &";
+	string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
 	cout << "CAMERA_STREAMER | setupStream | command: " << command << "\n";
 	/* system(command.c_str()); */
 

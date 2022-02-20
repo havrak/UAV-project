@@ -10,13 +10,11 @@
 
 LinuxControllerImplementation::LinuxControllerImplementation()
 {
-	setupController();
+	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
 }
 
 ErrorMessage LinuxControllerImplementation::setupController()
 {
-	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
-
 	if ((fd = open(JOY_DEV, O_RDONLY)) < 0) {
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
@@ -45,11 +43,12 @@ void LinuxControllerImplementation::eventLoop()
 	unsigned int long index;
 
 	while (process) {
-		if (fd == -1) {
-			setupController();
-			this_thread::sleep_for(chrono::milliseconds(500));
-			continue;
-		}
+		setupController();
+		if(fd != -1) break;
+		this_thread::sleep_for(chrono::seconds(2000));
+	}
+
+	while (process) {
 
 		read(fd, &js, sizeof(js_event));
 		switch (js.type & ~JS_EVENT_INIT) {

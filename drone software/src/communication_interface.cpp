@@ -109,9 +109,7 @@ void CommunicationInterface::clearClientStruct(client cli)
 	cli.curMessageType = 0;
 	cli.curMessagePriority = 0;
 	cli.curMessageSize = 0;
-	// NOTE: cannot store data here as we should be process multiple request from client at the same time
-	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer));
-	cout << sizeof(cli.curMessageBuffer);
+	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
 void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
