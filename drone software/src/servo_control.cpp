@@ -22,7 +22,6 @@ mutex ServoControl::mutexServoControl;
 
 ServoControl::ServoControl()
 {
-	pca9685Up = true;
 	servo.SetFrequency(60);
 	servo.SetLeftUs(MIN_PULSE_LENGTH);
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
