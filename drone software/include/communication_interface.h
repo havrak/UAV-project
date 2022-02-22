@@ -66,9 +66,10 @@ class CommunicationInterface{
 
 		socklen_t clientLength;
 		list<client> clients;
+		thread managementThread;
+		bool process = true;
 
-		thread clientConnectThread;
-		thread checkForNewDataThread;
+		/* thread checkForNewDataThread; */
 
 		static CommunicationInterface* communicationInterface;
 		static mutex mutexCommunicationInterface;
@@ -80,6 +81,10 @@ class CommunicationInterface{
 		int newClientConnect();
 		void clearClientStruct(client cli);
 		bool fixReceiveData(client cli);
+
+		//Destructive
+		void restart();
+		void shutdown();
 	public:
 		static CommunicationInterface* GetInstance();
 		bool setupSocket();
@@ -90,11 +95,11 @@ class CommunicationInterface{
 		bool sendDataToClient(SendingStructure);
 		bool sendDataToAll(SendingStructure);
 		void pingClient(client cli);
+		void manage();
 
-		//Destructive
+		thread checkForNewDataThread;
 
-		void restart();
-		void shutdown();
+
 };
 
 class SendingThreadPool{
@@ -108,7 +113,7 @@ class SendingThreadPool{
 
 		queue<SendingStructure> workQueue;
 		bool process = true;
-
+		volatile bool wswitch  = false;
 		void endThreadPool();
 		void worker();
 

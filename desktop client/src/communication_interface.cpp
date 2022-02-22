@@ -136,28 +136,32 @@ bool CommunicationInterface::fixReceiveData()
 bool CommunicationInterface::receiveDataFromServer()
 {
 	ssize_t bytesReceived = 0;
-	bool receivingData = true;
+	/* bool receivingData = true; */
+
 	if (server.curIndexInBuffer == 0) { // we are starting new message
 		unsigned char infoBuffer[5];
-		ssize_t tmp = recv(sockfd, (char*)&infoBuffer + bytesReceived, 5 - bytesReceived, MSG_DONTWAIT);
-		if (tmp < 5)
+		ssize_t tmp = recv(sockfd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
+		if (tmp < 5){
+			cout << "no data received: " <<tmp << "\n";
 			return false;
+		}
 
 		if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) { // just check if first few bytes look semi valid
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received data doesn't match" << endl;
 			fixReceiveData();
 			return false;
 		} else {
+			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received matches" << endl;
 			server.curMessageType = infoBuffer[0];
 			server.curMessagePriority = infoBuffer[1];
 			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
 		}
-		bytesReceived = 0;
+		/* bytesReceived = 0; */
 	} else {
 		bytesReceived = server.curIndexInBuffer;
 	}
 
-	while (receivingData) {
+	while (true) {
 		ssize_t rCount = recv(sockfd, (char*)&server.curMessageBuffer + bytesReceived, server.curMessageSize - server.curIndexInBuffer + 5, MSG_DONTWAIT);
 		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
 			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from server" << endl;
@@ -191,15 +195,17 @@ void CommunicationInterface::checkActivityOnSocket()
 	int state;
 	while (process) {
 		buildFdSets();
-		state = select(sockfd + 1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
+		cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | waiting for activity, fd:" << (sockfd + 1) << "\n";
+		state = select(sockfd+1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
 		switch (state) {
 		case -1:
-			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
+			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
 			break;
 		case 0:
-			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong" << endl;
+			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
 		default:
 			if (FD_ISSET(sockfd, &read_fds)) {
+				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | got data to read\n";
 				receiveDataFromServer();
 			}
 			if (FD_ISSET(sockfd, &except_fds)) {
@@ -270,13 +276,14 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
 
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+			cout << "COMMUNICATION_INTERFACE | sendData | failed to send message\n";
 			return false;
 		bytesSend += sCount;
 		if (bytesSend == sizeof(message)) {
+			cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 			return true;
 		}
 	}
-	cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 	return false;
 }
 
@@ -519,12 +526,15 @@ void ControllerDroneBridge::sendControlComand()
 {
 
 	while (true) {
-		SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
-		controllerStateMutex.lock();
-		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
-		controllerStateMutex.unlock();
-		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
-		this_thread::sleep_for(chrono::milliseconds(50));
+		/* SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState)); */
+		/* controllerStateMutex.lock(); */
+		/* memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState)); */
+		/* controllerStateMutex.unlock(); */
+		/* SendingThreadPool::GetInstance()->scheduleToSendControl(ss); */
+		/* this_thread::sleep_for(chrono::milliseconds(50)); */
+		CommunicationInterface::GetInstance()->pingServer();
+		this_thread::sleep_for(chrono::milliseconds(1000));
+
 	}
 }
 

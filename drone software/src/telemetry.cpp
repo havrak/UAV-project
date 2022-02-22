@@ -41,10 +41,10 @@ int Telemetry::setUpSensors()
 	cout << "MAIN | main | INA226 attached\n";
 	BatteryInterface::GetInstance()->startLoop();
 	cout << "MAIN | main | loop started\n";
-	/* GPSInterface::GetInstance()->attachGPS(); */
-	/* cout << "MAIN | main | GPS attached\n"; */
-	/* GPSInterface::GetInstance()->startLoop(); */
-	/* cout << "MAIN | main | GPS Loop started\n"; */
+	GPSInterface::GetInstance()->attachGPS();
+	cout << "MAIN | main | GPS attached\n";
+	GPSInterface::GetInstance()->startLoop();
+	cout << "MAIN | main | GPS Loop started\n";
 	return 1;
 }
 
@@ -116,11 +116,16 @@ int Telemetry::processGeneralTelemetryRequest(const client* cli)
 {
 	pTeleGen data;
 	data.att = createTeleAttStruct();
+	cout << "TELEMETRY | processGeneralTelemetryRequest | got att, ";
 	data.gps = createTeleGPSStruct();
+	cout << "gps, ";
 	data.batt = createTeleBattStuct();
+	cout << "batt, ";
 	data.io = createTeleIOStatStruct();
+	cout << "io, ";
 	data.pwm = createTelePWMStruct();
-	SendingStructure ss(cli, P_TELE_GEN, 0x01, sizeof(data));
+	cout << "pwm \n";
+	SendingStructure ss(cli->fd, cli->cMutex, P_TELE_GEN, 0x01, sizeof(data));
 	/* ss.MessagePriority = 0x01; */
 	/* ss.MessageType = P_TELE_GEN; */
 	/* ss.cli = cli; */
@@ -134,7 +139,7 @@ int Telemetry::processAttGPSRequest(const client* cli)
 	pTeleATTGPS data;
 	data.att = createTeleAttStruct();
 	data.gps = createTeleGPSStruct();
-	SendingStructure ss(cli, P_TELE_ATTGPS, 0x01, sizeof(data));
+	SendingStructure ss(cli->fd, cli->cMutex, P_TELE_ATTGPS, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
@@ -142,7 +147,7 @@ int Telemetry::processAttGPSRequest(const client* cli)
 int Telemetry::processBatteryRequest(const client* cli)
 {
 	pTeleBATT data = createTeleBattStuct();
-	SendingStructure ss(cli, P_TELE_BATT, 0x01, sizeof(data));
+	SendingStructure ss(cli->fd, cli->cMutex, P_TELE_BATT, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
@@ -151,7 +156,7 @@ int Telemetry::processBatteryRequest(const client* cli)
 int Telemetry::processPWMRequest(const client* cli)
 {
 	pTelePWM data = createTelePWMStruct();
-	SendingStructure ss(cli, P_TELE_PWM, 0x01, sizeof(data));
+	SendingStructure ss(cli->fd, cli->cMutex, P_TELE_PWM, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;
@@ -159,7 +164,7 @@ int Telemetry::processPWMRequest(const client* cli)
 int Telemetry::processIORequest(const client* cli)
 {
 	pTeleIOStat data = createTeleIOStatStruct();
-	SendingStructure ss(cli, P_TELE_IOSTAT, 0x01, sizeof(data));
+	SendingStructure ss(cli->fd, cli->cMutex, P_TELE_IOSTAT, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return 1;

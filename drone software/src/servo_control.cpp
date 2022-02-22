@@ -27,20 +27,19 @@ ServoControl::ServoControl()
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
 	servo.SetRightUs(MAX_PULSE_LENGTH);
 	servo.SetInvert(false);
-	slowDownToMin();
-	/* armESC(); */
-	servo.SetAngle(CHANNEL(1), ANGLE(90));
-	nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
+	/* slowDownToMin(); */
+	armESC();
+	/* servo.SetAngle(CHANNEL(1), ANGLE(90)); */
 
-	servo.SetAngle(CHANNEL(1), ANGLE(180));
-	servo.SetAngle(CHANNEL(2), ANGLE(90));
+	servo.SetAngle(CHANNEL(2), ANGLE(180));
 	servo.SetAngle(CHANNEL(3), ANGLE(90));
 	servo.SetAngle(CHANNEL(4), ANGLE(90));
+	servo.SetAngle(CHANNEL(5), ANGLE(90));
 
-	servo.SetAngle(CHANNEL(10), ANGLE(90));
-	servo.SetAngle(CHANNEL(11), ANGLE(90));
-	servo.SetAngle(CHANNEL(14), ANGLE(90));
-	servo.SetAngle(CHANNEL(15), ANGLE(90));
+	/* servo.SetAngle(CHANNEL(10), ANGLE(90)); */
+	/* servo.SetAngle(CHANNEL(11), ANGLE(90)); */
+	/* servo.SetAngle(CHANNEL(14), ANGLE(90)); */
+	/* servo.SetAngle(CHANNEL(15), ANGLE(90)); */
 
 	if (debug)
 		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
@@ -165,6 +164,7 @@ int ServoControl::processControl(ProcessingStructure ps)
 		return processMovementForStandart(control);
 		break;
 	}
+	cout << "Control processed\n";
 	return 0;
 }
 
