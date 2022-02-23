@@ -19,9 +19,11 @@ CameraStreamer::CameraStreamer(){
 
 bool CameraStreamer::setupStream()
 {
-	string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
+	string command = "gst-launch-1.0 -v autovideosrc device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
+	//string command = "gst-launch-1.0 -v libcamerasrc" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
+	//string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
 	cout << "CAMERA_STREAMER | setupStream | command: " << command << "\n";
-	/* system(command.c_str()); */
+	system(command.c_str());
 
 	if (debug)
 		cout << "CAMERA_STREAMER | setupStream | resutl: " << endl;

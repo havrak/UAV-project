@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <object class="GtkTextBuffer" id="telemetryBuffer"/>
   <object class="GtkWindow" id="MainWindow">
     <property name="can-focus">False</property>
     <child>
@@ -96,6 +97,7 @@
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="margin-right">325</property>
+                <property name="stock">gtk-missing-image</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -112,40 +114,31 @@
                   <object class="GtkImage" id="artHorizon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-bottom">29</property>
+                    <property name="margin-bottom">30</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">True</property>
+                    <property name="fill">False</property>
                     <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="margin-bottom">24</property>
-                    <property name="stock">gtk-missing-image</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
-                    <property name="margin-left">69</property>
-                    <property name="margin-bottom">169</property>
-                    <property name="input-purpose">digits</property>
+                    <property name="margin-left">80</property>
+                    <property name="margin-bottom">191</property>
+                    <property name="editable">False</property>
+                    <property name="wrap-mode">word</property>
+                    <property name="cursor-visible">False</property>
+                    <property name="buffer">telemetryBuffer</property>
+                    <property name="accepts-tab">False</property>
                     <property name="monospace">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">True</property>
+                    <property name="fill">False</property>
                     <property name="position">2</property>
                   </packing>
                 </child>

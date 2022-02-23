@@ -48,28 +48,6 @@ struct client {
 			, cMutex(cMutex) {};
 };
 
-// struct are nice, but i would end up wasting a lot of space
-/* class ProcessingStructure { */
-/* 	public: */
-/* 	const client* cli; // we need the client to know if he is ready to receive data */
-
-/* 	const unsigned char messageType = 0; */
-/* 	const unsigned char messagePriority = 0; */
-/* 	unsigned int short messageSize; */
-/* 	unsigned char* messageBuffer; */
-/* 	ProcessingStructure(client* cli, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize) */
-/* 			: cli(cli) */
-/* 			, messageType(messageType) */
-/* 			, messagePriority(messagePriority) */
-/* 			, messageSize(messageBufferSize) */
-/* 			, messageBuffer(new unsigned char[messageBufferSize]) {}; */
-
-/* 	unsigned char* getMessageBuffer() */
-/* 	{ */
-/* 		return (unsigned char*)messageBuffer; */
-/* 	}; */
-/* }; */
-
 class ProcessingStructure {
 	public:
 	// const client* cli; // we need the client to know if he is ready to receive data
@@ -94,27 +72,6 @@ class ProcessingStructure {
 		return (unsigned char*)messageBuffer;
 	};
 };
-
-/* class SendingStructure { */
-/* 	public: */
-/* 	const client* cli; */
-
-/* 	const unsigned char messageType = 0; */
-/* 	const unsigned char messagePriority = 0; */
-/* 	unsigned int short messageSize; */
-/* 	unsigned char* messageBuffer; */
-/* 	SendingStructure(const client* cli, const unsigned char messageType, const unsigned char messagePriority, unsigned int short messageBufferSize) */
-/* 			: cli(cli) */
-/* 			, messageType(messageType) */
-/* 			, messagePriority(messagePriority) */
-/* 			, messageSize(messageBufferSize) */
-/* 			, messageBuffer(new unsigned char[messageBufferSize]) {}; */
-
-/* 	unsigned char* getMessageBuffer() */
-/* 	{ */
-/* 		return (unsigned char*)messageBuffer; */
-/* 	}; */
-/* }; */
 
 class SendingStructure {
 	public:
@@ -165,7 +122,7 @@ struct pTeleIOStat {
 	bool pca9685;
 	bool wt901;
 	bool gps;
-	pTeleIOStat();
+	pTeleIOStat(){};
 	pTeleIOStat(bool ina226, bool pca9685, bool wt901, bool gps): ina226(ina226), pca9685(pca9685), wt901(wt901), gps(gps){};
 };
 
@@ -175,7 +132,7 @@ struct pTeleGPS {
 	double longitude;
 	double altitude;
 	double numberOfSatelites;
-	pTeleGPS();
+	pTeleGPS(){};
 	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double numberOfSatelites): gpsUp(gpsUp), latitude(latitude), longitude(longitude), altitude(altitude), numberOfSatelites(numberOfSatelites){};
 };
 
@@ -196,7 +153,7 @@ struct pTeleATT {
 	int pressure;
 	// TEMP
 	double temp;
-	pTeleATT();
+	pTeleATT(){};
 	pTeleATT(double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp): accX(accX), accY(accY), accZ(accZ), gyroX(gyroX), gyroY(gyroY), gyroZ(gyroZ), magX(magX), magY(magY), magZ(magZ), pressure(pressure), temp(temp) {};
 };
 
@@ -206,7 +163,7 @@ struct pTeleBATT {
 	float power;
 	float shunt;
 	float energy;
-	pTeleBATT();
+	pTeleBATT(){};
 	pTeleBATT(float voltage, float current, float power, float shunt, float energy): voltage(voltage), current(current), power(power), shunt(shunt), energy(energy){};
 };
 

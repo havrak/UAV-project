@@ -31,7 +31,6 @@ DroneTelemetry* DroneTelemetry::GetInstance()
 int DroneTelemetry::processGeneralTelemetry(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	//pTeleGen tmp;
 	memcpy(&data, ps.getMessageBuffer(),  sizeof(ps.messageSize));
 	gpsLastTimeReceived = clock();
 	ioLastTimeReceived = clock();

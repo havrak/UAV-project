@@ -9,6 +9,8 @@ project(${PROJECT_NAME})
 find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(X11 REQUIRED)
+
 pkg_check_modules(GTKMM gtkmm-3.0)
 
 link_directories(${GTKMM_LIBRARY_DIRS})
@@ -27,3 +29,6 @@ target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME} ${GTKMM_LIBRARIES})
 
 target_link_libraries(${PROJECT_NAME}  ${CMAKE_THREAD_LIBS_INIT})
+
+target_link_libraries(${PROJECT_NAME}  X11)
+

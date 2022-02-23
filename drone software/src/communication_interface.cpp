@@ -343,12 +343,6 @@ int CommunicationInterface::newClientConnect()
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
 
 	cout << "COMMUNICATION_INTERFACE | newClientConnect | ip: " << clientIPV4Address << ":" << clientAddress.sin_port << " fd:" << clientfd << "\n";
-	/* struct client c; */
-	/* c.adress = clientAddress; */
-	/* c.fd = clientfd; */
-	/* //mutex cm; */
-	/* c.cMutex = new mutex; */
-	/* cout << "COMMUNICATION_INTERFACE | newClientConnect | client mutex: " << c.cMutex << "\n"; */
 	clients.push_back(client(clientfd, clientAddress, new mutex));
 	return clientfd;
 }

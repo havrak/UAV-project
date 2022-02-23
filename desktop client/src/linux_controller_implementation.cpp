@@ -21,7 +21,10 @@ void LinuxControllerImplementation::setupController()
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
 							"open device \n";
-		mainWindow->displayError(pTeleErr(127, "Controller was not found"));
+		if(fd == -1){
+			mainWindow->displayError(pTeleErr(127, "Controller was not found"));
+			fd = -2;
+		}
 		return;
 	}
 
@@ -47,9 +50,10 @@ void LinuxControllerImplementation::eventLoop()
 
 	while (process) {
 		setupController();
-		if(fd != -1) break;
+		if(fd > 0) break;
 		this_thread::sleep_for(chrono::seconds(2000));
 	}
+	generateEventForEveryButton();
 
 	while (process) {
 

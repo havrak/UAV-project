@@ -9,6 +9,7 @@
 #ifndef MAINWINDOW_H_
 #define MAINWINDOW_H_
 
+#include "gtkmm/textbuffer.h"
 #include "gtkmm/textview.h"
 #include "protocol_spec.h"
 #include <gtkmm.h>

@@ -23,11 +23,14 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
 	this->builder->get_widget("artHorizon", this->artHorizon);
 	this->builder->get_widget("telemetryField", this->telemetryField);
+
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 
 	this->artHorizon->set("images/image_not_found.png");
 	this->drawingImage->set("images/image_not_found.png");
+	this->telemetryField->get_buffer()->set_text("No telemetry was received");
+
 }
 
 MainWindow::~MainWindow()
@@ -59,6 +62,7 @@ void MainWindow::updateImage(cv::Mat& frame)
 
 void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 {
+	this->telemetryField->get_buffer()->set_text("aaa");
 }
 
 void MainWindow::displayError(pTeleErr error)

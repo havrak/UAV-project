@@ -16,6 +16,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <thread>
+#include <X11/Xlib.h>
 
 using namespace std;
 
@@ -42,7 +43,8 @@ int main(int argc, char** argv)
 	signal(SIGABRT, signalHandler);
 	signal(SIGKILL, signalHandler);
 
-	Gtk::Main app(argc, argv); // stupstíme gtk okno
+	XInitThreads();
+	Gtk::Main app(argc, argv);
 	Glib::RefPtr<Gtk::Builder> builder;
 	try {
 		builder = Gtk::Builder::create_from_file("main_window.glade");  // create gtk builder, load glade file
