@@ -11,8 +11,6 @@
 #include "protocol_spec.h"
 #include <mutex>
 #include <stack>
-#include "error_message.h"
-#include "error_message.h"
 
 using namespace std;
 
@@ -53,14 +51,11 @@ class DroneTelemetry{
 	private:
 		static DroneTelemetry* telemetry;
 		static mutex telemetryMutex;
-		mutex errorStackMutex;
+
 		DroneTelemetry();
 		wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
 
-
-
-		stack<ErrorMessage> errors; // some loop will check for all errors and display them
-
+		pTeleGen data;
 
 		pTeleBATT battery;
 		clock_t batteryLastTimeReceived;

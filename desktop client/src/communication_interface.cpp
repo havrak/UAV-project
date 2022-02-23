@@ -155,6 +155,10 @@ bool CommunicationInterface::receiveDataFromServer()
 			server.curMessageType = infoBuffer[0];
 			server.curMessagePriority = infoBuffer[1];
 			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
+
+			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+			cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
+
 		}
 		/* bytesReceived = 0; */
 	} else {
@@ -175,7 +179,7 @@ bool CommunicationInterface::receiveDataFromServer()
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
 				ProcessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
-				memcpy(&ps.messageBuffer, &server.curMessageBuffer, server.curMessageSize);
+				memcpy(ps.getMessageBuffer(), &server.curMessageBuffer, server.curMessageSize);
 				lastTimeDataReceived = clock();
 				ProcessingThreadPool::GetInstance()->addJob(ps);
 
@@ -272,12 +276,14 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	cout << "COMMUNICATION_INTERFACE | sendData | got mutex\n";
 	ssize_t bytesSend = 0;
 	bool sending = true;
+
 	while (sending) {
 		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
 
-		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
 			cout << "COMMUNICATION_INTERFACE | sendData | failed to send message\n";
 			return false;
+		}
 		bytesSend += sCount;
 		if (bytesSend == sizeof(message)) {
 			cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
@@ -360,6 +366,7 @@ void ProcessingThreadPool::worker()
 		}
 		switch (ps->messageType) {
 		case P_PING: // ping
+			cout << "PROCESSING_THREAD_POOL | worker | got ping from pi | \n";
 			break;
 		case P_SET_RESTART: // resart of system
 			break;
@@ -375,6 +382,7 @@ void ProcessingThreadPool::worker()
 			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_GEN: // general information
+			cout << "got general telemetry\n";
 			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
@@ -526,14 +534,14 @@ void ControllerDroneBridge::sendControlComand()
 {
 
 	while (true) {
-		/* SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState)); */
-		/* controllerStateMutex.lock(); */
-		/* memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState)); */
-		/* controllerStateMutex.unlock(); */
-		/* SendingThreadPool::GetInstance()->scheduleToSendControl(ss); */
-		/* this_thread::sleep_for(chrono::milliseconds(50)); */
-		CommunicationInterface::GetInstance()->pingServer();
-		this_thread::sleep_for(chrono::milliseconds(1000));
+		SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
+		controllerStateMutex.lock();
+		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
+		controllerStateMutex.unlock();
+		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
+		this_thread::sleep_for(chrono::milliseconds(50));
+		/* CommunicationInterface::GetInstance()->pingServer(); */
+		/* this_thread::sleep_for(chrono::milliseconds(1000)); */
 
 	}
 }

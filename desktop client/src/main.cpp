@@ -28,11 +28,11 @@ cv::Size imageSize;
 thread cameraThread;
 MainWindow* mainWindow = nullptr;
 bool cameraInitialized;
-LinuxControllerImplementation lci;
+LinuxControllerImplementation* lci = nullptr;
 
 void signalHandler( int sigNum){
 	CommunicationInterface::GetInstance()->cleanUp();
-	lci.process = false;
+	lci->process = false;
 	captureVideoFromCamera = false;
 	exit(127);
 }
@@ -57,15 +57,15 @@ int main(int argc, char** argv)
 	CommunicationInterface::GetInstance()->setupSocket();
 	cout << "MAIN | main | socket setted up \n";
 
-	LinuxControllerImplementation lci = LinuxControllerImplementation();
+	lci = new LinuxControllerImplementation();
 	cout << "MAIN | main | controller setted up \n";
 
 	ControllerDroneBridge::GetInstance();
 	cout << "MAIN | main | drone bridge setted up \n";
 	ControlInterpreter* ci = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
 
-	lci.addObserver(ci);
-	lci.generateEventForEveryButton();
+	lci->addObserver(ci);
+	lci->generateEventForEveryButton();
 	cout << "MAIN | main | drone bridge setted up \n";
 
 	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz

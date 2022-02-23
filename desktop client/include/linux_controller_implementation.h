@@ -11,7 +11,7 @@
 
 #include "control_interpreter.h"
 #include "controller_interface.h"
-#include "error_message.h"
+#include "protocol_spec.h"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -59,8 +59,9 @@ class LinuxControllerImplementation : public ControllerInterface {
 		// D-PAD Y - 7 (up is negative: value of 32767)
 		vector<int> axisStates;
 	public:
+		LinuxControllerImplementation(bool){};
 		LinuxControllerImplementation();
-		ErrorMessage setupController();
+		void setupController();
 		void generateEventForEveryButton() override;
 };
 

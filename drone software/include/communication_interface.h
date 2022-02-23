@@ -85,6 +85,7 @@ class CommunicationInterface{
 		//Destructive
 		void restart();
 		void shutdown();
+
 	public:
 		static CommunicationInterface* GetInstance();
 		bool setupSocket();
@@ -95,6 +96,8 @@ class CommunicationInterface{
 		bool sendDataToClient(SendingStructure);
 		bool sendDataToAll(SendingStructure);
 		void pingClient(client cli);
+		void sendErrorMessage(client cli, int errCode, char *errMessage );
+		void sendErrorMessageToAll(int errCode, char *errMessage);
 		void manage();
 
 		thread checkForNewDataThread;

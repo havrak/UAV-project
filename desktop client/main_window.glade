@@ -92,14 +92,13 @@
               </packing>
             </child>
             <child>
-              <object class="GtkImage" id="DrawingImage">
+              <object class="GtkImage" id="drawingImage">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="margin-right">325</property>
-                <property name="stock">gtk-missing-image</property>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
@@ -113,6 +112,7 @@
                   <object class="GtkImage" id="artHorizon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <property name="margin-bottom">29</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
@@ -125,6 +125,7 @@
                   <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <property name="margin-bottom">24</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
@@ -134,9 +135,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkTextView">
+                  <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
+                    <property name="margin-left">69</property>
+                    <property name="margin-bottom">169</property>
+                    <property name="input-purpose">digits</property>
+                    <property name="monospace">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -148,6 +153,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
+                <property name="pack-type">end</property>
                 <property name="position">2</property>
               </packing>
             </child>

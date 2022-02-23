@@ -247,9 +247,6 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 
 	ssize_t bytesSend = 0;
 	bool sending = true;
-	cout << "COMMUNICATION_INTERFACE | sendDataToClient | getting lock to client\n";
-	cout << "COMMUNICATION_INTERFACE | sendDataToClient | clientfd: " << ss.cfd << "\n";
-	cout << "COMMUNICATION_INTERFACE | sendDataToClient | client mutex: " << ss.cMutex << "\n";
 	{
 		//mutex m = ;
 		lock_guard<mutex> m(*ss.cMutex); // NOTE: problematic
@@ -257,12 +254,13 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 		cout << "COMMUNICATION_INTERFACE | sendDataToClient | client locked\n";
 		while (sending) {
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
+			cout << "Send: " << sCount << " to " << ss.cfd << "\n ";
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
 				cout << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
 				return false;
 			}
 			bytesSend += sCount;
-			if (bytesSend == sizeof(*message)) {
+			if (bytesSend == sizeof(message)) {
 				cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send unlocking client\n";
 				return true;
 			}
@@ -275,7 +273,7 @@ bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 {
 	bool toReturn = true;
 	for (client c : clients) {
-		if (c.fd != 0) {
+		if (c.fd != -1) {
 			cout << "sending to clinet\n";
 			ss.cfd = c.fd;
 			ss.cMutex= c.cMutex;
@@ -345,21 +343,21 @@ int CommunicationInterface::newClientConnect()
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
 
 	cout << "COMMUNICATION_INTERFACE | newClientConnect | ip: " << clientIPV4Address << ":" << clientAddress.sin_port << " fd:" << clientfd << "\n";
-	struct client c;
-	c.adress = clientAddress;
-	c.fd = clientfd;
-	//mutex cm;
-	c.cMutex = new mutex;
-	cout << "COMMUNICATION_INTERFACE | newClientConnect | client mutex: " << c.cMutex << "\n";
-	clients.push_back(c);
+	/* struct client c; */
+	/* c.adress = clientAddress; */
+	/* c.fd = clientfd; */
+	/* //mutex cm; */
+	/* c.cMutex = new mutex; */
+	/* cout << "COMMUNICATION_INTERFACE | newClientConnect | client mutex: " << c.cMutex << "\n"; */
+	clients.push_back(client(clientfd, clientAddress, new mutex));
 	return clientfd;
 }
 
 void CommunicationInterface::manage()
 {
 	while (process) {
-		// cout << "COMMUNICATION_INTERFACE | manage | sending telemetry\n";
-		// Telemetry::GetInstance()->processGeneralTelemetryRequest(nullptr);
+		cout << "COMMUNICATION_INTERFACE | manage | sending telemetry\n";
+		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
 		this_thread::sleep_for(chrono::milliseconds(250));
 	}
 }
@@ -393,13 +391,25 @@ bool CommunicationInterface::setupSocket()
 	return true;
 }
 
+void CommunicationInterface::sendErrorMessageToAll( int errCode, char *errMessage){
+	sendErrorMessage(client(-1, 0), errCode, errMessage);
+}
+
+void CommunicationInterface::sendErrorMessage(client cli, int errCode, char *errMessage){
+	/* if(logOn){ */
+	/* 	// TODO: log errors into file */
+	/* } */
+
+	pTeleErr err(errCode, errMessage);
+	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_ERR, 0x04, sizeof(err));
+	memcpy(ss.getMessageBuffer(), &err, sizeof(err));
+	SendingThreadPool::GetInstance()->scheduleToSend(ss);
+
+}
+
 void CommunicationInterface::pingClient(client cli)
 {
-	cout << "COMMUNICATION_INTERFACE | pingClient | ping client  \n";
-	cout << "COMMUNICATION_INTERFACE | pingClient | client fd: " << cli.fd << "\n";
-	SendingStructure ss(cli.fd, cli.cMutex, P_PING, 0x01, 3);
-	cout << "COMMUNICATION_INTERFACE | pingClient | ping structure reated\n";
-	cout << "COMMUNICATION_INTERFACE | pingClient | cli in ss: " << cli.fd << "\n";
+	SendingStructure ss(cli.fd, cli.cMutex, P_PING, 0x01, 1);
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
@@ -429,9 +439,7 @@ void ProcessingThreadPool::worker()
 			ps = &workQueue.front();
 			workQueue.pop();
 		}
-		client tmp;
-		tmp.cMutex = ps->cMutex;
-		tmp.fd= ps->cfd;
+		client tmp(ps->cfd, ps->cMutex);
 		switch (ps->messageType) {
 		case P_PING: // ping
 			cout << "PING\n";
@@ -457,21 +465,19 @@ void ProcessingThreadPool::worker()
 		case P_CON_SPC: // spacial control
 			break;
 		case P_TELE_IOSTAT: // io status
-			tmp.fd = ps->cfd;
-			tmp.cMutex= ps->cMutex;
-			Telemetry::GetInstance()->processIORequest(&tmp);
+			Telemetry::GetInstance()->processIORequest(tmp);
 			break;
 		case P_TELE_GEN:																										 // general information
-			Telemetry::GetInstance()->processGeneralTelemetryRequest(&tmp); // sex tvoje máma
+			Telemetry::GetInstance()->processGeneralTelemetryRequest(tmp); // sex tvoje máma
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			Telemetry::GetInstance()->processAttGPSRequest(&tmp);
+			Telemetry::GetInstance()->processAttGPSRequest(tmp);
 			break;
 		case P_TELE_BATT: // battery status
-			Telemetry::GetInstance()->processBatteryRequest(&tmp);
+			Telemetry::GetInstance()->processBatteryRequest(tmp);
 			break;
 		case P_TELE_PWM: // pwm settings
-			Telemetry::GetInstance()->processPWMRequest(&tmp);
+			Telemetry::GetInstance()->processPWMRequest(tmp);
 			break;
 		case P_TELE_ERR: // general error message
 			// NOTE: do we care if clients sends an error,
@@ -491,7 +497,6 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !controlQueue.empty() || !process;
 			});
-			cout << "PROCESSSING_THREAD_POOL | controlWorker | new control\n";
 			ps = &controlQueue.back();
 			controlQueueTimestamps.pop_back();
 			controlQueue.pop_back();
@@ -563,6 +568,7 @@ void SendingThreadPool::worker()
 void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
+	cout << "Message type: " << ss.messageType << "\n";
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 	/* wswitch = true; */

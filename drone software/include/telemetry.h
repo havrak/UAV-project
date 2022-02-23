@@ -32,11 +32,11 @@ class Telemetry{
 	public:
 		static Telemetry* GetInstance();
 		int setUpSensors();
-		int processGeneralTelemetryRequest(const client *cli);
-		int processAttGPSRequest(const client *cli);
-		int processBatteryRequest(const client *cli);
-		int processPWMRequest(const client *cli);
-		int processIORequest(const client *cli);
+		int processGeneralTelemetryRequest(const client cli);
+		int processAttGPSRequest(const client cli);
+		int processBatteryRequest(const client cli);
+		int processPWMRequest(const client cli);
+		int processIORequest(const client cli);
 
 
 };

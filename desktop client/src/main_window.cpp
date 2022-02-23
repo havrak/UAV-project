@@ -6,6 +6,7 @@
  */
 
 #include "main_window.h"
+#include "protocol_spec.h"
 #include <opencv2/calib3d.hpp>
 #include <opencv2/videoio.hpp>
 
@@ -17,12 +18,15 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 {
 
 	this->paused = false;
-	this->builder->get_widget("DrawingImage", this->drawingImage);
+	this->builder->get_widget("drawingImage", this->drawingImage);
 	this->builder->get_widget("closeButton", this->closeButton);
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
+	this->builder->get_widget("artHorizon", this->artHorizon);
+	this->builder->get_widget("telemetryField", this->telemetryField);
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 
+	this->artHorizon->set("images/image_not_found.png");
 	this->drawingImage->set("images/image_not_found.png");
 }
 
@@ -51,6 +55,30 @@ void MainWindow::updateImage(cv::Mat& frame)
 		this->drawingImage->set(Gdk::Pixbuf::create_from_data(frame.data, Gdk::COLORSPACE_RGB, false, 8, frame.cols, frame.rows, frame.step));
 		this->drawingImage->queue_draw();
 	}
+}
+
+void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
+{
+}
+
+void MainWindow::displayError(pTeleErr error)
+{
+	GtkWidget *dialog = gtk_dialog_new_with_buttons(
+			"Error",
+			(GtkWindow*) mainWindow,
+			(GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+			"OK", GTK_RESPONSE_ACCEPT,
+			NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
+	gtk_widget_set_size_request (GTK_WIDGET (dialog), 200, 130);
+
+	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), gtk_label_new(error.message));
+	g_signal_connect_swapped(dialog,
+			"response",
+			G_CALLBACK(gtk_widget_destroy),
+			dialog);
+
+	gtk_widget_show_all(dialog);
 }
 
 bool setupCamera()

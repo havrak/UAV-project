@@ -9,6 +9,8 @@
 #ifndef MAINWINDOW_H_
 #define MAINWINDOW_H_
 
+#include "gtkmm/textview.h"
+#include "protocol_spec.h"
 #include <gtkmm.h>
 #include <opencv2/opencv.hpp>
 #include <mutex>
@@ -33,14 +35,19 @@ public:
 		return this->paused;
 	}
 	Gtk::ToggleButton *resumePauseButton;
+	Gtk::TextView *telemetryField;
+	void updateData(pTeleGen data, mutex *dataMutex);
+	void displayError(pTeleErr error);
 
 private:
 
 	Glib::RefPtr<Gtk::Builder> builder;
-	Gtk::Image *drawingImage;
 	Gtk::Button *closeButton;
+	Gtk::Image *artHorizon;
+	Gtk::Image *drawingImage;
 
 	bool paused;
+	//bool process = true;
 
 };
 

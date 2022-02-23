@@ -7,19 +7,22 @@
 
 #include "linux_controller_implementation.h"
 #include "controller_interface.h"
+#include "main_window.h"
+#include "protocol_spec.h"
 
 LinuxControllerImplementation::LinuxControllerImplementation()
 {
 	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
 }
 
-ErrorMessage LinuxControllerImplementation::setupController()
+void LinuxControllerImplementation::setupController()
 {
 	if ((fd = open(JOY_DEV, O_RDONLY)) < 0) {
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
 							"open device \n";
-		return *new ErrorMessage(true, 1, "Failed to open device");
+		mainWindow->displayError(pTeleErr(127, "Controller was not found"));
+		return;
 	}
 
 	ioctl(fd, JSIOCGAXES, &num_of_axis);
@@ -34,7 +37,7 @@ ErrorMessage LinuxControllerImplementation::setupController()
 			 << "  buttons: " << num_of_buttons << endl;
 
 	fcntl(fd, F_SETFL, O_NONBLOCK); // using non-blocking mode
-	return *new ErrorMessage(false, 0, "");
+	return;
 }
 
 void LinuxControllerImplementation::eventLoop()

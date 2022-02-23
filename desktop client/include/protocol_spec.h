@@ -14,9 +14,9 @@
 #define BUT_X 0x03
 #define BUT_Y 0x04
 
+#include <array>
 #include <cstring>
 #include <string>
-#include <array>
 
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
@@ -43,8 +43,9 @@ class ProcessingStructure {
 			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
 
-	unsigned char* getMessageBuffer(){
-		return (unsigned char*) messageBuffer;
+	unsigned char* getMessageBuffer()
+	{
+		return (unsigned char*)messageBuffer;
 	};
 };
 
@@ -58,11 +59,11 @@ class SendingStructure {
 			: messageType(messageType)
 			, messagePriority(messagePriority)
 			, messageSize(messageBufferSize)
-			, messageBuffer(new unsigned char[messageBufferSize])
-			{};
+			, messageBuffer(new unsigned char[messageBufferSize]) {};
 
-	unsigned char* getMessageBuffer(){
-		return (unsigned char*) messageBuffer;
+	unsigned char* getMessageBuffer()
+	{
+		return (unsigned char*)messageBuffer;
 	};
 };
 
@@ -81,8 +82,8 @@ class SendingStructure {
 
 using namespace std;
 
-//const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
-const unsigned char terminator[5] = { 0, 0, 255, 255, 255};
+// const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
+const unsigned char terminator[5] = { 0, 0, 255, 255, 255 };
 
 // Settings
 
@@ -169,7 +170,11 @@ struct pTeleGen {
 
 struct pTeleErr {
 	unsigned int code;
-	string message;
+	char message[60];
+	pTeleErr(unsigned int code, string msg)
+			: code(code) { strncpy(message, msg.c_str(), msg.length() > 60 ? 60 : msg.length()) ;};
+	pTeleErr(unsigned int code, char *msg)
+			: code(code) { strncpy(message, msg, strlen(msg) > 60 ? 60 : strlen(msg));};
 };
 
 enum protocol_codes {
