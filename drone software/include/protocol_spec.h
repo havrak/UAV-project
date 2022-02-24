@@ -137,11 +137,15 @@ struct pTeleGPS {
 };
 
 struct pTeleATT {
+	// GYRO
+	double yaw;
+	double pitch;
+	double roll;
 	// ACC
 	double accX;
 	double accY;
 	double accZ;
-	// GYRO
+	// GYRO ACC
 	double gyroX;
 	double gyroY;
 	double gyroZ;
@@ -154,7 +158,7 @@ struct pTeleATT {
 	// TEMP
 	double temp;
 	pTeleATT(){};
-	pTeleATT(double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp): accX(accX), accY(accY), accZ(accZ), gyroX(gyroX), gyroY(gyroY), gyroZ(gyroZ), magX(magX), magY(magY), magZ(magZ), pressure(pressure), temp(temp) {};
+	pTeleATT(double yaw, double pitch, double roll, double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp): yaw(yaw), pitch(pitch), roll(roll), accX(accX), accY(accY), accZ(accZ), gyroX(gyroX), gyroY(gyroY), gyroZ(gyroZ), magX(magX), magY(magY), magZ(magZ), pressure(pressure), temp(temp) {};
 };
 
 struct pTeleBATT {

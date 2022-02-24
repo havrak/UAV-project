@@ -124,11 +124,15 @@ struct pTeleGPS {
 };
 
 struct pTeleATT {
+	// GYRO
+	double yaw;
+	double pitch;
+	double roll;
 	// ACC
 	double accX;
 	double accY;
 	double accZ;
-	// GYRO
+	// GYRO ACC
 	double gyroX;
 	double gyroY;
 	double gyroZ;

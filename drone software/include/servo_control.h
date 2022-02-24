@@ -38,7 +38,7 @@ private:
   static ServoControl *servoControl;
   static mutex mutexServoControl;
 
-	wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
+	const wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
 	bool pca9685Up = false;
 	unsigned int short mainMotorMS;
 

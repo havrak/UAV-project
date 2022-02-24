@@ -52,7 +52,7 @@ int Telemetry::setUpSensors()
 pTeleATT Telemetry::createTeleAttStruct()
 {
 	ImuInterface* instance = ImuInterface::GetInstance();
-	pTeleATT toReturn(instance->getAccX(),instance->getAccY(),instance->getAccZ(),instance->getGyroX(),instance->getGyroY(),instance->getGyroZ(),instance->getMagX(),instance->getMagY(),instance->getMagZ(),instance->getPressure(),instance->getTemp()
+	pTeleATT toReturn(instance->getYaw(), instance->getPitch(), instance->getRoll(), instance->getAccX(),instance->getAccY(),instance->getAccZ(),instance->getGyroX(),instance->getGyroY(),instance->getGyroZ(),instance->getMagX(),instance->getMagY(),instance->getMagZ(),instance->getPressure(),instance->getTemp()
 	);
 	return toReturn;
 }

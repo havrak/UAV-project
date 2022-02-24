@@ -47,32 +47,6 @@
                 <property name="margin-bottom">142</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">button</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">button</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkToggleButton" id="resumePauseButton">
                     <property name="label" translatable="yes">pause</property>
                     <property name="visible">True</property>
@@ -115,7 +89,7 @@
                   <object class="GtkImage" id="artHorizon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-bottom">41</property>
+                    <property name="margin-bottom">40</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
@@ -128,8 +102,7 @@
                   <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
-                    <property name="margin-left">52</property>
-                    <property name="margin-bottom">189</property>
+                    <property name="margin-bottom">190</property>
                     <property name="editable">False</property>
                     <property name="wrap-mode">word</property>
                     <property name="cursor-visible">False</property>

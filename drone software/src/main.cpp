@@ -43,19 +43,11 @@ int main(int argc, char** argv)
 	} else {
 		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << "\n";
 	}
-	/* ServoControl::GetInstance(); */
-	/* cout << "MAIN | main | Setting up CAMERA_STREAMER" << endl; */
-	/* CameraStreamer *cs1 = new CameraStreamer(0, 5000, "192.168.6.11"); */
-	/* cs1->setupStream(); */
-	/* cout << "MAIN | main | CAMERA_STREAMER setted up" << endl; */
-
 	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
+	ServoControl::GetInstance();
 	Telemetry::GetInstance()->setUpSensors();
 	CommunicationInterface::GetInstance()->setupSocket();
 
-	// cout << "MAIN | main | ServoControl created" << endl;
-
-	// cout << "MAIN | main | servo Calibrating"
 	//ServoControl::GetInstance()->calibrateESC();
 	cout << "MAIN | main | entering main loop\n";
 	CommunicationInterface::GetInstance()->checkForNewDataThread.join();

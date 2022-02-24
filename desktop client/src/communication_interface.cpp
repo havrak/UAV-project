@@ -149,7 +149,6 @@ bool CommunicationInterface::receiveDataFromServer()
 		unsigned char infoBuffer[5];
 		ssize_t tmp = recv(sockfd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
 		if (tmp < 5){
-			cout << "no data received: " <<tmp << "\n";
 			if(tmp == 0) connectionEstablished = false; // NOTE: check this
 			return false;
 		}
@@ -162,7 +161,7 @@ bool CommunicationInterface::receiveDataFromServer()
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received matches" << endl;
 			server.curMessageType = infoBuffer[0];
 			server.curMessagePriority = infoBuffer[1];
-			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3];
+			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3] +5;
 
 			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
 			cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
@@ -174,7 +173,7 @@ bool CommunicationInterface::receiveDataFromServer()
 	}
 
 	while (true) {
-		ssize_t rCount = recv(sockfd, (char*)&server.curMessageBuffer + bytesReceived, server.curMessageSize - server.curIndexInBuffer + 5, MSG_DONTWAIT);
+		ssize_t rCount = recv(sockfd, (char*)&server.curMessageBuffer + bytesReceived, server.curMessageSize - server.curIndexInBuffer, MSG_DONTWAIT);
 		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
 			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from server" << endl;
 			clearServerStruct();
@@ -185,6 +184,7 @@ bool CommunicationInterface::receiveDataFromServer()
 		if (server.curIndexInBuffer == server.curMessageSize + 4) {
 
 			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
+				server.curMessageSize -=5;
 				ProcessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
 				memcpy(ps.getMessageBuffer(), &server.curMessageBuffer, server.curMessageSize);
@@ -194,7 +194,7 @@ bool CommunicationInterface::receiveDataFromServer()
 				clearServerStruct();
 				return true;
 			} else {
-				cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | Data doesn't end with correct terminator" << endl;
+				cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | data doesn't end with correct terminator" << endl;
 				return false;
 			}
 		}
@@ -217,12 +217,11 @@ void CommunicationInterface::checkActivityOnSocket()
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
 		default:
 			if (FD_ISSET(sockfd, &read_fds)) {
-				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | got data to read\n";
 				receiveDataFromServer();
 			}
 			if (FD_ISSET(sockfd, &except_fds)) {
 				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | server failed with exception\n";
-				//close(sockfd);
+				close(sockfd);
 			}
 		}
 	}
@@ -289,7 +288,7 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
 
 		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
-			cout << "COMMUNICATION_INTERFACE | sendData | failed to send message\n";
+			cerr << "COMMUNICATION_INTERFACE | sendData | failed to send message\n";
 			return false;
 		}
 		bytesSend += sCount;
@@ -506,7 +505,8 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 		controllerState.rAnalog.second = y;
 		break;
 	case R_TRIGGER:
-		controllerState.lTrigger = x;
+		cout << "rTrigger: " << x;
+		controllerState.rTrigger = x;
 		break;
 	case D_PAD:
 		controllerState.dpad.first = x;
@@ -548,8 +548,6 @@ void ControllerDroneBridge::sendControlComand()
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
 		this_thread::sleep_for(chrono::milliseconds(50));
-		/* CommunicationInterface::GetInstance()->pingServer(); */
-		/* this_thread::sleep_for(chrono::milliseconds(1000)); */
 
 	}
 }
@@ -569,10 +567,8 @@ void sendConfigurationOfCamera()
 	cameraSetup.port = 5000;
 	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
-	cout << "message set to object: ";
 	for (int i = 0; i < sizeof(ss.messageBuffer); i++) {
 		cout << int(ss.messageBuffer[i]) << " ";
 	}
-	cout << "SENDING DATA TO CAMERA" << endl;
 	CommunicationInterface::GetInstance()->sendData(ss);
 }

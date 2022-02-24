@@ -14,6 +14,7 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
+#include <string>
 
 using namespace std;
 
@@ -87,7 +88,26 @@ bool MainWindow::updateTextField(textBufferUpdate update)
 void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 {
 	//textBufferUpdate  aa(telemetryBuffer, "test");
-	g_idle_add(G_SOURCE_FUNC(updateTextField), new textBufferUpdate(textBuffer, "test"));
+	string message;
+	message+="temp: "+to_string(data.att.temp)+"\n";
+	message+="-----------------------\n";
+	message+="yaw x: "+to_string(data.att.yaw) + "\n";
+	message+="pitch y: "+to_string(data.att.pitch) + "\n";
+	message+="roll y: "+to_string(data.att.roll) + "\n";
+	message+="-----------------------\n";
+	message+="gyro x: "+to_string(data.att.gyroX) + "\n";
+	message+="gyro y: "+to_string(data.att.gyroY) + "\n";
+	message+="gyro y: "+to_string(data.att.gyroZ) + "\n";
+	message+="-----------------------\n";
+	message+="GPS NOS: "+to_string(data.gps.numberOfSatelites) + "\n";
+	message+="lat: "+to_string(data.gps.latitude) + "\n";
+	message+="lot: "+to_string(data.gps.longitude) + "\n";
+	message+="-----------------------\n";
+	message+="Voltage: "+to_string(data.batt.getVoltage)+"\n";
+	message+="Current: "+to_string(data.batt.getCurrent)+"\n";
+
+
+	g_idle_add(G_SOURCE_FUNC(updateTextField), new textBufferUpdate(textBuffer, message));
 
 	/* this->telemetryField->get_buffer().clear(); */
 	/* this->telemetryField->get_buffer()->set_text("aaa"); */

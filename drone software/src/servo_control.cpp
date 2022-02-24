@@ -7,9 +7,11 @@
 
 #include "servo_control.h"
 #include "bcm2835.h"
+#include "protocol_spec.h"
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
+#include <iterator>
 #include <ostream>
 #include <stdexcept>
 #include <time.h>
@@ -143,19 +145,21 @@ pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
 
 int ServoControl::processMovementForVTail(pConStr ps)
 {
-	cout << "WE GOT CONTROLINO" << endl;
-	// left trigger -> slow down
-	// right trigger -> speed up
+	cout << "TRIGGER: \n";
+	cout << "   l Trigger: " << ps.lTrigger << "\n";
+	cout << "   r Trigger: " <<ps.rTrigger << "\n";
+	return 1;
 }
 
 int ServoControl::processMovementForStandart(pConStr ps)
 {
+	return 1;
 }
 
 int ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
-	memcpy(&control, &ps.messageBuffer, sizeof(ps.messageBuffer));
+	memcpy(&control, ps.getMessageBuffer(), ps.messageSize);
 	switch (configuration) {
 	case V_SHAPE_TAIL_WING:
 		return processMovementForVTail(control);

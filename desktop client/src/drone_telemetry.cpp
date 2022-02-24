@@ -31,7 +31,7 @@ DroneTelemetry* DroneTelemetry::GetInstance()
 int DroneTelemetry::processGeneralTelemetry(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&data, ps.getMessageBuffer(),  sizeof(ps.messageSize));
+	memcpy(&data, ps.getMessageBuffer(),  ps.messageSize);
 	gpsLastTimeReceived = clock();
 	ioLastTimeReceived = clock();
 	batteryLastTimeReceived = clock();
@@ -47,7 +47,7 @@ int DroneTelemetry::processGeneralTelemetry(ProcessingStructure ps)
 int DroneTelemetry::processAttGPS(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&data.att, &ps.messageBuffer,  sizeof(ps.messageBuffer)); //  gps is right after att
+	memcpy(&data.att, ps.getMessageBuffer(),  ps.messageSize); //  gps is right after att
 	gpsLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	mainWindow->updateData(data, &telemetryMutex);
@@ -56,7 +56,7 @@ int DroneTelemetry::processAttGPS(ProcessingStructure ps)
 int DroneTelemetry::processBattery(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&data.batt, ps.getMessageBuffer(),  sizeof(ps.messageSize));
+	memcpy(&data.batt, ps.getMessageBuffer(),  ps.messageSize);
 	batteryLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	mainWindow->updateData(data, &telemetryMutex);
@@ -65,7 +65,7 @@ int DroneTelemetry::processBattery(ProcessingStructure ps)
 int DroneTelemetry::processPWM(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&data.pwm, ps.getMessageBuffer(),  sizeof(ps.messageSize));
+	memcpy(&data.pwm, ps.getMessageBuffer(),  ps.messageSize);
 	pwmLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	mainWindow->updateData(data, &telemetryMutex);
@@ -74,7 +74,7 @@ int DroneTelemetry::processPWM(ProcessingStructure ps)
 int DroneTelemetry::processIO(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
-	memcpy(&data.io, ps.getMessageBuffer(),  sizeof(ps.messageSize));
+	memcpy(&data.io, ps.getMessageBuffer(), ps.messageSize);
 	ioLastTimeReceived = clock();
 	telemetryMutex.unlock();
 	mainWindow->updateData(data, &telemetryMutex);

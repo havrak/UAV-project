@@ -201,13 +201,13 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 5] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[4]) {
 
-				cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | Data was correctly terminated\n";
+				cli.curMessageSize -=5;
 
 				ProcessingStructure ps(cli.fd, cli.cMutex, cli.curMessageType, cli.curMessagePriority, cli.curMessageSize);
 				memcpy(ps.getMessageBuffer(), &cli.curMessageBuffer, cli.curMessageSize);
 
 				if (ps.messageType == P_CON_STR) {
-					// ProcessingThreadPool::GetInstance()->addJobControl(ps);
+					ProcessingThreadPool::GetInstance()->addJobControl(ps);
 				} else {
 					ProcessingThreadPool::GetInstance()->addJob(ps);
 				}
@@ -257,13 +257,11 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 		//mutex m = ;
 		lock_guard<mutex> m(*ss.cMutex); // NOTE: problematic
 		/* ss.cli->cMutex->lock(); */
-		cout << "COMMUNICATION_INTERFACE | sendDataToClient | client locked\n";
 		while (sending) {
 
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
-			cout << "Send: " << sCount << " to " << ss.cfd << "\n ";
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
-				cout << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
+				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
 				return false;
 			}
 			bytesSend += sCount;
@@ -281,7 +279,6 @@ bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 	bool toReturn = true;
 	for (client c : clients) {
 		if (c.fd != -1) {
-			cout << "sending to clinet\n";
 			ss.cfd = c.fd;
 			ss.cMutex= c.cMutex;
 			if (!sendDataToClient(ss))
@@ -321,7 +318,6 @@ void CommunicationInterface::checkActivityOnSocket()
 
 			for (client c : clients) {
 				if (FD_ISSET(c.fd, &read_fds)) {
-					cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | got data to be read from:" << c.fd << "\n";
 					receiveDataFromClient(c);
 				}
 				if (FD_ISSET(c.fd, &except_fds)) {
@@ -357,7 +353,6 @@ int CommunicationInterface::newClientConnect()
 void CommunicationInterface::manage()
 {
 	while (process) {
-		cout << "COMMUNICATION_INTERFACE | manage | sending telemetry\n";
 		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
 		this_thread::sleep_for(chrono::milliseconds(250));
 	}
@@ -499,11 +494,12 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !controlQueue.empty() || !process;
 			});
+			cout << "Processing request \n";
+			cout << "sizeof control queue: " << controlQueue.size() << "\n";
 			ps = &controlQueue.back();
 			controlQueueTimestamps.pop_back();
 			controlQueue.pop_back();
 		}
-		cout << "PROCESSSING_THREAD_POOL | controlWorker | processing new control\n";
 		ServoControl::GetInstance()->processControl(*ps);
 	}
 }
@@ -511,14 +507,14 @@ void ProcessingThreadPool::controlWorker()
 void ProcessingThreadPool::addJobControl(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
-	if (!controlQueueTimestamps.empty() && (((float)clock()) - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.01) {
+	cout << "PROCESSSING_THREAD_POOL | addJob | adding control\n";
+	if (!controlQueueTimestamps.empty() && ((float) clock() - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.03) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
 	controlQueue.push_front(ps);
 	controlQueueTimestamps.push_front(clock());
 	controlQueueUpdate.notify_all();
-	cout << "Control added\n";
 }
 
 void ProcessingThreadPool::addJob(ProcessingStructure ps)
@@ -557,10 +553,7 @@ void SendingThreadPool::worker()
 
 		}
 		//SendingStructure s = *ss;
-		cout << "SENDING_THREAD_POOL | message type: " << ss->messageType << "\n";
-		cout << "SENDING_THREAD_POOL | client fd: " << ss->cfd << "\n";
 		if (ss->cfd == -1) {
-			cout << "SENDING_THREAD_POOL | sending message to all, message type: " << (int)ss->messageType << "\n";
 			CommunicationInterface::GetInstance()->sendDataToAll(*ss);
 		} else
 			CommunicationInterface::GetInstance()->sendDataToClient(*ss);
@@ -570,7 +563,6 @@ void SendingThreadPool::worker()
 void SendingThreadPool::scheduleToSend(SendingStructure ss)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
-	cout << "Message type: " << ss.messageType << "\n";
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 	/* wswitch = true; */

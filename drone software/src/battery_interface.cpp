@@ -46,7 +46,7 @@ void BatteryInterface::updateFunction()
 	while (true) {
 		ina226.ina226_read(&voltage, &current, &power, &shunt);
 		energy = voltage * current * 24 * 365.25 / 1000000;
-
+		cout << "Voltage: " << voltage << "\n";
 		// time(&rawtime);
 		// struct tm* info = localtime(&rawtime);
 		// strftime(buffer, 80, "%Y-%m-%d,%H:%M:%S", info);
