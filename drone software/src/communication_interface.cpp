@@ -121,6 +121,12 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
+bool CommunicationInterface::isFdValid(int fd)
+{
+		return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+
 void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
 {
 	close(cli.fd);
@@ -253,6 +259,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 		/* ss.cli->cMutex->lock(); */
 		cout << "COMMUNICATION_INTERFACE | sendDataToClient | client locked\n";
 		while (sending) {
+
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
 			cout << "Send: " << sCount << " to " << ss.cfd << "\n ";
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
@@ -326,7 +333,7 @@ void CommunicationInterface::checkActivityOnSocket()
 				/* } */
 			}
 		}
-		this_thread::sleep_for(chrono::milliseconds(100));
+		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 }
 
@@ -434,6 +441,7 @@ void ProcessingThreadPool::worker()
 			workQueue.pop();
 		}
 		client tmp(ps->cfd, ps->cMutex);
+		cout << "processing new thing: " << ps->messageType << "\n";
 		switch (ps->messageType) {
 		case P_PING: // ping
 			cout << "PING\n";

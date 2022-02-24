@@ -81,6 +81,7 @@ class CommunicationInterface{
 		int newClientConnect();
 		void clearClientStruct(client cli);
 		bool fixReceiveData(client cli);
+		bool isFdValid(int fd);
 
 		//Destructive
 		void restart();

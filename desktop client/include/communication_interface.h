@@ -26,6 +26,7 @@
 #include <thread>
 #include <time.h>
 #include <vector>
+#include <fcntl.h>
 
 #define SERVER_PORT 8066
 #define SERVER_IPV4_ADDR "192.168.6.1"
@@ -88,6 +89,8 @@ class CommunicationInterface {
 
 	bool fixReceiveData();
 	bool receiveDataFromServer();
+	bool isFdValid(int fd);
+
 
 	public:
 	static CommunicationInterface* GetInstance();

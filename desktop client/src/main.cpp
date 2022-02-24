@@ -34,6 +34,7 @@ LinuxControllerImplementation* lci = nullptr;
 void signalHandler( int sigNum){
 	CommunicationInterface::GetInstance()->cleanUp();
 	lci->process = false;
+	mainWindow->stopCamera();
 	captureVideoFromCamera = false;
 	exit(127);
 }
@@ -44,6 +45,8 @@ int main(int argc, char** argv)
 	signal(SIGKILL, signalHandler);
 
 	XInitThreads();
+
+
 	Gtk::Main app(argc, argv);
 	Glib::RefPtr<Gtk::Builder> builder;
 	try {
@@ -84,7 +87,6 @@ int main(int argc, char** argv)
 		/* 	asm("nop"); */
 		/* this_thread::sleep_for(chrono::milliseconds(100)); */
 		/* } */
-		//setupCamera();
 
 		Gtk::Main::run(*mainWindow);
 

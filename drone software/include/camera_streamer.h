@@ -22,16 +22,20 @@ class CameraStreamer{
 	private:
 
 		const bool debug = true;
-		const int cameraIndex = 0;
 		int port;
 		string ipaddr = "";
+		const int cameraIndex = 0;
+		const int capture_width = 640;
+		const int capture_height = 480;
+		const int framerate = 30;
 
 
 	public:
 		CameraStreamer(const int port, const string ipaddr):port(port),ipaddr(ipaddr){};
+
 		CameraStreamer();
 		bool setupStream();
-		int setUpCamera(ProcessingStructure ps);
+		bool setUpCamera(ProcessingStructure ps);
 };
 
 #endif /* !CAMERA_STREAMER_H */

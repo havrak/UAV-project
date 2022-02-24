@@ -13,6 +13,7 @@
 #include "gtkmm/textview.h"
 #include "protocol_spec.h"
 #include <gtkmm.h>
+#include <gdk/gdk.h>
 #include <opencv2/opencv.hpp>
 #include <mutex>
 #include <thread>
@@ -20,6 +21,15 @@
 bool setupCamera();
 void cameraLoop();
 bool initializeCamera();
+
+
+struct textBufferUpdate {
+	Glib::RefPtr<Gtk::TextBuffer> buffer;
+    string text;
+		textBufferUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, string text): buffer(buffer), text(text){};
+};
+
+
 
 class MainWindow : public Gtk::Window
 {
@@ -46,6 +56,9 @@ private:
 	Gtk::Button *closeButton;
 	Gtk::Image *artHorizon;
 	Gtk::Image *drawingImage;
+	Glib::RefPtr<Gtk::TextBuffer> textBuffer;
+	GtkTextBuffer *telemetryBuffer;
+	static bool updateTextField(textBufferUpdate update); // we will be passing pointer of this function, thus it needs to be statis
 
 	bool paused;
 	//bool process = true;
@@ -61,5 +74,6 @@ extern MainWindow *mainWindow;
 extern bool cameraInitialized;
 extern std::thread cameraThread;
 extern cv::Size imageSize;
+
 
 #endif // MAINWINDOW_H_

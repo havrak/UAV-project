@@ -18,6 +18,7 @@
 #include <cstring>
 #include <string>
 
+
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 

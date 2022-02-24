@@ -96,8 +96,8 @@
               <object class="GtkImage" id="drawingImage">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="margin-right">325</property>
                 <property name="stock">gtk-missing-image</property>
+                <property name="icon_size">0</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -109,12 +109,13 @@
               <object class="GtkBox" id="rightSidebar">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
+                <property name="halign">end</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkImage" id="artHorizon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-bottom">30</property>
+                    <property name="margin-bottom">41</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
@@ -127,8 +128,8 @@
                   <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
-                    <property name="margin-left">80</property>
-                    <property name="margin-bottom">191</property>
+                    <property name="margin-left">52</property>
+                    <property name="margin-bottom">189</property>
                     <property name="editable">False</property>
                     <property name="wrap-mode">word</property>
                     <property name="cursor-visible">False</property>

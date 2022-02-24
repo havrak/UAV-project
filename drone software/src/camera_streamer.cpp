@@ -10,34 +10,59 @@
 #include "protocol_spec.h"
 #include <cstdlib>
 #include <cstring>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
 #include <string>
+#include <unistd.h>
 
-
-CameraStreamer::CameraStreamer(){
-
+CameraStreamer::CameraStreamer()
+{
 }
+
 
 bool CameraStreamer::setupStream()
 {
-	string command = "gst-launch-1.0 -v autovideosrc device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
-	//string command = "gst-launch-1.0 -v libcamerasrc" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
-	//string command = "gst-launch-1.0 -v v4l2src device=/dev/video" + to_string(cameraIndex) + " ! videoconvert ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
+	string command = "gst-launch-1.0 -v autovideosrc device=/dev/video"+to_string(cameraIndex)+" ! video/x-raw,width="+to_string(capture_width)+",height="+to_string(capture_height)+",framerate="+to_string(framerate)+"/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &";
 	cout << "CAMERA_STREAMER | setupStream | command: " << command << "\n";
-	system(command.c_str());
+	/* system(command.c_str()); */
 
-	if (debug)
-		cout << "CAMERA_STREAMER | setupStream | resutl: " << endl;
+	/* string pipe = "-v autovideosrc device=/dev/video"+to_string(cameraIndex)+"; ! video/x-raw,width="+to_string(capture_width)+",height="+to_string(capture_height)+",framerate="+to_string(framerate)+"/1 ! jpegenc ! rtpjpegpay ! udpsink host=" + ipaddr + " port=" + to_string(port) + " >/dev/null &"; */
+  /* char * pipeline[] = {const_cast<char *>(pipe.c_str()) ,NULL}; */
+	/* int pid = fork(); */
+	/* if(pid == 0) */
+	/* 	execv("/usr/bin/gst-launch-1.0",pipeline)*/
+	/*  */
+	//CommunicationInterface::GetInstance()->sendErrorMessageToAll(0x05, "Failed to open camera");
 	return true;
+
+	/* string pipeline = "autovideosrc device=/dev/video"+to_string(cameraIndex)+" ! video/x-raw,width="+to_string(capture_width)+",height="+to_string(capture_height)+",framerate="+to_string(framerate)+"/1 ! jpegenc ! rtpjpegpay ! appsink"; */
+	/* cout << "CAMERA_STREAMER | setupStream | pipeline: " << pipeline << "\n"; */
+	/* cv::VideoCapture cap(pipeline, cv::CAP_GSTREAMER); */
+	/* // free to do whatever with the stream probably */
+	/* cv::VideoWriter writer("appsrc ! udpsink host="+ipaddr+" port="+to_string(port), 0, (double)30, cv::Size(640, 480), true); */
+	/* if (!cap.isOpened() && !writer.isOpened()) { */
+	/* 	cout << "CAMERA_STREAMER | setupStream | Failed to open camera\n"; */
+	/* 	CommunicationInterface::GetInstance()->sendErrorMessageToAll(0x05, "Failed to open camera"); */
+	/* 	return false; */
+	/* } */
+	/* cout << "CAMERA_STREAMER | setupStream | camera was open\n"; */
+	/* return true; */
 }
 
-int CameraStreamer::setUpCamera(ProcessingStructure ps)
+bool CameraStreamer::setUpCamera(ProcessingStructure ps)
 {
 	pSetCamera pc;
-	memcpy(&pc, ps.getMessageBuffer(), sizeof(ps.messageBuffer));
+	memcpy(&pc, ps.getMessageBuffer(), ps.messageSize);
+	for(int i = 0 ; i < 8 ; i++ ){
+		cout << int(ps.getMessageBuffer()[i]) << " ";
+	}
+	cout << "\n";
 	port = pc.port;
-	for(int i = 0; i < 4 ; i++){
-		ipaddr+= to_string(pc.ip[i]);
-		if(i != 3) ipaddr+=".";
+	for (int i = 0; i < 4; i++) {
+		cout << int(pc.ip[i]);
+		ipaddr += to_string(int(pc.ip[i]));
+		if (i != 3)
+			ipaddr += ".";
 	}
 	return setupStream();
 }

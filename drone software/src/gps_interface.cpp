@@ -59,7 +59,7 @@ void GPSInterface::updateFunction()
 				while (getline(ss, item, ','))
 					parts.push_back(item);
 
-				if (parts.at(0).compare("$GPGGA") == 0) {
+				if (parts.size() > 8 && parts.at(0).compare("$GPGGA") == 0) {
 					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
 					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
 					numberOfSatelites = stoi(parts.at(7));

@@ -13,6 +13,7 @@
 #include <cstring>
 #include <ctime>
 #include <ios>
+#include <iterator>
 #include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -107,6 +108,12 @@ void CommunicationInterface::clearServerStruct()
 	memset(&server.curMessageBuffer, 0, sizeof(server.curMessageBuffer));
 }
 
+bool CommunicationInterface::isFdValid(int fd)
+{
+		return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+
 void CommunicationInterface::cleanUp()
 {
 	cout << "COMMUNICATION_INTERFACE | cleanUp | killing communicationInterface\n";
@@ -143,6 +150,7 @@ bool CommunicationInterface::receiveDataFromServer()
 		ssize_t tmp = recv(sockfd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
 		if (tmp < 5){
 			cout << "no data received: " <<tmp << "\n";
+			if(tmp == 0) connectionEstablished = false; // NOTE: check this
 			return false;
 		}
 
@@ -555,7 +563,7 @@ void sendConfigurationOfCamera()
 	cout << "COMMUNICATION_INTERFACE | sendConfigurationOfCamera | sending the configuration of the camera\n";
 	pSetCamera cameraSetup;
 	cameraSetup.ip[0] = 192;
-	cameraSetup.ip[1] = 192;
+	cameraSetup.ip[1] = 168;
 	cameraSetup.ip[2] = 6;
 	cameraSetup.ip[3] = 11;
 	cameraSetup.port = 5000;
