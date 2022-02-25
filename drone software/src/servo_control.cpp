@@ -8,6 +8,7 @@
 #include "servo_control.h"
 #include "bcm2835.h"
 #include "protocol_spec.h"
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -143,11 +144,40 @@ pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
 	return toReturn;
 }
 
+bool ServoControl::adjustMainMotorSpeed(pConStr ps){
+
+	return true;
+}
+
 int ServoControl::processMovementForVTail(pConStr ps)
 {
 	cout << "TRIGGER: \n";
-	cout << "   l Trigger: " << ps.lTrigger << "\n";
-	cout << "   r Trigger: " <<ps.rTrigger << "\n";
+	// fully released -- value of 65k
+	// fully pressend -- value of 0
+	if(ps.lTrigger < 2500) ps.lTrigger=0;
+	if(ps.rTrigger < 2500) ps.rTrigger=0;
+	if(ps.lTrigger > 63000) ps.lTrigger=CONTROLLER_AXIS_VALUE*2;
+	if(ps.rTrigger > 63000) ps.rTrigger=CONTROLLER_AXIS_VALUE*2;
+	int valL = (ps.lTrigger << 10) >> 10;
+	int valR = (ps.rTrigger << 10) >> 10;
+
+	if(valL < valR){
+		// accelerate
+		if(mainMotorMS+log(valR-valL)*SERVO_ACCELERATION_MULTIPLIER <= MAX_PULSE_LENGTH){
+				mainMotorMS+= log(valR-valL)*SERVO_ACCELERATION_MULTIPLIER;
+				servo.Set(CHANNEL(0), mainMotorMS);
+				cout << "SERVO_CONTROL | processMovementForVTail | accelerating: " << mainMotorMS << "\n";
+		}
+	}else{
+		// decelerate
+		if(mainMotorMS-log(valL-valR)*SERVO_ACCELERATION_MULTIPLIER >= MIN_PULSE_LENGTH){
+				mainMotorMS-= log(valL-valR)*SERVO_ACCELERATION_MULTIPLIER;
+				if(mainMotorMS-80 > MIN_PULSE_LENGTH) mainMotorMS = MIN_PULSE_LENGTH;
+				cout << "SERVO_CONTROL | processMovementForVTail | decelerating: " << mainMotorMS << "\n";
+				servo.Set(CHANNEL(0), mainMotorMS);
+		}
+
+	}
 	return 1;
 }
 

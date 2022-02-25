@@ -67,7 +67,7 @@ pTeleGPS Telemetry::createTeleGPSStruct()
 pTeleBATT Telemetry::createTeleBattStuct()
 {
 	BatteryInterface* instance = BatteryInterface::GetInstance();
-	pTeleBATT toReturn(instance->getCurrent(), instance->getEnergy(), instance->getPower(), instance->getShunt(), instance->getVoltage());
+	pTeleBATT toReturn(instance->getVoltage(), instance->getCurrent(),  instance->getPower(), instance->getEnergy(),instance->getShunt());
 	return toReturn;
 }
 

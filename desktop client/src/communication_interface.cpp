@@ -181,9 +181,9 @@ bool CommunicationInterface::receiveDataFromServer()
 		}
 		server.curIndexInBuffer += rCount;
 
-		if (server.curIndexInBuffer == server.curMessageSize + 4) {
+		if (server.curIndexInBuffer == server.curMessageSize) {
 
-			if (server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer] == terminator[4]) {
+			if (server.curMessageBuffer[server.curIndexInBuffer - 5] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer-1] == terminator[4]) {
 				server.curMessageSize -=5;
 				ProcessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
@@ -204,11 +204,12 @@ bool CommunicationInterface::receiveDataFromServer()
 
 void CommunicationInterface::checkActivityOnSocket()
 {
-	int state;
+	int state= -1;
 	while (process) {
 		buildFdSets();
 		cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | waiting for activity, fd:" << (sockfd + 1) << "\n";
 		state = select(sockfd+1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
+
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
@@ -218,6 +219,7 @@ void CommunicationInterface::checkActivityOnSocket()
 		default:
 			if (FD_ISSET(sockfd, &read_fds)) {
 				receiveDataFromServer();
+				cout << "datat recieved from server \n";
 			}
 			if (FD_ISSET(sockfd, &except_fds)) {
 				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | server failed with exception\n";
@@ -505,7 +507,6 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 		controllerState.rAnalog.second = y;
 		break;
 	case R_TRIGGER:
-		cout << "rTrigger: " << x;
 		controllerState.rTrigger = x;
 		break;
 	case D_PAD:
@@ -547,7 +548,7 @@ void ControllerDroneBridge::sendControlComand()
 		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
-		this_thread::sleep_for(chrono::milliseconds(50));
+		this_thread::sleep_for(chrono::milliseconds(1000));
 
 	}
 }

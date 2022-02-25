@@ -172,13 +172,12 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 			fixReceiveData(cli);
 			return false;
 		} else {
-			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | checksum from: " << cli.fd << " was valid\n";
 			cli.curMessageType = infoBuffer[0];
 			cli.curMessagePriority = infoBuffer[1];
 			cli.curMessageSize = (((uint16_t)infoBuffer[2]) << 8) + ((uint16_t)infoBuffer[3]) + 5;
 
 			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
-			cout << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
+			cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
 		}
 	} else {
 		bytesReceived = cli.curIndexInBuffer;
@@ -195,9 +194,6 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 		cli.curIndexInBuffer += rCount;
 
 		if (cli.curIndexInBuffer == cli.curMessageSize) {
-			for (int i = 0; i < cli.curMessageSize; i++)
-				cout << int(cli.curMessageBuffer[i]) << " ";
-			cout << " \n";
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 5] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[4]) {
 
@@ -232,11 +228,11 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 	char message[ss.messageSize + 10];
 
 	cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
-	cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
-	for (int i = 0; i < ss.messageSize; i++) {
-		cout << int(ss.messageBuffer[i]) << " ";
-	}
-	cout << "\n";
+	cout << "\n   clientfd: " << int(ss.cfd)<< "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
+	/* for (int i = 0; i < ss.messageSize; i++) { */
+	/* 	cout << int(ss.messageBuffer[i]) << " "; */
+	/* } */
+	/* cout << "\n"; */
 
 	// setup metadata
 	message[0] = ss.messageType;
@@ -254,9 +250,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 	ssize_t bytesSend = 0;
 	bool sending = true;
 	{
-		//mutex m = ;
-		lock_guard<mutex> m(*ss.cMutex); // NOTE: problematic
-		/* ss.cli->cMutex->lock(); */
+		lock_guard<mutex> m(*ss.cMutex);
 		while (sending) {
 
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
@@ -266,7 +260,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 			}
 			bytesSend += sCount;
 			if (bytesSend == sizeof(message)) {
-				cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send unlocking client\n";
+				cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
 				return true;
 			}
 		}
@@ -291,7 +285,6 @@ bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 void CommunicationInterface::checkActivityOnSocket()
 {
 	int state, fd;
-	cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | thread started\n";
 	while (process) {
 
 		fd = sockfd;
@@ -300,7 +293,6 @@ void CommunicationInterface::checkActivityOnSocket()
 				fd = c.fd;
 		buildFdSets();
 
-		cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | waiting for activity, fd:" << (fd + 1) << "\n";
 		/* state = select(fd + 1, &read_fds, 0, 0, NULL); */
 		state = select(fd + 1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to client?
 		switch (state) {
@@ -312,7 +304,6 @@ void CommunicationInterface::checkActivityOnSocket()
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong, select return 0\n";
 			break;
 		default:
-			cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | we have an activity \n";
 			if (FD_ISSET(sockfd, &read_fds)) // we will drop first packet by this method
 				newClientConnect();
 
@@ -436,14 +427,9 @@ void ProcessingThreadPool::worker()
 			workQueue.pop();
 		}
 		client tmp(ps->cfd, ps->cMutex);
-		cout << "processing new thing: " << ps->messageType << "\n";
 		switch (ps->messageType) {
 		case P_PING: // ping
-			cout << "PING\n";
-			{
-			cout << "client fd: " << ps->cfd << "\n";
 			CommunicationInterface::GetInstance()->pingClient(tmp);
-			}
 			break;
 		case P_SET_RESTART: // resart of system
 			/* CommunicationInterface::GetInstance()->restart(); */
@@ -494,8 +480,6 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueUpdate.wait(mutex, [&] {
 				return !controlQueue.empty() || !process;
 			});
-			cout << "Processing request \n";
-			cout << "sizeof control queue: " << controlQueue.size() << "\n";
 			ps = &controlQueue.back();
 			controlQueueTimestamps.pop_back();
 			controlQueue.pop_back();
@@ -507,7 +491,6 @@ void ProcessingThreadPool::controlWorker()
 void ProcessingThreadPool::addJobControl(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
-	cout << "PROCESSSING_THREAD_POOL | addJob | adding control\n";
 	if (!controlQueueTimestamps.empty() && ((float) clock() - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.03) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
@@ -520,7 +503,6 @@ void ProcessingThreadPool::addJobControl(ProcessingStructure ps)
 void ProcessingThreadPool::addJob(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(workQueueMutex);
-	cout << "PROCESSSING_THREAD_POOL | addJob | adding job\n";
 	workQueue.push(ps);
 	workQueueUpdate.notify_all();
 }

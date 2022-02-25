@@ -12,9 +12,11 @@
 #define MIXING_GAIN 0.5
 
 #define MIN_PULSE_LENGTH 200 // Minimum pulse length in µs1
-#define CEN_PULSE_LENGTH 1000 // Central pulse length in µs
-#define MAX_PULSE_LENGTH 1800 // Maximum pulse length in µs
+#define CEN_PULSE_LENGTH 800 // Central pulse length in µs
+#define MAX_PULSE_LENGTH 1400 // Maximum pulse length in µs
 // NOTE: current max is over 1900
+#define SERVO_ACCELERATION_MULTIPLIER 5
+#define CONTROLLER_AXIS_VALUE 32767
 
 #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h"
 #include <bcm2835.h>
@@ -71,6 +73,8 @@ private:
 
 	VShapeTailWingConfiguration vTail;
 	StandardTailWingConfiguration standard;
+
+	bool adjustMainMotorSpeed(pConStr ps);
 
 protected:
   ServoControl();

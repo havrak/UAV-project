@@ -81,7 +81,7 @@ void LinuxControllerImplementation::eventLoop()
 						continue;
 					}
 				} else {
-					notifyObserverEvent(cs, axisStates[index], 0);
+					notifyObserverEvent(cs, axisStates[index]+32767, 0); // to be from zero to 2*32767
 					continue;
 				}
 			}
@@ -113,7 +113,7 @@ void LinuxControllerImplementation::generateEventForEveryButton()
 				i++;
 				continue;
 			} else {
-				notifyObserverEvent(cs, axisStates[i], 0);
+				notifyObserverEvent(cs, axisStates[i]+32767, 0);
 				continue;
 			}
 		}
