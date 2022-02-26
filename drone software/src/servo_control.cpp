@@ -7,15 +7,20 @@
 
 #include "servo_control.h"
 #include "bcm2835.h"
+#include "imu_interface.h"
 #include "protocol_spec.h"
+#include "telemetry.h"
+#include <bits/types/clock_t.h>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
 #include <iostream>
 #include <iterator>
 #include <math.h>
 #include <ostream>
 #include <stdexcept>
+#include <thread>
 #include <time.h>
 #include <unistd.h>
 
@@ -31,7 +36,6 @@ ServoControl::ServoControl()
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
 	servo.SetRightUs(MAX_PULSE_LENGTH);
 	servo.SetInvert(false);
-	/* slowDownToMin(); */
 	armESC();
 
 	servo.SetAngle(CHANNEL(2), ANGLE(135));
@@ -184,6 +188,72 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 	return true;
 }
 
+bool ServoControl::pidController(){
+	const float weightP = 1;
+	const float weightI = 1;
+	const float weightD = 1;
+	const float maxValOfIntegrator = 1;
+	const float scaler = 1;
+
+	float lowPass = 0.00795774715459476;// infintie impulse response filter
+	float integratorValue = 0;// integrator value
+	float proportionalValue = 0;
+	float derivativeValue = 0;
+	float lastError = 0;// last error for derivative
+	float lastDerivative = 0;// last derivative for low-pass filter
+	float error = 0;
+	float pidOutput;
+
+	clock_t lastTime = clock();
+	clock_t now = clock();
+	clock_t difference;
+
+	while (pidOn) {
+		pidOutput = 0;
+		now = clock();
+		difference = now - lastTime;
+		difference /=CLOCKS_PER_SEC;
+
+		proportionalValue = error * weightP;
+ 		pidOutput +=proportionalValue;
+
+		if (difference > 0.001){
+			lastTime = clock();
+			//derivation value
+			derivativeValue = (error-lastError)/difference;
+			derivativeValue = lastDerivative+(difference/(lowPass+difference)) * (derivativeValue - lastDerivative);
+			derivativeValue *= scaler*weightD;
+ 			pidOutput +=derivativeValue;
+
+
+			lastError = error;
+			lastDerivative = derivativeValue;
+			//integration value
+			integratorValue += (error+weightI) * difference;
+			integratorValue = integratorValue < -maxValOfIntegrator ? -maxValOfIntegrator : (integratorValue > maxValOfIntegrator ? maxValOfIntegrator : integratorValue);
+			pidOutput +=integratorValue;
+		}
+
+		error = ImuInterface::GetInstance()->getRoll() - ImuInterface::GetInstance()->getPitch();
+
+		//
+
+
+
+	}
+	return true;
+}
+
+bool ServoControl::togglePIDController(){
+	if((pidOn = !pidOn) == true){
+		pidControllerThread = thread(&ServoControl::pidController, this);
+	}else{
+		pidControllerThread.join();
+	}
+	return true;
+}
+
+
 int ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
@@ -226,6 +296,10 @@ int ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), ps.messageSize);
+	if(pidOn){
+		adjustMainMotorSpeed(control);
+		return 0;
+	}
 	switch (configuration) {
 	case V_SHAPE_TAIL_WING:
 		return processMovementForVTail(control);

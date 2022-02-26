@@ -44,6 +44,7 @@ private:
   const bool debug = true;
   static ServoControl *servoControl;
   static mutex mutexServoControl;
+	thread pidControllerThread;
 
 	const wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
 	bool pca9685Up = false;
@@ -82,6 +83,12 @@ private:
 	bool adjustMainMotorSpeed(pConStr ps);
 	void setAngleOfServo(int channel, bool right, unsigned char angle);
 
+
+	// PID controller
+	bool pidOn = false;
+	bool pidController();
+
+
 protected:
   ServoControl();
 
@@ -92,6 +99,7 @@ public:
 	void slowDownToMin();
 	void testServo();
 	bool getPCA9865Status();
+	bool togglePIDController();
 	unsigned int short getMainMotorMS();
 	pair<int,unsigned int short*> getControlSurfaceConfiguration();
 	int processControl(ProcessingStructure ps);

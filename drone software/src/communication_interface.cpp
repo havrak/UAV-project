@@ -6,12 +6,15 @@
  */
 
 #include "communication_interface.h"
+#include "imu_interface.h"
 #include "protocol_spec.h"
 #include "servo_control.h"
 #include "telemetry.h"
 #include <asm-generic/errno-base.h>
+#include <bits/types/clock_t.h>
 #include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <mutex>
 #include <netinet/in.h>
 #include <sys/select.h>
@@ -83,11 +86,26 @@ void CommunicationInterface::cleanUp()
 	close(sockfd);
 }
 
+void CommunicationInterface::restart(){
+	process = false;
+	checkForNewDataThread.join();
+	managementThread.join();
+	cleanUp();
+	process = true;
+	setupSocket();
+	ProcessingThreadPool::GetInstance()->restart();
+	SendingThreadPool::GetInstance()->restart();
+}
+
+
 void CommunicationInterface::shutdown()
 {
 	process = false;
 	checkForNewDataThread.join();
 	managementThread.join();
+	cleanUp();
+	ProcessingThreadPool::GetInstance()->endThreadPool();
+	SendingThreadPool::GetInstance()->endThreadPool();
 }
 
 int CommunicationInterface::buildFdSets()
@@ -123,17 +141,16 @@ void CommunicationInterface::clearClientStruct(client cli)
 
 bool CommunicationInterface::isFdValid(int fd)
 {
-		return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
-
 
 void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
 {
 	close(cli.fd);
-	for(client c: clients){
-		if(c.fd == cli.fd){
-				clearClientStruct(c);
-				cli.fd = -1;
+	for (client c : clients) {
+		if (c.fd == cli.fd) {
+			clearClientStruct(c);
+			cli.fd = -1;
 		}
 	}
 }
@@ -176,8 +193,10 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 			cli.curMessagePriority = infoBuffer[1];
 			cli.curMessageSize = (((uint16_t)infoBuffer[2]) << 8) + ((uint16_t)infoBuffer[3]) + 5;
 
-			if(debug) cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
-			if(debug) cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
+			if (debug)
+				cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+			if (debug)
+				cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
 		}
 	} else {
 		bytesReceived = cli.curIndexInBuffer;
@@ -197,7 +216,7 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 
 			if (cli.curMessageBuffer[cli.curIndexInBuffer - 5] == terminator[0] && cli.curMessageBuffer[cli.curIndexInBuffer - 4] == terminator[1] && cli.curMessageBuffer[cli.curIndexInBuffer - 3] == terminator[2] && cli.curMessageBuffer[cli.curIndexInBuffer - 2] == terminator[3] && cli.curMessageBuffer[cli.curIndexInBuffer - 1] == terminator[4]) {
 
-				cli.curMessageSize -=5;
+				cli.curMessageSize -= 5;
 
 				ProcessingStructure ps(cli.fd, cli.cMutex, cli.curMessageType, cli.curMessagePriority, cli.curMessageSize);
 				memcpy(ps.getMessageBuffer(), &cli.curMessageBuffer, cli.curMessageSize);
@@ -227,8 +246,10 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 	}
 	char message[ss.messageSize + 10];
 
-	if(debug) cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
-	if(debug) cout << "\n   clientfd: " << int(ss.cfd)<< "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
+	if (debug)
+		cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
+	if (debug)
+		cout << "\n   clientfd: " << int(ss.cfd) << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
 	/* for (int i = 0; i < ss.messageSize; i++) { */
 	/* 	cout << int(ss.messageBuffer[i]) << " "; */
 	/* } */
@@ -254,13 +275,14 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 		while (sending) {
 
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
-			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
+			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
 				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
 				return false;
 			}
 			bytesSend += sCount;
 			if (bytesSend == sizeof(message)) {
-				if(debug) cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
+				if (debug)
+					cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
 				return true;
 			}
 		}
@@ -274,7 +296,7 @@ bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 	for (client c : clients) {
 		if (c.fd != -1) {
 			ss.cfd = c.fd;
-			ss.cMutex= c.cMutex;
+			ss.cMutex = c.cMutex;
 			if (!sendDataToClient(ss))
 				toReturn = false;
 		}
@@ -378,11 +400,13 @@ bool CommunicationInterface::setupSocket()
 	return true;
 }
 
-void CommunicationInterface::sendErrorMessageToAll( int errCode, char *errMessage){
+void CommunicationInterface::sendErrorMessageToAll(int errCode, char* errMessage)
+{
 	sendErrorMessage(client(-1, 0), errCode, errMessage);
 }
 
-void CommunicationInterface::sendErrorMessage(client cli, int errCode, char *errMessage){
+void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* errMessage)
+{
 	/* if(logOn){ */
 	/* 	// TODO: log errors into file */
 	/* } */
@@ -391,7 +415,6 @@ void CommunicationInterface::sendErrorMessage(client cli, int errCode, char *err
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_ERR, 0x04, sizeof(err));
 	memcpy(ss.getMessageBuffer(), &err, sizeof(err));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-
 }
 
 void CommunicationInterface::pingClient(client cli)
@@ -400,9 +423,39 @@ void CommunicationInterface::pingClient(client cli)
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
+void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
+{
+	pConSpc pc;
+	memcpy(&pc, ps.getMessageBuffer(), ps.messageSize);
+	switch (pc.cs) {
+	case X:
+		ImuInterface::GetInstance()->resetOrientation();
+	case Y:
+		ServoControl::GetInstance()->togglePIDController();
+	case A:
+	case B:
+	case XBOX:
+	case START:
+	case SELECT:
+	case L_STICK_BUTTON:
+	case R_STICK_BUTTON:
+		break;
+	}
+}
+
 /*-----------------------------------
 // ProcessingThreadPool section
 ----------------------------------**/
+void ProcessingThreadPool::restart(){
+	endThreadPool();
+	process = true;
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
+	controlThread = thread(&ProcessingThreadPool::controlWorker, this);
+ 	queue<ProcessingStructure>().swap(workQueue);
+ 	deque<ProcessingStructure>().swap(controlQueue);
+ 	deque<clock_t>().swap(controlQueueTimestamps);
+}
 
 void ProcessingThreadPool::endThreadPool()
 {
@@ -432,10 +485,10 @@ void ProcessingThreadPool::worker()
 			CommunicationInterface::GetInstance()->pingClient(tmp);
 			break;
 		case P_SET_RESTART: // resart of system
-			/* CommunicationInterface::GetInstance()->restart(); */
+			CommunicationInterface::GetInstance()->restart();
 			break;
 		case P_SET_SHUTDOW: // shutdown
-			/* CommunicationInterface::GetInstance()->shutdown(); */
+			CommunicationInterface::GetInstance()->shutdown();
 			break;
 		case P_SET_DISCONNECT: // disconnect client
 			CommunicationInterface::GetInstance()->removeClient(tmp);
@@ -446,12 +499,13 @@ void ProcessingThreadPool::worker()
 			cs->setUpCamera(*ps);
 		} break;
 		case P_CON_SPC: // spacial control
+			CommunicationInterface::GetInstance()->processSpecialControl(*ps);
 
 			break;
 		case P_TELE_IOSTAT: // io status
 			Telemetry::GetInstance()->processIORequest(tmp);
 			break;
-		case P_TELE_GEN:																										 // general information
+		case P_TELE_GEN:																								 // general information
 			Telemetry::GetInstance()->processGeneralTelemetryRequest(tmp); // sex tvoje máma
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
@@ -492,7 +546,7 @@ void ProcessingThreadPool::controlWorker()
 void ProcessingThreadPool::addJobControl(ProcessingStructure ps)
 {
 	lock_guard<mutex> mutex(controlQueueMutex);
-	if (!controlQueueTimestamps.empty() && ((float) clock() - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.03) {
+	if (!controlQueueTimestamps.empty() && ((float)clock() - controlQueueTimestamps.back()) / CLOCKS_PER_SEC > 0.03) {
 		controlQueueTimestamps.pop_back();
 		controlQueue.pop_back();
 	}
@@ -512,6 +566,14 @@ void ProcessingThreadPool::addJob(ProcessingStructure ps)
 // SendingThreadPool section
 ----------------------------------**/
 
+void SendingThreadPool::restart(){
+	endThreadPool();
+	process = true;
+	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
+		threads.push_back(std::thread(&SendingThreadPool::worker, this));
+ 	queue<SendingStructure>().swap(workQueue);
+}
+
 void SendingThreadPool::endThreadPool()
 {
 	process = false;
@@ -519,7 +581,6 @@ void SendingThreadPool::endThreadPool()
 	for (thread& t : threads)
 		t.join();
 }
-
 
 void SendingThreadPool::worker()
 {
@@ -533,9 +594,7 @@ void SendingThreadPool::worker()
 			wswitch = false;
 			ss = &workQueue.front();
 			workQueue.pop();
-
 		}
-		//SendingStructure s = *ss;
 		if (ss->cfd == -1) {
 			CommunicationInterface::GetInstance()->sendDataToAll(*ss);
 		} else
@@ -548,13 +607,5 @@ void SendingThreadPool::scheduleToSend(SendingStructure ss)
 	lock_guard<mutex> mutex(workQueueMutex);
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
-	/* wswitch = true; */
 }
 
-/* void SendingThreadPool::scheduleToSendAll(SendingStructure ss) */
-/* { */
-/* 	lock_guard<mutex> mutex(workQueueMutex); */
-/* 	ss.cli = nullptr; */
-/* 	workQueue.push(ss); */
-/* 	workQueueUpdate.notify_all(); */
-/* } */

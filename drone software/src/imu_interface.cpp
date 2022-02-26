@@ -42,194 +42,149 @@ bool ImuInterface::attachIMU()
 
 }
 
+bool ImuInterface::resetOrientation(){
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	yawOffset = JY901.getYaw();
+	pitchOffset = JY901.getPitch();
+	rollOffset = JY901.getRoll();
+	return true;
+}
+
 bool ImuInterface::getIMUStatus(){
 	return imuUp;
 }
 
 double ImuInterface::getTemp()
 {
-	sensorMutex.lock();
-	double toReturn = JY901.getTemp();
-	sensorMutex.unlock();
-	return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getTemp();
 }
 
 double ImuInterface::getAccX() {
-	sensorMutex.lock();
-	double toReturn = JY901.getAccX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccX();
 }  // getAccX() unit: G(gravity)
 
 double ImuInterface::getAccY() {
-	sensorMutex.lock();
-	double toReturn = JY901.getAccY();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccY();
 }  // getAccY() unit: G(gravity)
 
 double ImuInterface::getAccZ() {
-	sensorMutex.lock();
-	double toReturn = JY901.getAccZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccZ();
 }  // getAccZ() unit: G(gravity)
 
 double ImuInterface::getGyroX() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGyroX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroX();
 }  // getGyroX() unit: degree(s) per second
 
 double ImuInterface::getGyroY() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGyroY();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroY();
 }  // getGyroY() unit: degree(s) per second
 
 double ImuInterface::getGyroZ() {
-	sensorMutex.lock();
-	double toReturn = JY901.getGyroZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroZ();
 }  // getGyroZ() unit: degree(s) per second
 double ImuInterface::getRoll() {  // X-axis
-	sensorMutex.lock();
-	double toReturn = JY901.getRoll();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getRoll() - rollOffset;
 }  // getRoll() unit: degree(s)
 
 double ImuInterface::getPitch() {  // Y-axis
-	sensorMutex.lock();
-	double toReturn = JY901.getPitch();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getPitch() - pitchOffset;
 }  // getPitch() unit: degree(s)
 
 double ImuInterface::getYaw() {  // Z-axis
-	sensorMutex.lock();
-	double toReturn = JY901.getYaw();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getYaw() - yawOffset;
 }  // getYaw() unit: degree(s)
 
 double ImuInterface::getMagX() {
-	sensorMutex.lock();
-	double toReturn = JY901.getMagX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagX();
 }  // getMagX()
 
 double ImuInterface::getMagY() {
-	sensorMutex.lock();
-	double toReturn = JY901.getMagY();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagY();
 }  // getMagY()
 
 double ImuInterface::getMagZ() {
-	sensorMutex.lock();
-	double toReturn = JY901.getMagZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagZ();
 }  // getMagZ()
 
 
 int ImuInterface::getPressure() {
-	sensorMutex.lock();
-	double toReturn = JY901.getPressure();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getPressure();
 }  // getPressure() unit: Pa
 
 int ImuInterface::getAltitude() {
-	sensorMutex.lock();
-	double toReturn = JY901.getAltitude();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAltitude();
 }  // getAltitude() unit: cm
 
 
 double ImuInterface::getQuater(string str) {
-	double toReturn =0;
-	sensorMutex.lock();
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
   if (str.compare("q0") == 0)
-    toReturn = JY901.getQuater("q0");  // get q0
+     return JY901.getQuater("q0");  // get q0
   if (str.compare("q1") == 0)
-    toReturn = JY901.getQuater("q1");  // get q1
+     return JY901.getQuater("q1");  // get q1
   if (str.compare("q2") == 0)
-    toReturn = JY901.getQuater("q2");  // get q2
+     return JY901.getQuater("q2");  // get q2
   if (str.compare("q3") == 0)
-    toReturn = JY901.getQuater("q3");  // get q3
-	sensorMutex.unlock();
-  return toReturn;
+     return JY901.getQuater("q3");  // get q3
 }  // getQuater()
 
 
 milliseconds ImuInterface::getLastTime() {
-	sensorMutex.lock();
-	milliseconds toReturn = JY901.getLastTime();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getLastTime();
 }  // get last receive time
 
 /* ----------------- Get Raw data if needed ----------------- */
 short ImuInterface::getAccRawX() {
-	sensorMutex.lock();
-	short toReturn = JY901.getAccRawX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccRawX();
 }
 short ImuInterface::getAccRawY() {
-	sensorMutex.lock();
-	short toReturn = JY901.getAccRawX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccRawX();
 }
 short ImuInterface::getAccRawZ() {
-	sensorMutex.lock();
-	short toReturn = JY901.getAccRawZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getAccRawZ();
 }
 
 short ImuInterface::getGyroRawX() {
-	sensorMutex.lock();
-	short toReturn = JY901.getGyroRawX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroRawX();
 }
 short ImuInterface::getGyroRawY() {
-	sensorMutex.lock();
-	short toReturn = JY901.getGyroRawY();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroRawY();
 }
 short ImuInterface::getGyroRawZ() {
-	sensorMutex.lock();
-	short toReturn = JY901.getGyroRawZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getGyroRawZ();
 }
 
 short ImuInterface::getMagRawX() {
-	sensorMutex.lock();
-	short toReturn = JY901.getMagRawX();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagRawX();
 }
 short ImuInterface::getMagRawY() {
-	sensorMutex.lock();
-	short toReturn = JY901.getMagRawY();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagRawY();
 }
 short ImuInterface::getMagRawZ() {
-	sensorMutex.lock();
-	short toReturn = JY901.getMagRawZ();
-	sensorMutex.unlock();
-  return toReturn;
+	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	return JY901.getMagRawZ();
 }

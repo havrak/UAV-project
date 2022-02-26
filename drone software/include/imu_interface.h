@@ -34,7 +34,13 @@ class ImuInterface {
 	bool attachIMU(); // bind serial connection
 	CJY901 getSensor();
 
+	double yawOffset = 0;
+	double pitchOffset = 0;
+	double rollOffset = 0;
+	const bool usingSerial = false;
+
 	// copy from library just adds mutex, to make sure there are no errors due to multitherading, as data is stored in structures, thus it is not strictly safe
+	bool resetOrientation();
 	double getTemp();						 // get temperature
 	double getAccX();						 // get X-axis acceleration
 	double getAccY();						 // get Y-axis acceleration

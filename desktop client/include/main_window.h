@@ -51,6 +51,12 @@ public:
 	void displayError(pTeleErr error);
 
 private:
+	class AttitudeIndicator{
+		public:
+			double roll = 0;
+			double pitch = 0;
+
+	};
 
 	Glib::RefPtr<Gtk::Builder> builder;
 	Gtk::Button *closeButton;
@@ -61,7 +67,9 @@ private:
 	static bool updateTextField(textBufferUpdate update); // we will be passing pointer of this function, thus it needs to be statis
 
 	bool paused;
+
 	//bool process = true;
+	AttitudeIndicator ai;
 
 };
 

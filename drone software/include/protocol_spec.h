@@ -24,6 +24,16 @@
 
 using namespace std;
 
+enum ControlSurface{
+	L_ANALOG = 0x11, R_ANALOG = 0x12, L_TRIGGER = 0x13, R_TRIGGER = 0x14, L_BUMPER = 0x15, R_BUMPER = 0x16,
+	X =0x01, Y =0x02, A =0x03, B =0x04,
+	XBOX =0x07,START =0x05, SELECT =0x06,
+	L_STICK_BUTTON = 0x08, R_STICK_BUTTON = 0x09,
+	D_PAD = 0x10,
+	NON_DEFINED
+};
+
+
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
 
 struct client {
@@ -114,7 +124,8 @@ struct pConStr {
 };
 
 struct pConSpc {
-	unsigned char button;
+	ControlSurface cs;
+	int val;
 };
 
 struct pTeleIOStat {

@@ -109,6 +109,9 @@ void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 
 	g_idle_add(G_SOURCE_FUNC(updateTextField), new textBufferUpdate(textBuffer, message));
 
+	ai.roll = data.att.roll;
+	ai.pitch = data.att.pitch;
+
 	/* this->telemetryField->get_buffer().clear(); */
 	/* this->telemetryField->get_buffer()->set_text("aaa"); */
 }

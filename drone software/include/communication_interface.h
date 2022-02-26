@@ -85,8 +85,6 @@ class CommunicationInterface{
 		bool isFdValid(int fd);
 
 		//Destructive
-		void restart();
-		void shutdown();
 
 	public:
 		static CommunicationInterface* GetInstance();
@@ -97,10 +95,15 @@ class CommunicationInterface{
 		void removeClient(client cli);
 		bool sendDataToClient(SendingStructure);
 		bool sendDataToAll(SendingStructure);
-		void pingClient(client cli);
 		void sendErrorMessage(client cli, int errCode, char *errMessage );
 		void sendErrorMessageToAll(int errCode, char *errMessage);
+		void restart();
+		void shutdown();
+
+		// TODO: move these methods into solo group, outside class COMMUNICATION_INTERFACE
 		void manage();
+		void pingClient(client cli);
+		void processSpecialControl(ProcessingStructure ps);
 
 		thread checkForNewDataThread;
 
@@ -119,14 +122,14 @@ class SendingThreadPool{
 		queue<SendingStructure> workQueue;
 		bool process = true;
 		volatile bool wswitch  = false;
-		void endThreadPool();
 		void worker();
 
 	public:
 		static SendingThreadPool* GetInstance();
 
+		void restart();
+		void endThreadPool();
 		void scheduleToSend(SendingStructure ss);
-
 		void	scheduleToSendAll(SendingStructure  ss);
 };
 
@@ -149,7 +152,6 @@ class ProcessingThreadPool{
 
 
 
-		void endThreadPool();
 		void worker();
 		void controlWorker();
 		void processControlCommands();
@@ -157,6 +159,8 @@ class ProcessingThreadPool{
 	public:
 		static ProcessingThreadPool* GetInstance();
 
+		void restart();
+		void endThreadPool();
 		void addJob(ProcessingStructure ps);
 		void addJobControl(ProcessingStructure ps);
 };

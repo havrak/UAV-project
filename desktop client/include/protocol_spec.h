@@ -22,6 +22,17 @@
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 
+enum ControlSurface{
+	L_ANALOG = 0x11, R_ANALOG = 0x12, L_TRIGGER = 0x13, R_TRIGGER = 0x14, L_BUMPER = 0x15, R_BUMPER = 0x16,
+	X =0x01, Y =0x02, A =0x03, B =0x04,
+	XBOX =0x07,START =0x05, SELECT =0x06,
+	L_STICK_BUTTON = 0x08, R_STICK_BUTTON = 0x09,
+	D_PAD = 0x10,
+	NON_DEFINED
+};
+
+
+
 struct serverStruct {
 	int curIndexInBuffer = 0; // position where we have left off, first not filled index
 	unsigned char curMessageType = 0;
@@ -68,19 +79,6 @@ class SendingStructure {
 	};
 };
 
-/* class SendingStructure { */
-/* 	public: */
-/* 	unsigned char messageType = 0; */
-/* 	unsigned char messagePriority = 0; */
-/* 	unsigned int short messageSize; */
-/* 	/1* unsigned char messageBuffer[]; *1/ */
-/* 	std::vector<unsigned char> messageBuffer; */
-/* 	SendingStructure(unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize) */
-/* 			: messageType(messageType) */
-/* 			, messagePriority(messagePriority) */
-/* 			{messageBuffer.reserve(messageBufferSize);}; */
-/* }; */
-
 using namespace std;
 
 // const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
@@ -104,8 +102,8 @@ struct pConStr {
 };
 
 struct pConSpc {
-	unsigned char button;
-	unsigned int state;
+	ControlSurface cs;
+	int val;
 };
 
 struct pTeleIOStat {

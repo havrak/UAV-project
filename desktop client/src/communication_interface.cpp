@@ -532,8 +532,11 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerStateMutex.unlock();
 	} else if (active) {
 		pConSpc pcs;
+		pcs.cs = cs;
+		pcs.val = val;
+
 		SendingStructure ss(P_CON_SPC, 0x01, sizeof(pcs));
-		memcpy(ss.messageBuffer, &pcs, sizeof(pcs));
+		memcpy(ss.getMessageBuffer(), &pcs, sizeof(pcs));
 		SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	}
 	return 1;
