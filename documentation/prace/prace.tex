@@ -1,0 +1,179 @@
+\documentclass[a4paper,oneside,12pt]{report}
+\setlength\textwidth{155mm}
+\setlength\textheight{247mm}
+\setlength\topmargin{-10mm}
+\setlength\headheight{0mm}
+\setlength\oddsidemargin{05mm}
+\setlength\evensidemargin{05mm}
+\let\openright=\clearpage
+
+
+%% Vytváříme PDF/A-2u
+\usepackage[a-2u]{pdfx}
+
+%% Přepneme na českou sazbu a fonty Latin Modern
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+
+
+\usepackage{amsmath}						% rozšíření pro sazbu matematiky
+\usepackage{amsfonts}						% matematické fonty
+\usepackage{amsthm}							% sazba vět, definic apod.
+\usepackage{bbding}							% balíček s nejrůznějšími symboly (čtverečky, hvězdičky, tužtičky, nůžtičky, ...)
+\usepackage{bm}									% tučné symboly (příkaz \bm)
+\usepackage{graphicx}						% vkládání obrázků
+\usepackage{fancyhdr}						% možnost stylizovat záhlaví
+\usepackage{fancyvrb}						% vylepšené prostředí pro strojové písmo
+\usepackage{indentfirst}				% zavede odsazení 1. odstavce kapitoly
+\usepackage[nottoc]{tocbibind} 	% zajistí přidání seznamu literatury,
+\usepackage{icomma}         		% inteligentní čárka v matematickém módu
+\usepackage{dcolumn}        		% lepší zarovnání sloupců v tabulkách
+\usepackage{booktabs}       		% lepší vodorovné linky v tabulkách
+\usepackage{paralist}       		% lepší enumerate a itemize
+\usepackage{caption}						%	popisky
+\usepackage{dirtree}						% strom souborů
+\usepackage{minted} 						% vkládání kódu
+\usepackage[bottom]{footmisc}  	% poznámky pod čarou vespod
+\usepackage{bibentry} 					% citace přes celé heslo, používáno u první citace z jednoho zdroje
+\usepackage{xurl}								% umožní url zalomit všude
+\usepackage{hyperref} 					% odstranění červených okrajů v obsahu
+\nobibliography*
+
+\usepackage{color}
+\usepackage{natbib}
+
+\definecolor{pblue}{rgb}{0.13,0.13,1}
+\definecolor{pgreen}{rgb}{0,0.5,0}
+\definecolor{pred}{rgb}{0.9,0,0}
+\definecolor{pgrey}{rgb}{0.46,0.45,0.48}
+\renewcommand{\baselinestretch}{1.5}
+%%% Údaje o práci
+
+\def\NazevSkoly{Gymnázium, Praha 6, Arabská 14}
+% Název oboru včetně počátečního 'Obor'.
+\def\NazevOboru{Programování}
+
+% Název práce v jazyce práce (přesně podle zadání)
+\def\NazevPrace{Bezpilotní letadlo}
+
+\def\NazevPraceShort{Bezpilotní letadlo}
+% Název práce v angličtině
+\def\NazevPraceEN{Drone}
+
+% Název práce v němčině
+\def\NazevPraceDE{Drohne}
+
+% Jméno autora
+\def\AutorPrace{Havránek Kryštof}
+
+% Rok odevzdání
+\def\RokOdevzdani{2022}
+% Měsíc odevzdání
+\def\MesicOdevzdani{Únor}
+
+% Vedoucí práce: Jméno a příjmení s~tituly
+\def\Vedouci{ing. Daniel Kahoun}
+
+% Nepovinné poděkování (vedoucímu práce, konzultantovi, tomu, kdo
+% zapůjčil software, literaturu apod.)
+\def\Podekovani{%
+\textbf{Poděkování}
+}
+
+% Abstrakt (doporučený rozsah cca 80-200 slov; nejedná se o zadání práce)
+\def\Abstrakt{%
+}
+
+\def\AbstraktEN{%
+}
+\def\AbstraktDE{%
+}
+% 3 až 5 klíčových slov (doporučeno), každé uzavřeno ve složených závorkách
+\def\KlicovaSlova{%
+	(UAV), (Gtk), (C++), (Raspberry zero 2)
+}
+\def\KlicovaSlovaEN{%
+	(UAV), (Gtk), (C++), (Raspberry zero 2)
+}
+\def\KlicovaSlovaDE{%
+	(UAV), (Gtk), (C++), (Raspberry zero 2)
+}
+
+%% Balíček hyperref, kterým jdou vyrábět klikací odkazy v PDF,
+%% ale hlavně ho používáme k uložení metadat do PDF (včetně obsahu).
+\hypersetup{unicode}
+\hypersetup{breaklinks=true}
+\hypersetup{pdfborder=0 0 0}
+
+%% Definice různých užitečných maker (viz popis uvnitř souboru)
+\include{makra}
+
+%% Titulní strana a různé povinné informační strany
+\fancypagestyle{plain}{
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[C]{}
+\fancyhead[L]{Ročníková práce -- \NazevSkoly}
+\fancyhead[R]{\NazevPraceShort}
+\fancyfoot[L]{Vypracoval: \AutorPrace	(\NazevOboru)}
+\fancyfoot[C]{}
+\fancyfoot[R]{\thepage}
+}
+
+
+
+\begin{document}
+
+\include{titulka}
+
+\tableofcontents
+
+
+\newpage
+
+\include{uvod}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\chapter{Rozložení práce}
+
+Práci lze rozdělit na dva základní komponenty.
+První část software běží na počítači přes který se bezpilotní letadlo ovládá, druhá na samotném dronu.
+Obě části jsou psané v jazyce C++.
+
+Software pro počítač používá grafickou knihovnu Gtk3 a byl vyvíjen primárně na operačním systém Linux.
+Gtk3 je multiplatformní toolkit, port na další operační systémy je tak možný a kód je psán stylem, aby umožnil další verze.
+
+Jádro samotného dronu představuje malý počítač Raspberry Pi Zero 2.
+Vyšší výkon verze Zero verze 2 není nutný pro fungování, práce tak defacto může fungovat na libovolném Raspberry Pi.
+
+Obě části mezi sebou komunikují prostřednictvím protitoku založené na TCP rodině.
+Přenos videa je zprostředkovávám pomocí UDP.
+
+\section{Komunikační protokol}
+
+
+
+\chapter{Hardware a Raspberry Pi}
+
+\chapter{Client na ovládání}
+
+
+
+
+\chapter*{}
+\pagenumbering{roman}
+\setcounter{page}{6} % text bude pokračovat v číslování římském, kde přestal na začátku souboru
+\include{zaver}
+
+\include{literatura}
+
+
+\listoffigures
+\openright
+\end{document}

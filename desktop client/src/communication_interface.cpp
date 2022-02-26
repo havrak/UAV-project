@@ -219,7 +219,6 @@ void CommunicationInterface::checkActivityOnSocket()
 		default:
 			if (FD_ISSET(sockfd, &read_fds)) {
 				receiveDataFromServer();
-				cout << "datat recieved from server \n";
 			}
 			if (FD_ISSET(sockfd, &except_fds)) {
 				cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | server failed with exception\n";
@@ -501,6 +500,7 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 	case L_ANALOG:
 		controllerState.lAnalog.first = x;
 		controllerState.lAnalog.second = y;
+
 		break;
 	case R_ANALOG:
 		controllerState.rAnalog.first = x;
@@ -548,7 +548,7 @@ void ControllerDroneBridge::sendControlComand()
 		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
-		this_thread::sleep_for(chrono::milliseconds(1000));
+		this_thread::sleep_for(chrono::milliseconds(20));
 
 	}
 }

@@ -93,16 +93,10 @@ int Telemetry::processGeneralTelemetryRequest(const client cli)
 {
 	pTeleGen data;
 	data.att = createTeleAttStruct();
-	cout << "TELEMETRY | processGeneralTelemetryRequest | got att, ";
 	data.gps = createTeleGPSStruct();
-	cout << "gps, ";
 	data.batt = createTeleBattStuct();
-	cout << "batt, ";
 	data.io = createTeleIOStatStruct();
-	cout << "io, ";
 	data.pwm = createTelePWMStruct();
-	cout << "pwm \n";
-	cout << "TELEMETRY | processGeneralTelemetryRequest | gyroX: " << data.att.gyroX   << ", gyroY: " << data.att.gyroY << ", gyroZ: " << data.att.gyroZ << "\n";
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_GEN, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);

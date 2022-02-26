@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <iostream>
 #include <iterator>
+#include <math.h>
 #include <ostream>
 #include <stdexcept>
 #include <time.h>
@@ -32,17 +33,11 @@ ServoControl::ServoControl()
 	servo.SetInvert(false);
 	/* slowDownToMin(); */
 	armESC();
-	/* servo.SetAngle(CHANNEL(1), ANGLE(90)); */
 
-	servo.SetAngle(CHANNEL(2), ANGLE(180));
-	servo.SetAngle(CHANNEL(3), ANGLE(90));
-	servo.SetAngle(CHANNEL(4), ANGLE(90));
-	servo.SetAngle(CHANNEL(5), ANGLE(90));
-
-	/* servo.SetAngle(CHANNEL(10), ANGLE(90)); */
-	/* servo.SetAngle(CHANNEL(11), ANGLE(90)); */
-	/* servo.SetAngle(CHANNEL(14), ANGLE(90)); */
-	/* servo.SetAngle(CHANNEL(15), ANGLE(90)); */
+	servo.SetAngle(CHANNEL(2), ANGLE(135));
+	servo.SetAngle(CHANNEL(3), ANGLE(135));
+	servo.SetAngle(CHANNEL(4), ANGLE(135));
+	servo.SetAngle(CHANNEL(5), ANGLE(135));
 
 	if (debug)
 		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
@@ -61,6 +56,17 @@ ServoControl* ServoControl::GetInstance()
 	}
 
 	return servoControl;
+}
+
+void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
+{
+	if (right) {
+		/* cout << "Right: channel: " << channel << ", i: " << (90 + angle) << "\n"; */
+		servo.SetAngle(channel, 90 + angle);
+	} else {
+		cout << "Left:  channel: " << channel << ", i: " << (180 - angle) << "\n";
+		servo.SetAngle(channel, 180 - angle);
+	}
 }
 
 bool ServoControl::calibrateESC()
@@ -102,10 +108,10 @@ void ServoControl::testServo()
 		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
 	}
-	cout << "SERVOCONTROL | testServo | max speed reached\n";
 	nanosleep((const struct timespec[]) { { 3, 0L } }, NULL);
+
 	cout << "SERVOCONTROL | testServo | slowing down motor motor\n";
-	for (mainMotorMS = MAX_PULSE_LENGTH; mainMotorMS >= MIN_PULSE_LENGTH; mainMotorMS -= 10) {
+	for (mainMotorMS = MAX_MOTOR_PULSE_LENGTH; mainMotorMS >= MAX_MOTOR_PULSE_LENGTH; mainMotorMS -= 10) {
 		cout << mainMotorMS << "\n";
 		servo.Set(CHANNEL(0), mainMotorMS);
 		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
@@ -144,46 +150,76 @@ pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
 	return toReturn;
 }
 
-bool ServoControl::adjustMainMotorSpeed(pConStr ps){
+bool ServoControl::adjustMainMotorSpeed(pConStr ps)
+{
+	if (ps.lTrigger < 2500)
+		ps.lTrigger = 0;
+	if (ps.rTrigger < 2500)
+		ps.rTrigger = 0;
+	if (ps.lTrigger > 63000)
+		ps.lTrigger = MAX_CONTROLLER_AXIS_VALUE;
+	if (ps.rTrigger > 63000)
+		ps.rTrigger = MAX_CONTROLLER_AXIS_VALUE;
+	int valL = (ps.lTrigger << 10) >> 10;
+	int valR = (ps.rTrigger << 10) >> 10;
+
+	if (valL < valR) {
+		// accelerate
+		if (mainMotorMS + log(valR - valL) * SERVO_ACCELERATION_MULTIPLIER <= MAX_MOTOR_PULSE_LENGTH) {
+			mainMotorMS += log(valR - valL) * SERVO_ACCELERATION_MULTIPLIER;
+			servo.Set(CHANNEL(0), mainMotorMS);
+			/* cout << "SERVO_CONTROL | processMovementForVTail | accelerating: " << mainMotorMS << "\n"; */
+		}
+	} else {
+		// decelerate
+		if (mainMotorMS - log(valL - valR) * SERVO_ACCELERATION_MULTIPLIER >= MIN_PULSE_LENGTH) {
+			mainMotorMS -= log(valL - valR) * SERVO_ACCELERATION_MULTIPLIER;
+			if (mainMotorMS - 80 > MIN_PULSE_LENGTH)
+				mainMotorMS = MIN_PULSE_LENGTH;
+			/* cout << "SERVO_CONTROL | processMovementForVTail | decelerating: " << mainMotorMS << "\n"; */
+			servo.Set(CHANNEL(0), mainMotorMS);
+		}
+	}
 
 	return true;
 }
 
 int ServoControl::processMovementForVTail(pConStr ps)
 {
-	cout << "TRIGGER: \n";
-	// fully released -- value of 65k
-	// fully pressend -- value of 0
-	if(ps.lTrigger < 2500) ps.lTrigger=0;
-	if(ps.rTrigger < 2500) ps.rTrigger=0;
-	if(ps.lTrigger > 63000) ps.lTrigger=CONTROLLER_AXIS_VALUE*2;
-	if(ps.rTrigger > 63000) ps.rTrigger=CONTROLLER_AXIS_VALUE*2;
-	int valL = (ps.lTrigger << 10) >> 10;
-	int valR = (ps.rTrigger << 10) >> 10;
+	adjustMainMotorSpeed(ps);
+	int yaw, pitch;
 
-	if(valL < valR){
-		// accelerate
-		if(mainMotorMS+log(valR-valL)*SERVO_ACCELERATION_MULTIPLIER <= MAX_PULSE_LENGTH){
-				mainMotorMS+= log(valR-valL)*SERVO_ACCELERATION_MULTIPLIER;
-				servo.Set(CHANNEL(0), mainMotorMS);
-				cout << "SERVO_CONTROL | processMovementForVTail | accelerating: " << mainMotorMS << "\n";
-		}
-	}else{
-		// decelerate
-		if(mainMotorMS-log(valL-valR)*SERVO_ACCELERATION_MULTIPLIER >= MIN_PULSE_LENGTH){
-				mainMotorMS-= log(valL-valR)*SERVO_ACCELERATION_MULTIPLIER;
-				if(mainMotorMS-80 > MIN_PULSE_LENGTH) mainMotorMS = MIN_PULSE_LENGTH;
-				cout << "SERVO_CONTROL | processMovementForVTail | decelerating: " << mainMotorMS << "\n";
-				servo.Set(CHANNEL(0), mainMotorMS);
-		}
+	float tmp;
 
+	if (ps.lAnalog.first == 0){
+		yaw = 0;
+		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
+		if(tmp < 1.047) // we don't want to decrease value
+			ps.lAnalog.first*=cos(tmp)*2;
+		if(tmp > 0.524)
+			ps.lAnalog.second*=sin(tmp)*2;
+
+	}else {
+		yaw = ((float)ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
 	}
+	if (ps.lAnalog.second == 0)
+		pitch = 0;
+	else {
+		pitch = ((float)ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
+	}
+
+	vTail.leftRuddervator = (yaw + pitch) * MIXING_GAIN;
+	vTail.rightRuddervator = (90-yaw + pitch) * MIXING_GAIN;
+	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
+	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
+	setAngleOfServo(vTail.leftFlapIndex, false, yaw);
+	setAngleOfServo(vTail.rightFlapIndex, true, (90-yaw));
 	return 1;
 }
 
 int ServoControl::processMovementForStandart(pConStr ps)
 {
-	return 1;
+	return 0;
 }
 
 int ServoControl::processControl(ProcessingStructure ps)

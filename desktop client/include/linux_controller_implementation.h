@@ -24,6 +24,8 @@
 using namespace std;
 
 #define DEV_FILE "/dev/input/js0"
+#define CONTROLLER_AXIS_VALUE 32767
+
 
 class LinuxControllerImplementation : public ControllerInterface {
 	protected:

@@ -68,6 +68,7 @@ class CommunicationInterface{
 		list<client> clients;
 		thread managementThread;
 		bool process = true;
+		const bool debug = false;
 
 		/* thread checkForNewDataThread; */
 

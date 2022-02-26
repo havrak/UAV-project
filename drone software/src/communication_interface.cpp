@@ -176,8 +176,8 @@ bool CommunicationInterface::receiveDataFromClient(client cli)
 			cli.curMessagePriority = infoBuffer[1];
 			cli.curMessageSize = (((uint16_t)infoBuffer[2]) << 8) + ((uint16_t)infoBuffer[3]) + 5;
 
-			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
-			cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
+			if(debug) cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+			if(debug) cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
 		}
 	} else {
 		bytesReceived = cli.curIndexInBuffer;
@@ -227,8 +227,8 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 	}
 	char message[ss.messageSize + 10];
 
-	cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
-	cout << "\n   clientfd: " << int(ss.cfd)<< "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
+	if(debug) cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
+	if(debug) cout << "\n   clientfd: " << int(ss.cfd)<< "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
 	/* for (int i = 0; i < ss.messageSize; i++) { */
 	/* 	cout << int(ss.messageBuffer[i]) << " "; */
 	/* } */
@@ -260,7 +260,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 			}
 			bytesSend += sCount;
 			if (bytesSend == sizeof(message)) {
-				cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
+				if(debug) cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
 				return true;
 			}
 		}
@@ -312,7 +312,7 @@ void CommunicationInterface::checkActivityOnSocket()
 					receiveDataFromClient(c);
 				}
 				if (FD_ISSET(c.fd, &except_fds)) {
-					cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client  " << c.fd << " failed with exception\n";
+					cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client  " << c.fd << " failed with exception\n";
 					removeClient(c);
 				}
 				/* if(FD_ISSET(c.fd, &write_fds)){ */
@@ -446,6 +446,7 @@ void ProcessingThreadPool::worker()
 			cs->setUpCamera(*ps);
 		} break;
 		case P_CON_SPC: // spacial control
+
 			break;
 		case P_TELE_IOSTAT: // io status
 			Telemetry::GetInstance()->processIORequest(tmp);

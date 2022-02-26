@@ -12,11 +12,16 @@
 #define MIXING_GAIN 0.5
 
 #define MIN_PULSE_LENGTH 200 // Minimum pulse length in µs1
-#define CEN_PULSE_LENGTH 800 // Central pulse length in µs
-#define MAX_PULSE_LENGTH 1400 // Maximum pulse length in µs
+#define CEN_PULSE_LENGTH 1100 // Central pulse length in µs
+#define MAX_PULSE_LENGTH 2000 // Maximum pulse length in µs
+#define MAX_MOTOR_PULSE_LENGTH 1400
+
 // NOTE: current max is over 1900
 #define SERVO_ACCELERATION_MULTIPLIER 5
-#define CONTROLLER_AXIS_VALUE 32767
+#define LOW_CONTROLLER_AXIS_VALUE 0
+#define MID_CONTROLLER_AXIS_VALUE 32767
+#define MAX_CONTROLLER_AXIS_VALUE 65534
+#define LEVERAGE 20;
 
 #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h"
 #include <bcm2835.h>
@@ -48,10 +53,10 @@ private:
 	int currentMotorPulse;
 
 	struct StandardTailWingConfiguration{
-		int leftFlapIndex = 1;
-		int rightFlapIndex = 2;
-		int leftElevatorIndex = 3;
-		int rightElevatorIndex = 4;
+		int rightFlapIndex = 1;
+		int leftFlapIndex = 2;
+		int rightElevatorIndex = 3;
+		int leftElevatorIndex = 4;
 		int rudderIndex = 5;
 		unsigned int short leftFlap;
 		unsigned int short rightFlap;
@@ -61,10 +66,10 @@ private:
 
 	};
 	struct VShapeTailWingConfiguration{
-		int leftFlapIndex = 1;
-		int rightFlapIndex = 2;
+		int rightFlapIndex = 4;
+		int leftFlapIndex = 5;
+		int rightRuddervatorIndex = 2;
 		int leftRuddervatorIndex = 3;
-		int rightRuddervatorIndex = 4;
 		unsigned int short leftFlap;
 		unsigned int short rightFlap;
 		unsigned int short leftRuddervator;
@@ -75,6 +80,7 @@ private:
 	StandardTailWingConfiguration standard;
 
 	bool adjustMainMotorSpeed(pConStr ps);
+	void setAngleOfServo(int channel, bool right, unsigned char angle);
 
 protected:
   ServoControl();

@@ -94,13 +94,13 @@ struct pSetCamera {
 };
 
 struct pConStr {
-	pair<int, int> lAnalog;
-	int lTrigger;
-	int lBumber;
-	pair<int, int> rAnalog;
-	int rTrigger;
-	int rBumber;
-	pair<int, int> dpad;
+	pair<float, float> lAnalog;
+	uint lTrigger;
+	uint lBumber;
+	pair<float, float> rAnalog;
+	uint rTrigger;
+	uint rBumber;
+	pair<uint, uint> dpad;
 };
 
 struct pConSpc {

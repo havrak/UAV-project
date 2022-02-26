@@ -68,8 +68,8 @@ void LinuxControllerImplementation::eventLoop()
 			}
 
 			// NOTE: we don't want to call functions with every microscopic adjustment on analog stick, thus value is update only if change is more significant
-			if (abs(axisStates[index] - js.value) > 2500) {
-				axisStates[index] = js.value;
+			if (abs(axisStates[index] - js.value) > 2000) {
+				axisStates[index] = js.value+CONTROLLER_AXIS_VALUE;
 				// process here
 				ControlSurface cs = getControlSurfaceFor(false, index);
 				if (cs != L_TRIGGER && cs != R_TRIGGER) {
@@ -81,7 +81,7 @@ void LinuxControllerImplementation::eventLoop()
 						continue;
 					}
 				} else {
-					notifyObserverEvent(cs, axisStates[index]+32767, 0); // to be from zero to 2*32767
+					notifyObserverEvent(cs, axisStates[index], 0); // to be from zero to 2*32767
 					continue;
 				}
 			}
