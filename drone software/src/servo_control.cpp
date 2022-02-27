@@ -201,17 +201,17 @@ bool ServoControl::pidController()
 			this_thread::sleep_for(chrono::milliseconds(100));
 			continue;
 		}
-		float pitchOutput = pitchPID.calculateOutput(ImuInterface::GetInstance()->getPitch()/2)+45;
-		float rollOutput = rollPID.calculateOutput(ImuInterface::GetInstance()->getRoll()/2)+45;
+		float pitchOutput = pitchPID.calculateOutput(ImuInterface::GetInstance()->getPitch()/2);
+		float rollOutput = rollPID.calculateOutput(ImuInterface::GetInstance()->getRoll()/2);
 
 		switch (configuration) {
 		case V_SHAPE_TAIL_WING:
 				//roll
-				setAngleOfServo(vTail.leftFlapIndex, false, rollOutput);
-				setAngleOfServo(vTail.rightFlapIndex, true, (90 - rollOutput));
+				setAngleOfServo(vTail.leftFlapIndex, false, 45-rollOutput);
+				setAngleOfServo(vTail.rightFlapIndex, true, 45+rollOutput);
 				//pitch
-				setAngleOfServo(vTail.leftRuddervatorIndex, false, pitchOutput);
-				setAngleOfServo(vTail.rightRuddervatorIndex, true, 90-pitchOutput);
+				setAngleOfServo(vTail.leftRuddervatorIndex, false, 45-pitchOutput);
+				setAngleOfServo(vTail.rightRuddervatorIndex, true, 45+pitchOutput);
 
 			break;
 		case STANDARD_TAIL_WING:
