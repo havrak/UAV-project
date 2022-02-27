@@ -160,13 +160,12 @@ bool CommunicationInterface::receiveDataFromServer()
 			fixReceiveData();
 			return false;
 		} else {
-			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | checksum of received matches" << endl;
 			server.curMessageType = infoBuffer[0];
 			server.curMessagePriority = infoBuffer[1];
 			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3] +5;
 
-			cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
-			cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
+			if(debug) cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+			if(debug) cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
 
 		}
 		/* bytesReceived = 0; */
@@ -209,7 +208,6 @@ void CommunicationInterface::checkActivityOnSocket()
 	int state= -1;
 	while (process) {
 		buildFdSets();
-		cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | waiting for activity, fd:" << (sockfd + 1) << "\n";
 		state = select(sockfd+1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
 
 		switch (state) {
@@ -259,14 +257,8 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	}
 
 	unsigned char message[ss.messageSize + 10];
-	cout << "CONTROLLER_INTERFACE | sendData | message: ";
-	cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
-
-	for (int i = 0; i < ss.messageSize; i++) {
-		cout << int(ss.messageBuffer[i]) << " ";
-	}
-	cout << "\n";
-
+	if(debug) cout << "CONTROLLER_INTERFACE | sendData | message: ";
+	if(debug) cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
 	// setup metadata
 	message[0] = ss.messageType;
 	message[1] = ss.messagePriority;
@@ -280,10 +272,8 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	// setup terminator
 	memcpy(message + 5 + ss.messageSize, &terminator, 5);
 
-	cout << "COMMUNICATION_INTERFACE | sendData | message is ready waiting to send it\n";
 
 	lock_guard<mutex> mutex(serverMutex);
-	cout << "COMMUNICATION_INTERFACE | sendData | got mutex\n";
 	ssize_t bytesSend = 0;
 	bool sending = true;
 
@@ -296,7 +286,7 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 		}
 		bytesSend += sCount;
 		if (bytesSend == sizeof(message)) {
-			cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
+			if(debug) cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 			return true;
 		}
 	}
@@ -376,7 +366,6 @@ void ProcessingThreadPool::worker()
 		}
 		switch (ps->messageType) {
 		case P_PING: // ping
-			cout << "PROCESSING_THREAD_POOL | worker | got ping from pi | \n";
 			break;
 		case P_SET_RESTART: // resart of system
 			break;
@@ -392,7 +381,6 @@ void ProcessingThreadPool::worker()
 			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_GEN: // general information
-			cout << "got general telemetry\n";
 			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
@@ -572,8 +560,5 @@ void sendConfigurationOfCamera()
 	cameraSetup.port = 5000;
 	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
-	for (int i = 0; i < sizeof(ss.messageBuffer); i++) {
-		cout << int(ss.messageBuffer[i]) << " ";
-	}
 	CommunicationInterface::GetInstance()->sendData(ss);
 }

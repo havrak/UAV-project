@@ -144,6 +144,7 @@ double ImuInterface::getQuater(string str) {
      return JY901.getQuater("q2");  // get q2
   if (str.compare("q3") == 0)
      return JY901.getQuater("q3");  // get q3
+	return 0;
 }  // getQuater()
 
 

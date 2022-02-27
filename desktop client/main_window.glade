@@ -102,7 +102,8 @@
                   <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
-                    <property name="margin-bottom">190</property>
+                    <property name="margin-left">76</property>
+                    <property name="margin-bottom">196</property>
                     <property name="editable">False</property>
                     <property name="wrap-mode">word</property>
                     <property name="cursor-visible">False</property>

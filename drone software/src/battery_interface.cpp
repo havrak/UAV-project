@@ -6,6 +6,7 @@
  */
 
 #include "battery_interface.h"
+#include <mutex>
 
 BatteryInterface* BatteryInterface::batteryInterface = nullptr;
 mutex BatteryInterface::mutexBatteryInterface;
@@ -44,7 +45,9 @@ bool BatteryInterface::attachINA226()
 void BatteryInterface::updateFunction()
 {
 	while (true) {
+		mutexBatteryInterface.lock();
 		ina226.ina226_read(&voltage, &current, &power, &shunt);
+		mutexBatteryInterface.unlock();
 		energy = voltage * current * 24 * 365.25 / 1000000;
 		// time(&rawtime);
 		// struct tm* info = localtime(&rawtime);
@@ -72,29 +75,35 @@ void BatteryInterface::startLoop()
 
 float BatteryInterface::getVoltage()
 {
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return voltage;
 }
 
 float BatteryInterface::getCurrent()
 {
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return current;
 }
 
 float BatteryInterface::getPower()
 {
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return power;
 }
 
 float BatteryInterface::getShunt()
 {
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return shunt;
 }
 
 float BatteryInterface::getEnergy()
 {
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return energy;
 }
 
 bool BatteryInterface::getINAStatus(){
+	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return inaUp;
 }

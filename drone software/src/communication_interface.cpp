@@ -357,7 +357,6 @@ int CommunicationInterface::newClientConnect()
 
 	if (clientfd == -1)
 		return 0;
-	int set = 1;
 
 	char clientIPV4Address[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
@@ -376,9 +375,9 @@ void CommunicationInterface::manage()
 		// NOTE: this should not be here
 		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
 		// this fix is only temporary, gpio library shouldn't share this problem
-		ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
+		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
 		this_thread::sleep_for(chrono::milliseconds(100));
-		ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
+		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 }

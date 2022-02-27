@@ -78,6 +78,7 @@ class CommunicationInterface {
 	sockaddr_in serverAddress;
 	serverStruct server;
 
+	const bool debug = false;
 	bool process = true;
 	bool connectionEstablished = false;;
 	thread establishConnectionToDroneThread;

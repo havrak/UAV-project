@@ -73,7 +73,7 @@ void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 		/* cout << "Right: channel: " << channel << ", i: " << (90 + angle) << "\n"; */
 		servo.SetAngle(channel, 90 + angle);
 	} else {
-		cout << "Left:  channel: " << channel << ", i: " << (180 - angle) << "\n";
+		/* cout << "Left:  channel: " << channel << ", i: " << (180 - angle) << "\n"; */
 		servo.SetAngle(channel, 180 - angle);
 	}
 }
@@ -245,22 +245,22 @@ int ServoControl::processMovementForVTail(pConStr ps)
 	adjustMainMotorSpeed(ps);
 
 	// squaring circle - https://squircular.blogspot.com/2015/09/mapping-circle-to-square.html
-	/* tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE; */
-	/* tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE; */
-	/* scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2); */
-	/* scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2); */
-	/* ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX; */
-	/* ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY; */
+	tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE;
+	tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE;
+	scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2);
+	scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2);
+	ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX;
+	ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
 
 	// smoothening contoller by goniometry
-	float tmp;
-	if (ps.lAnalog.first == 0){
-		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
-		if(tmp < 1.047) // we don't want to decrease value
-			ps.lAnalog.first*=cos(tmp)*2;
-		if(tmp > 0.524)
-			ps.lAnalog.second*=sin(tmp)*2;
-	}
+	/* float tmp; */
+	/* if (ps.lAnalog.first == 0){ */
+	/* 	tmp = atan(ps.lAnalog.second / ps.rAnalog.first); */
+	/* 	if(tmp < 1.047) // we don't want to decrease value */
+	/* 		ps.lAnalog.first*=cos(tmp)*2; */
+	/* 	if(tmp > 0.524) */
+	/* 		ps.lAnalog.second*=sin(tmp)*2; */
+	/* } */
 
 	if (ps.lAnalog.first == 0)
 		roll = 0;
@@ -288,7 +288,7 @@ int ServoControl::processMovementForStandart(pConStr ps)
 int ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
-	memcpy(&control, ps.getMessageBuffer(), ps.messageSize);
+	memcpy(&control, ps.getMessageBuffer(), sizeof(control));
 	if (pidOn) {
 		adjustMainMotorSpeed(control);
 		return 0;

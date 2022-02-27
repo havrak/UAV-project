@@ -88,8 +88,10 @@ void MainWindow::updateImage(cv::Mat& frame)
 bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
 {
 	/* GtkTextIter end; */
+	cout << "updating\n";
 	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
 
+	cout << "updating AI\n";
 	mainWindow->updateAttitudeIndicator();
 	/* gtk_text_buffer_get_end_iter(, &end); */
 	/* cout << "text: " << update.text << " length: " << update.text.size(); */
@@ -99,8 +101,8 @@ bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
 
 void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 {
-	// textBufferUpdate  aa(telemetryBuffer, "test");
 	string message;
+	lock_guard<mutex> m(*dataMutex);
 	message += "temp: " + to_string(data.att.temp) + "\n";
 	message += "-----------------------\n";
 	message += "yaw x: " + to_string(data.att.yaw) + "\n";
@@ -232,9 +234,12 @@ void MainWindow::setRollAndPitch(float pitch, float roll)
 	lock_guard<mutex> mutex(attitudeValuesMutex);
 }
 
+
+
 void MainWindow::updateAttitudeIndicator()
 	{
 	cout << imgBackOri->get_width() << '\n';
+	cout << "size: " << artHorizon->get_width() << " x " << artHorizon->get_height() << "\n";
 	float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height();
 	float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width();
 	float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
@@ -258,11 +263,9 @@ void MainWindow::updateAttitudeIndicator()
 
   float faceDeltaX = delta * sin( roll_rad );
   float faceDeltaY = delta * cos( roll_rad );
-	//imgBackCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
-	//imgRingCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
-	/* imgFaceCpy->copy_area(0, 0, width, height, tmpbuf, faceDeltaX, faceDeltaY); */
-	//imgCaseCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
-
+	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
+	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
+	imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
 	artHorizon->set(imgBackCpy);
 }
 
