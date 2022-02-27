@@ -89,14 +89,17 @@ double ImuInterface::getGyroZ() {
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
 	return JY901.getGyroZ();
 }  // getGyroZ() unit: degree(s) per second
+
+
+// pitch and roll is switched on hardware
 double ImuInterface::getRoll() {  // X-axis
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	return JY901.getRoll() - rollOffset;
+	return JY901.getPitch() - pitchOffset;
 }  // getRoll() unit: degree(s)
 
 double ImuInterface::getPitch() {  // Y-axis
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	return JY901.getPitch() - pitchOffset;
+	return JY901.getRoll() - rollOffset;
 }  // getPitch() unit: degree(s)
 
 double ImuInterface::getYaw() {  // Z-axis

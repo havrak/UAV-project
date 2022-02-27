@@ -274,8 +274,11 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 		lock_guard<mutex> m(*ss.cMutex);
 		while (sending) {
 
-			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
+			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), MSG_NOSIGNAL);
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
+				if(errno== EPIPE)
+					removeClient(client(ss.cfd, ss.cMutex));
+
 				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
 				return false;
 			}
@@ -354,6 +357,7 @@ int CommunicationInterface::newClientConnect()
 
 	if (clientfd == -1)
 		return 0;
+	int set = 1;
 
 	char clientIPV4Address[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
@@ -366,8 +370,16 @@ int CommunicationInterface::newClientConnect()
 void CommunicationInterface::manage()
 {
 	while (process) {
+
 		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
-		this_thread::sleep_for(chrono::milliseconds(250));
+
+		// NOTE: this should not be here
+		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
+		// this fix is only temporary, gpio library shouldn't share this problem
+		ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
+		this_thread::sleep_for(chrono::milliseconds(100));
+		ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
+		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 }
 
@@ -431,6 +443,7 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 	case X:
 		ImuInterface::GetInstance()->resetOrientation();
 	case Y:
+		ImuInterface::GetInstance()->resetOrientation();
 		ServoControl::GetInstance()->togglePIDController();
 	case A:
 	case B:

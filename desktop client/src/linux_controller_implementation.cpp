@@ -21,9 +21,9 @@ void LinuxControllerImplementation::setupController()
 		if (debug)
 			cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController | Failed to "
 							"open device \n";
-		if(fd == -1){
+		if(!shownError){
 			mainWindow->displayError(pTeleErr(127, "Controller was not found"));
-			fd = -2;
+			shownError = true;
 		}
 		return;
 	}
@@ -34,6 +34,12 @@ void LinuxControllerImplementation::setupController()
 
 	buttonsStates.resize(num_of_buttons, 0);
 	axisStates.resize(num_of_axis, 0);
+
+
+	for(int i = 0; i < num_of_axis; i++)
+		axisStates[i] = CONTROLLER_AXIS_VALUE;
+
+	settingUpFinished = true;
 
 	cout << "LINUX_CONTROLLER_IMPLEMENTATION | setupController Joystick: " << name_of_joystick << endl
 			 << "  axis: " << num_of_axis << endl
@@ -53,6 +59,7 @@ void LinuxControllerImplementation::eventLoop()
 		if(fd > 0) break;
 		this_thread::sleep_for(chrono::seconds(2000));
 	}
+
 	generateEventForEveryButton();
 
 	while (process) {
@@ -105,19 +112,20 @@ void LinuxControllerImplementation::eventLoop()
 
 void LinuxControllerImplementation::generateEventForEveryButton()
 {
-	if (fd != -1) {
-		for (int i = 0; i + 1 < sizeof(axisStates) / sizeof(axisStates[0]); i++) {
+	if (settingUpFinished) { // we want to call it on every new observer added, though it gets called before setup is finished
+		for (int i = 0; i + 1 < num_of_axis; i++) {
 			ControlSurface cs = getControlSurfaceFor(false, i);
+
 			if (cs != L_TRIGGER && cs != R_TRIGGER) {
 				notifyObserverEvent(cs, axisStates[i], axisStates[i + 1]);
 				i++;
 				continue;
 			} else {
-				notifyObserverEvent(cs, axisStates[i]+32767, 0);
+				notifyObserverEvent(cs, axisStates[i], 0);
 				continue;
 			}
 		}
-		for (int i = 0; i < sizeof(buttonsStates) / sizeof(buttonsStates[0]); i++) {
+		for (int i = 0; i < num_of_buttons; i++) {
 			notifyObserverEvent(getControlSurfaceFor(true, i), buttonsStates[i]);
 		}
 	}

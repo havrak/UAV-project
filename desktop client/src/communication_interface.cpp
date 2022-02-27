@@ -120,6 +120,8 @@ void CommunicationInterface::cleanUp()
 	close(sockfd);
 	process = false;
 	checkForNewDataThread.join();
+	SendingThreadPool::GetInstance()->endThreadPool();
+	ProcessingThreadPool::GetInstance()->endThreadPool();
 }
 
 bool CommunicationInterface::fixReceiveData()
@@ -534,7 +536,6 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		pConSpc pcs;
 		pcs.cs = cs;
 		pcs.val = val;
-
 		SendingStructure ss(P_CON_SPC, 0x01, sizeof(pcs));
 		memcpy(ss.getMessageBuffer(), &pcs, sizeof(pcs));
 		SendingThreadPool::GetInstance()->scheduleToSend(ss);
@@ -548,7 +549,7 @@ void ControllerDroneBridge::sendControlComand()
 	while (true) {
 		SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
 		controllerStateMutex.lock();
-		memcpy(ss.messageBuffer, &controllerState, sizeof(controllerState));
+		memcpy(ss.getMessageBuffer(), &controllerState, sizeof(controllerState));
 		controllerStateMutex.unlock();
 		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
 		this_thread::sleep_for(chrono::milliseconds(20));

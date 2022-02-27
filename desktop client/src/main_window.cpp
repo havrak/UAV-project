@@ -6,11 +6,15 @@
  */
 
 #include "main_window.h"
+#include "communication_interface.h"
 #include "gdkmm/pixbuf.h"
 #include "gtkmm/textbuffer.h"
 #include "protocol_spec.h"
+#include <bits/types/struct_tm.h>
 #include <cstring>
+#include <ctime>
 #include <iterator>
+#include <mutex>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
@@ -29,31 +33,37 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
 	this->builder->get_widget("artHorizon", this->artHorizon);
 	this->builder->get_widget("telemetryField", this->telemetryField);
+	this->builder->get_widget("restartButton", this->resartButton);
 
-	/* telemetryBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(telemetryField)); */
 	textBuffer = telemetryField->get_buffer();
-	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
 
 	/* telemetryField->get_buffer(); */
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
+	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
 
 	this->artHorizon->set("images/image_not_found.png");
 	this->drawingImage->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
+	initAttitudeIndicator();
+	updateAttitudeIndicator();
 }
 
 MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::restartServer(){
+	SendingThreadPool::GetInstance()->scheduleToSend(SendingStructure(P_SET_RESTART, 0x10, 0));
+}
+
 void MainWindow::pauseResumeCamera()
 {
 	this->paused = !this->paused;
 	if (this->paused) {
-		this->resumePauseButton->set_label("resume");
+		this->resumePauseButton->set_label("Resume");
 	} else {
-		this->resumePauseButton->set_label("pause");
+		this->resumePauseButton->set_label("Pause");
 	}
 }
 
@@ -68,52 +78,50 @@ void MainWindow::updateImage(cv::Mat& frame)
 		float scaleX = (float)this->drawingImage->get_height() / frame.rows;
 		float scaleY = (float)this->drawingImage->get_width() / frame.cols;
 
-		float scaleFactor = (scaleX > scaleY ? scaleY : scaleX) ;
+		float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
 		Glib::RefPtr<Gdk::Pixbuf> bb = Gdk::Pixbuf::create_from_data(frame.data, Gdk::COLORSPACE_RGB, false, 8, frame.cols, frame.rows, frame.step);
 		this->drawingImage->set(bb->scale_simple(bb->get_width() * scaleFactor, bb->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR));
 		this->drawingImage->queue_draw();
 	}
 }
 
-bool MainWindow::updateTextField(textBufferUpdate update)
+bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
 {
 	/* GtkTextIter end; */
-	update.buffer->set_text(update.text);
+	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
+
+	mainWindow->updateAttitudeIndicator();
 	/* gtk_text_buffer_get_end_iter(, &end); */
 	/* cout << "text: " << update.text << " length: " << update.text.size(); */
 	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
-	return FALSE;
+	return true;
 }
 
 void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 {
-	//textBufferUpdate  aa(telemetryBuffer, "test");
+	// textBufferUpdate  aa(telemetryBuffer, "test");
 	string message;
-	message+="temp: "+to_string(data.att.temp)+"\n";
-	message+="-----------------------\n";
-	message+="yaw x: "+to_string(data.att.yaw) + "\n";
-	message+="pitch y: "+to_string(data.att.pitch) + "\n";
-	message+="roll y: "+to_string(data.att.roll) + "\n";
-	message+="-----------------------\n";
-	message+="gyro x: "+to_string(data.att.gyroX) + "\n";
-	message+="gyro y: "+to_string(data.att.gyroY) + "\n";
-	message+="gyro y: "+to_string(data.att.gyroZ) + "\n";
-	message+="-----------------------\n";
-	message+="GPS NOS: "+to_string(data.gps.numberOfSatelites) + "\n";
-	message+="lat: "+to_string(data.gps.latitude) + "\n";
-	message+="lot: "+to_string(data.gps.longitude) + "\n";
-	message+="-----------------------\n";
-	message+="Voltage: "+to_string(data.batt.getVoltage)+"\n";
-	message+="Current: "+to_string(data.batt.getCurrent)+"\n";
+	message += "temp: " + to_string(data.att.temp) + "\n";
+	message += "-----------------------\n";
+	message += "yaw x: " + to_string(data.att.yaw) + "\n";
+	message += "pitch y: " + to_string(data.att.pitch) + "\n";
+	message += "roll y: " + to_string(data.att.roll) + "\n";
+	message += "-----------------------\n";
+	message += "Voltage: " + to_string(data.batt.getVoltage) + "\n";
+	message += "Current: " + to_string(data.batt.getCurrent) + "\n";
+	message += "-----------------------\n";
+	message += "gyro x: " + to_string(data.att.gyroX) + "\n";
+	message += "gyro y: " + to_string(data.att.gyroY) + "\n";
+	message += "gyro y: " + to_string(data.att.gyroZ) + "\n";
+	message += "-----------------------\n";
+	message += "GPS NOS: " + to_string(data.gps.numberOfSatelites) + "\n";
+	message += "lat: " + to_string(data.gps.latitude) + "\n";
+	message += "lot: " + to_string(data.gps.longitude) + "\n";
 
+	this->pitch = data.att.pitch;
+	this->roll = data.att.roll;
+	g_idle_add(G_SOURCE_FUNC(updateOnScreenTelemetry), new textBufferUpdate(textBuffer, message));
 
-	g_idle_add(G_SOURCE_FUNC(updateTextField), new textBufferUpdate(textBuffer, message));
-
-	ai.roll = data.att.roll;
-	ai.pitch = data.att.pitch;
-
-	/* this->telemetryField->get_buffer().clear(); */
-	/* this->telemetryField->get_buffer()->set_text("aaa"); */
 }
 
 void MainWindow::displayError(pTeleErr error)
@@ -134,6 +142,128 @@ void MainWindow::displayError(pTeleErr error)
 			dialog);
 
 	gtk_widget_show_all(dialog);
+}
+
+
+// courtesty of  https://stackoverflow.com/questions/37520296/can-a-gdk-pixbuf-be-rotated-by-something-less-than-90-degrees/39130357#39130357
+Glib::RefPtr<Gdk::Pixbuf> MainWindow::rotatePixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf, double angle)
+{
+	double s = sin(angle/180*M_PI), c = cos(angle/180*M_PI);
+	double as = s < 0 ? -s : s, ac = c < 0 ? -c : c;
+	int width, height, nwidth, nheight;
+	int hasalpha, nhasalpha;
+	int nr, nc, r, col;
+	double nmodr, nmodc;
+	int alpha = 0;
+	guchar *pixels, *npixels, *pt, *npt;
+	int rowstride, nrowstride, pixellen;
+	;
+
+	width = pixbuf->get_width();
+	height = pixbuf->get_height();
+	hasalpha = pixbuf->get_has_alpha();
+	rowstride = pixbuf->get_rowstride();
+	pixels = pixbuf->get_pixels();
+	pixellen = hasalpha ? 4 : 3;
+
+	if (true) {
+		nwidth = round(ac * width + as * height);
+		nheight = round(as * width + ac * height);
+		nhasalpha = TRUE;
+	} else {
+		double denom = as * as - ac * ac;
+		if (denom < .1e-7 && denom > -1.e-7) {
+			nwidth = nheight = round(width / sqrt(2.0));
+		} else {
+			nwidth = round((height * as - width * ac) / denom);
+			nheight = round((width * as - height * ac) / denom);
+		}
+		nhasalpha = hasalpha;
+	}
+	Glib::RefPtr<Gdk::Pixbuf> toReturn = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, nwidth, nheight);
+
+	nrowstride = toReturn->get_rowstride();
+	npixels = toReturn->get_pixels();
+
+	for (nr = 0; nr < nheight; ++nr) {
+		nmodr = nr - nheight / 2.0;
+		npt = npixels + nr * nrowstride;
+		for (nc = 0; nc < nwidth; ++nc) {
+			nmodc = nc - nwidth / 2.0;
+			/* Where did this pixel come from? */
+			r = round(height / 2 - nmodc * s + nmodr * c);
+			col = round(width / 2 + nmodc * c + nmodr * s);
+			if (r < 0 || col < 0 || r >= height || col >= width) {
+				alpha = 0;
+				if (r < 0)
+					r = 0;
+				else if (r >= height)
+					r = height - 1;
+				if (col < 0)
+					col = 0;
+				else if (col >= width)
+					col = width - 1;
+			} else
+				alpha = 0xff;
+			pt = pixels + r * rowstride + col * pixellen;
+			*npt++ = *pt++;
+			*npt++ = *pt++;
+			*npt++ = *pt++;
+			if (hasalpha && alpha != 0)
+				alpha = *pt;
+			if (nhasalpha)
+				*npt++ = alpha;
+		}
+	}
+	return toReturn;
+}
+
+void MainWindow::initAttitudeIndicator()
+{
+	imgBackOri = Gdk::Pixbuf::create_from_file("images/ai_back.png");
+	imgCaseOri = Gdk::Pixbuf::create_from_file("images/ai_case.png");
+	imgFaceOri = Gdk::Pixbuf::create_from_file("images/ai_face.png");
+	imgRingOri = Gdk::Pixbuf::create_from_file("images/ai_ring.png");
+
+}
+
+void MainWindow::setRollAndPitch(float pitch, float roll)
+{
+	lock_guard<mutex> mutex(attitudeValuesMutex);
+}
+
+void MainWindow::updateAttitudeIndicator()
+	{
+	cout << imgBackOri->get_width() << '\n';
+	float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height();
+	float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width();
+	float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
+	// create scaled copies
+	imgBackCpy = imgBackOri->copy()->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
+	imgRingCpy = imgRingOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgRingOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
+	imgCaseCpy = imgCaseOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgCaseOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
+	imgFaceCpy = imgFaceOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgFaceOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
+
+	int width  = imgBackCpy->get_width();
+	int height = imgBackCpy->get_height();
+	// rotate copies;
+	imgBackCpy = rotatePixbuf(imgBackCpy, roll);
+	imgFaceCpy = rotatePixbuf(imgFaceCpy, roll);
+	imgRingCpy = rotatePixbuf(imgRingCpy, roll);
+	Glib::RefPtr<Gdk::Pixbuf> tmpbuf = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, width, height);
+
+  double roll_rad = M_PI *roll / 180.0;
+
+  double delta  = 1.7 * pitch;
+
+  float faceDeltaX = delta * sin( roll_rad );
+  float faceDeltaY = delta * cos( roll_rad );
+	//imgBackCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
+	//imgRingCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
+	/* imgFaceCpy->copy_area(0, 0, width, height, tmpbuf, faceDeltaX, faceDeltaY); */
+	//imgCaseCpy->copy_area(0, 0, width, height, tmpbuf, 0, 0);
+
+	artHorizon->set(imgBackCpy);
 }
 
 bool setupCamera()

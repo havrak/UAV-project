@@ -33,6 +33,8 @@ class LinuxControllerImplementation : public ControllerInterface {
 
 	private:
 		const bool debug = true;
+		bool shownError = false;
+		bool settingUpFinished = false;
 		int fd = -1;
 		int num_of_axis = 0;
 		int num_of_buttons =0;

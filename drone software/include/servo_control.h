@@ -24,6 +24,7 @@
 #define LEVERAGE 20;
 
 #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h"
+
 #include <bcm2835.h>
 
 #include <chrono>
@@ -45,6 +46,7 @@ private:
   static ServoControl *servoControl;
   static mutex mutexServoControl;
 	thread pidControllerThread;
+	float pitch = 0, roll = 0;
 
 	const wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
 	bool pca9685Up = false;
@@ -105,6 +107,7 @@ public:
 	int processControl(ProcessingStructure ps);
 	int processMovementForVTail(pConStr ps);
 	int processMovementForStandart(pConStr  ps);
+	int updatePichAndRoll(float pitch, float roll);
 };
 
 

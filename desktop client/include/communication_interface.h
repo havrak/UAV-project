@@ -122,11 +122,11 @@ class SendingThreadPool {
 
 	bool process = true;
 
-	void endThreadPool();
 	void worker();
 	void controlWorker();
 
 	public:
+	void endThreadPool();
 	static SendingThreadPool* GetInstance();
 	void scheduleToSend(SendingStructure ss);
 	void scheduleToSendControl(SendingStructure ss); // Schedules to send control sequence, if data in queue is older than 10 ms it is dropped
@@ -143,12 +143,12 @@ class ProcessingThreadPool {
 	queue<ProcessingStructure> workQueue;
 	bool process = true;
 
-	void endThreadPool();
 	void worker();
 
 	public:
 	static ProcessingThreadPool* GetInstance();
 
+	void endThreadPool();
 	void addJob(ProcessingStructure ps);
 };
 

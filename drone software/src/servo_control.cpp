@@ -8,9 +8,7 @@
 #include "servo_control.h"
 #include "bcm2835.h"
 #include "generic_PID.h"
-#include "imu_interface.h"
 #include "protocol_spec.h"
-#include "telemetry.h"
 #include <bits/types/clock_t.h>
 #include <cmath>
 #include <cstdint>
@@ -62,6 +60,12 @@ ServoControl* ServoControl::GetInstance()
 
 	return servoControl;
 }
+
+int ServoControl::updatePichAndRoll(float pitch, float roll){
+	this->pitch = pitch;
+	this->roll = roll;
+}
+
 
 void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 {
@@ -191,18 +195,18 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 
 bool ServoControl::pidController()
 {
-	ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
+	//ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
 
 	GenericPID pitchPID(7, 0.5, 2, 1);
 	GenericPID rollPID(7, 1, 3, 1);
 	while (pidOn) {
 
-		if(abs(ImuInterface::GetInstance()->getPitch()) <1.5 &&  abs(ImuInterface::GetInstance()->getRoll()) <1 ){
+		if(abs(pitch) <1.5 &&  abs(roll) <1 ){
 			this_thread::sleep_for(chrono::milliseconds(100));
 			continue;
 		}
-		float pitchOutput = pitchPID.calculateOutput(ImuInterface::GetInstance()->getPitch()/2);
-		float rollOutput = rollPID.calculateOutput(ImuInterface::GetInstance()->getRoll()/2);
+		float pitchOutput = pitchPID.calculateOutput(pitch/2);
+		float rollOutput = rollPID.calculateOutput(roll/2);
 
 		switch (configuration) {
 		case V_SHAPE_TAIL_WING:
@@ -240,38 +244,39 @@ int ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
 
-	/* float tmp; */
+	// squaring circle - https://squircular.blogspot.com/2015/09/mapping-circle-to-square.html
+	/* tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE; */
+	/* tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE; */
+	/* scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2); */
+	/* scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2); */
+	/* ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX; */
+	/* ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY; */
 
-	tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE;
-	tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE;
-	scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2);
-	scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2);
-	ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX;
-	ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
-
-	/* if (ps.lAnalog.first == 0){ */
-	/* 	tmp = atan(ps.lAnalog.second / ps.rAnalog.first); */
-	/* 	if(tmp < 1.047) // we don't want to decrease value */
-	/* 		ps.lAnalog.first*=cos(tmp)*2; */
-	/* 	if(tmp > 0.524) */
-	/* 		ps.lAnalog.second*=sin(tmp)*2; */
-	/* } */
+	// smoothening contoller by goniometry
+	float tmp;
+	if (ps.lAnalog.first == 0){
+		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
+		if(tmp < 1.047) // we don't want to decrease value
+			ps.lAnalog.first*=cos(tmp)*2;
+		if(tmp > 0.524)
+			ps.lAnalog.second*=sin(tmp)*2;
+	}
 
 	if (ps.lAnalog.first == 0)
-		yaw = 0;
+		roll = 0;
 	else
-		yaw = ((float)ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
+		roll = ((float)ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
 	if (ps.lAnalog.second == 0)
 		pitch = 0;
 	else
 		pitch = ((float)ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
 
-	vTail.leftRuddervator = (yaw + pitch) * MIXING_GAIN;
-	vTail.rightRuddervator = (90 - yaw + pitch) * MIXING_GAIN;
+	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
+	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
 	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
 	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
-	setAngleOfServo(vTail.leftFlapIndex, false, yaw);
-	setAngleOfServo(vTail.rightFlapIndex, true, (90 - yaw));
+	setAngleOfServo(vTail.leftFlapIndex, false, roll);
+	setAngleOfServo(vTail.rightFlapIndex, true, (90 - roll));
 	return 1;
 }
 

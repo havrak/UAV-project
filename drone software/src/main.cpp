@@ -28,7 +28,7 @@ void signalHandler( int sigNum){
 int main(int argc, char** argv)
 {
 	signal(SIGKILL, signalHandler);
-
+	signal(SIGPIPE, SIG_IGN);
 	/* if (argc > 1){ */
 	/* 	if(strcmp(argv[1], "-r") == 0){ */
 	/* 		cout << "MAIN | main | reseting ServoControl" << endl; */
