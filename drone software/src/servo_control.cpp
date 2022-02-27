@@ -7,6 +7,7 @@
 
 #include "servo_control.h"
 #include "bcm2835.h"
+#include "generic_PID.h"
 #include "imu_interface.h"
 #include "protocol_spec.h"
 #include "telemetry.h"
@@ -188,102 +189,89 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 	return true;
 }
 
-bool ServoControl::pidController(){
-	const float weightP = 1;
-	const float weightI = 1;
-	const float weightD = 1;
-	const float maxValOfIntegrator = 1;
-	const float scaler = 1;
+bool ServoControl::pidController()
+{
+	ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
 
-	float lowPass = 0.00795774715459476;// infintie impulse response filter
-	float integratorValue = 0;// integrator value
-	float proportionalValue = 0;
-	float derivativeValue = 0;
-	float lastError = 0;// last error for derivative
-	float lastDerivative = 0;// last derivative for low-pass filter
-	float error = 0;
-	float pidOutput;
-
-	clock_t lastTime = clock();
-	clock_t now = clock();
-	clock_t difference;
-
+	GenericPID pitchPID(7, 0.5, 2, 1);
+	GenericPID rollPID(7, 1, 3, 1);
 	while (pidOn) {
-		pidOutput = 0;
-		now = clock();
-		difference = now - lastTime;
-		difference /=CLOCKS_PER_SEC;
 
-		proportionalValue = error * weightP;
- 		pidOutput +=proportionalValue;
-
-		if (difference > 0.001){
-			lastTime = clock();
-			//derivation value
-			derivativeValue = (error-lastError)/difference;
-			derivativeValue = lastDerivative+(difference/(lowPass+difference)) * (derivativeValue - lastDerivative);
-			derivativeValue *= scaler*weightD;
- 			pidOutput +=derivativeValue;
-
-
-			lastError = error;
-			lastDerivative = derivativeValue;
-			//integration value
-			integratorValue += (error+weightI) * difference;
-			integratorValue = integratorValue < -maxValOfIntegrator ? -maxValOfIntegrator : (integratorValue > maxValOfIntegrator ? maxValOfIntegrator : integratorValue);
-			pidOutput +=integratorValue;
+		if(abs(ImuInterface::GetInstance()->getPitch()) <1.5 &&  abs(ImuInterface::GetInstance()->getRoll()) <1 ){
+			this_thread::sleep_for(chrono::milliseconds(100));
+			continue;
 		}
+		float pitchOutput = pitchPID.calculateOutput(ImuInterface::GetInstance()->getPitch()/2)+45;
+		float rollOutput = rollPID.calculateOutput(ImuInterface::GetInstance()->getRoll()/2)+45;
 
-		error = ImuInterface::GetInstance()->getRoll() - ImuInterface::GetInstance()->getPitch();
+		switch (configuration) {
+		case V_SHAPE_TAIL_WING:
+				//roll
+				setAngleOfServo(vTail.leftFlapIndex, false, rollOutput);
+				setAngleOfServo(vTail.rightFlapIndex, true, (90 - rollOutput));
+				//pitch
+				setAngleOfServo(vTail.leftRuddervatorIndex, false, pitchOutput);
+				setAngleOfServo(vTail.rightRuddervatorIndex, true, 90-pitchOutput);
 
-		//
+			break;
+		case STANDARD_TAIL_WING:
 
-
-
+			break;
+		}
+			this_thread::sleep_for(chrono::milliseconds(100));
 	}
-	return true;
 }
 
-bool ServoControl::togglePIDController(){
-	if((pidOn = !pidOn) == true){
+bool ServoControl::togglePIDController()
+{
+	if ((pidOn = !pidOn) == true) {
 		pidControllerThread = thread(&ServoControl::pidController, this);
-	}else{
+	} else {
 		pidControllerThread.join();
 	}
 	return true;
 }
 
+float scalerX, scalerY;
+float tmpX, tmpY;
+int yaw, pitch;
 
 int ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
-	int yaw, pitch;
 
-	float tmp;
+	/* float tmp; */
 
-	if (ps.lAnalog.first == 0){
+	tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE;
+	tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE;
+	scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2);
+	scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2);
+	ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX;
+	ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
+
+	/* if (ps.lAnalog.first == 0){ */
+	/* 	tmp = atan(ps.lAnalog.second / ps.rAnalog.first); */
+	/* 	if(tmp < 1.047) // we don't want to decrease value */
+	/* 		ps.lAnalog.first*=cos(tmp)*2; */
+	/* 	if(tmp > 0.524) */
+	/* 		ps.lAnalog.second*=sin(tmp)*2; */
+	/* } */
+
+	if (ps.lAnalog.first == 0)
 		yaw = 0;
-		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
-		if(tmp < 1.047) // we don't want to decrease value
-			ps.lAnalog.first*=cos(tmp)*2;
-		if(tmp > 0.524)
-			ps.lAnalog.second*=sin(tmp)*2;
-
-	}else {
+	else
 		yaw = ((float)ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
-	}
 	if (ps.lAnalog.second == 0)
 		pitch = 0;
-	else {
+	else
 		pitch = ((float)ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
-	}
 
 	vTail.leftRuddervator = (yaw + pitch) * MIXING_GAIN;
-	vTail.rightRuddervator = (90-yaw + pitch) * MIXING_GAIN;
+	vTail.rightRuddervator = (90 - yaw + pitch) * MIXING_GAIN;
 	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
 	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
 	setAngleOfServo(vTail.leftFlapIndex, false, yaw);
-	setAngleOfServo(vTail.rightFlapIndex, true, (90-yaw));
+	setAngleOfServo(vTail.rightFlapIndex, true, (90 - yaw));
 	return 1;
 }
 
@@ -296,7 +284,7 @@ int ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), ps.messageSize);
-	if(pidOn){
+	if (pidOn) {
 		adjustMainMotorSpeed(control);
 		return 0;
 	}
