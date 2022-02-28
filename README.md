@@ -56,8 +56,24 @@ However as I have never done anything like this I'm not sure how far will I get.
 * Gtk3
 * WiringPi (used by some libraries above) -- need to move to gpio library
 
+# Photos
+
+### UAV Photos
+
+![whole plane](./photos/whole_plane.jpg)
+
+![body detail](./photos/body.jpg)
+
+![internals](./photos/circuit.jpg)
+
+![detail](./photos/detail.jpg)
+
+### Circuit schema
+
+![circuit](./photos/schema.png)
 
 
 # Credits
 * textures for desktop client originate from [marek-cel/QFlightinstruments](https://github.com/marek-cel/QFlightinstruments)
+
 
