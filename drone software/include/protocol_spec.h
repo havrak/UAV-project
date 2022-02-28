@@ -24,6 +24,9 @@
 
 using namespace std;
 
+/**
+ * Enum to make working with controller more friendly
+ */
 enum ControlSurface{
 	L_ANALOG = 0x11, R_ANALOG = 0x12, L_TRIGGER = 0x13, R_TRIGGER = 0x14, L_BUMPER = 0x15, R_BUMPER = 0x16,
 	X =0x01, Y =0x02, A =0x03, B =0x04,
@@ -36,6 +39,14 @@ enum ControlSurface{
 
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
 
+/**
+ * structure to save data about client
+ * it also contains information about message being read
+ * currrently being read
+ *
+ * also used in SendingStructure, this is where constructor
+ * with only fd and mutex comes into play
+ */
 struct client {
 	int fd = -1;
 	sockaddr_in adress;
@@ -58,6 +69,9 @@ struct client {
 			, cMutex(cMutex) {};
 };
 
+/**
+ * Object used to store data waiting to be processed
+ */
 class ProcessingStructure {
 	public:
 	// const client* cli; // we need the client to know if he is ready to receive data
@@ -83,6 +97,9 @@ class ProcessingStructure {
 	};
 };
 
+/**
+ * Object used to store data waiting to be send
+ */
 class SendingStructure {
 	public:
 	int cfd;
@@ -185,7 +202,7 @@ struct pTeleBATT {
 struct pTelePWM {
 	unsigned char configuration;
 	unsigned int short motorMS;
-	unsigned int short angle[16];
+	unsigned char angle[16];
 };
 
 struct pTeleATTGPS {

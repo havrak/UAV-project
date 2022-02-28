@@ -34,7 +34,7 @@ Telemetry* Telemetry::GetInstance()
 }
 
 // TODO; make sure everything generates propper messages
-int Telemetry::setUpSensors()
+bool Telemetry::setUpSensors()
 {
 	ImuInterface::GetInstance()->attachIMU();
 	cout << "MAIN | main | IMU attached\n";
@@ -60,7 +60,7 @@ pTeleATT Telemetry::createTeleAttStruct()
 pTeleGPS Telemetry::createTeleGPSStruct()
 {
 	GPSInterface* instance = GPSInterface::GetInstance();
-	pTeleGPS toReturn( instance->getAltitude(), instance->getLon(), instance->getLan(), instance->getNOS(), instance->getGPSStatus());
+	pTeleGPS toReturn( instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getNOS(), instance->getGPSStatus());
 	return toReturn;
 }
 
@@ -83,13 +83,13 @@ pTelePWM Telemetry::createTelePWMStruct()
 
 	ServoControl* instance = ServoControl::GetInstance();
 	toReturn.motorMS = instance->getMainMotorMS();
-	pair<int, unsigned int short*> tmp = instance->getControlSurfaceConfiguration();
+	pair<int, unsigned char*> tmp = instance->getControlSurfaceConfiguration();
 	toReturn.configuration = tmp.first;
 	memcpy(&toReturn.angle, &tmp.second, 16);
 	return toReturn;
 }
 
-int Telemetry::processGeneralTelemetryRequest(const client cli)
+bool Telemetry::processGeneralTelemetryRequest(const client cli)
 {
 	pTeleGen data;
 	data.att = createTeleAttStruct();
@@ -101,10 +101,10 @@ int Telemetry::processGeneralTelemetryRequest(const client cli)
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_GEN, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-	return 1;
+	return true;
 }
 
-int Telemetry::processAttGPSRequest(const client cli)
+bool Telemetry::processAttGPSRequest(const client cli)
 {
 	pTeleATTGPS data;
 	data.att = createTeleAttStruct();
@@ -112,30 +112,30 @@ int Telemetry::processAttGPSRequest(const client cli)
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_ATTGPS, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-	return 1;
+	return true;
 }
-int Telemetry::processBatteryRequest(const client cli)
+bool Telemetry::processBatteryRequest(const client cli)
 {
 	pTeleBATT data = createTeleBattStuct();
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_BATT, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-	return 1;
+	return true;
 }
 
-int Telemetry::processPWMRequest(const client cli)
+bool Telemetry::processPWMRequest(const client cli)
 {
 	pTelePWM data = createTelePWMStruct();
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_PWM, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-	return 1;
+	return true;
 }
-int Telemetry::processIORequest(const client cli)
+bool Telemetry::processIORequest(const client cli)
 {
 	pTeleIOStat data = createTeleIOStatStruct();
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_IOSTAT, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
-	return 1;
+	return true;
 }

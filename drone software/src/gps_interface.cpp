@@ -63,7 +63,7 @@ void GPSInterface::updateFunction()
 					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
 					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
 					numberOfSatelites = stoi(parts.at(7));
-					if(numberOfSatelites > 0 ){
+					if(numberOfSatelites > 2 ){
 						gpsUp = true;
 						longitude = stod(parts.at(4));
 						latitude = stod(parts.at(2));
@@ -97,7 +97,7 @@ void GPSInterface::startLoop()
 }
 
 
-double GPSInterface::getLan(){
+double GPSInterface::getLat(){
 	return latitude;
 }
 

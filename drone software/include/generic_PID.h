@@ -9,6 +9,10 @@
 #define GENERIC_PID_H
 
 #include <chrono>
+
+/**
+ * generic implementation of PID controller
+ */
 class GenericPID{
 private:
 	const float weightP;
@@ -27,8 +31,22 @@ private:
 	clock_t lastTime;
 
 public:
+
+	/**
+	 *
+	 * @param float weightP - weight of proportional value
+	 * @param float weightI - weight of integrator value
+	 * @param float weightD - weight of derivative value
+	 * @param float maxValOfIntegrator - how big can integrator value get
+   */
 	GenericPID(float weightP, float weightI, float weightD, float maxValOfIntegrator): weightP(weightP), weightI(weightI), weightD(weightD), maxValOfIntegrator(maxValOfIntegrator){};
 
+	/**
+	 * calculates value of PID for given error
+	 *
+	 * @param float error - value of new error
+	 * @return float - output of pid controller
+	 */
 	float calculateOutput(float error);
 
 };

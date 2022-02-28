@@ -34,7 +34,21 @@ class CameraStreamer{
 		CameraStreamer(const int port, const string ipaddr):port(port),ipaddr(ipaddr){};
 
 		CameraStreamer();
+
+		/**
+		 * Start camera stream with parameters
+		 * stored in object variables
+		 *
+		 * @return bool - true if stream was launched
+		 */
 		bool setupStream();
+
+		/**
+		 * process request from client to setup camera
+		 * fills isn ipaddr and port field
+		 *
+		 * @return bool - true if stream was launched
+		 */
 		bool setUpCamera(ProcessingStructure ps);
 };
 

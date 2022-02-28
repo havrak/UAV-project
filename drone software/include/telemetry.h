@@ -15,30 +15,99 @@
 
 using namespace std;
 
-
 // will handle prepping of all telemetry -- especially prepearing packets to send
-class Telemetry{
-	private:
-		static Telemetry* telemetry;
-		static mutex telemetryMutex;
-		Telemetry();
 
-		pTeleATT createTeleAttStruct();
-		pTeleGPS createTeleGPSStruct();
-		pTeleBATT createTeleBattStuct();
-		pTeleIOStat createTeleIOStatStruct();
-		pTelePWM createTelePWMStruct();
+/**
+ * class that aggregates all of drones telemetry
+ */
+class Telemetry {
+	private:
+	static Telemetry* telemetry;
+	static mutex telemetryMutex;
+	Telemetry();
+
+	/**
+	 * fills in pTeleATT structure
+	 *
+	 * @return pTeleATT - filled in structure
+	 */
+	pTeleATT createTeleAttStruct();
+
+	/**
+	 * fills in pTeleGPS structure
+	 *
+	 * @return pTeleGPS - filled in structure
+	 */
+	pTeleGPS createTeleGPSStruct();
+
+	/**
+	 * fills in pTeleBATT structure
+	 *
+	 * @return pTeleBATT - filled in structure
+	 */
+	pTeleBATT createTeleBattStuct();
+
+	/**
+	 * fills in pTeleIOStat structure
+	 *
+	 * @return pTeleIOStat - filled in structure
+	 */
+	pTeleIOStat createTeleIOStatStruct();
+
+	/**
+	 * fills in pTelePWM structure
+	 *
+	 * @return pTelePWM - filled in structure
+	 */
+	pTelePWM createTelePWMStruct();
 
 	public:
-		static Telemetry* GetInstance();
-		int setUpSensors();
-		int processGeneralTelemetryRequest(const client cli);
-		int processAttGPSRequest(const client cli);
-		int processBatteryRequest(const client cli);
-		int processPWMRequest(const client cli);
-		int processIORequest(const client cli);
+	/**
+	 * main method used to access Telemetry
+	 * if instace wasn't created it will
+	 * initialize Telemetry
+	 */
+	static Telemetry* GetInstance();
 
+	/**
+	 * sets up all senors used for telemetry
+	 */
+	bool setUpSensors();
 
+	/**
+	 * fills in pTeleGen struct and sends it to client
+	 *
+	 * @param const client cli - client to which answer should be sends
+	 */
+	bool processGeneralTelemetryRequest(const client cli);
+
+	/**
+	 * fills in pTeleATTGPS struct and sends it to client
+	 *
+	 * @param const client cli - client to which answer should be sends
+	 */
+	bool processAttGPSRequest(const client cli);
+
+	/**
+	 * fills in pTeleBATT struct and sends it to client
+	 *
+	 * @param const client cli - client to which answer should be sends
+	 */
+	bool processBatteryRequest(const client cli);
+
+	/**
+	 * fills in pTelePWM struct and sends it to client
+	 *
+	 * @param const client cli - client to which answer should be sends
+	 */
+	bool processPWMRequest(const client cli);
+
+	/**
+	 * fills in pTeleIO struct and sends it to client
+	 *
+	 * @param const client cli - client to which answer should be sends
+	 */
+	bool processIORequest(const client cli);
 };
 
 #endif /* !TELEMETRY_H */

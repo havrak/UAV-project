@@ -45,13 +45,45 @@ class BatteryInterface {
 	protected:
 	thread loopThread;
 	BatteryInterface();
+
+	/**
+	 * TODO: should send notification if voltage is low
+	 * starts loop that will periodically load info about power
+	 */
 	void updateFunction();
 
 	public:
+	/**
+	 * main method used to access BatteryInterface
+	 * if instace wasn't created it will initialize
+	 * BatteryInterface
+	 */
 	static BatteryInterface* GetInstance();
+
+	/**
+	 * initializes INA226 library
+	 *
+	 * @return bool - true if connection was established
+	 */
 	bool attachINA226();
+
+	/**
+	 * starts loop to periodically load data
+	 */
 	void startLoop();
+
+	/**
+   * return how often should data be read from sensor
+	 *
+	 * @return int - polling delay
+	 */
 	int getPollingDelay();
+
+	/**
+   * sets how often should data be read from sensor
+	 *
+	 * @return int - polling delay
+	 */
 	void setPollingDelay(int pollingDelay);
 
 	float getVoltage();
@@ -59,6 +91,12 @@ class BatteryInterface {
 	float getPower();
 	float getShunt();
 	float getEnergy();
+
+	/**
+	 * return whether connection to sensor was established
+	 *
+	 * @return bool - true if connection was established
+	 */
 	bool getINAStatus();
 
 };

@@ -16,6 +16,10 @@
 
 using namespace std;
 
+/**
+ * wrapper for WT901B library
+ * all getters are made thread safe
+ */
 class ImuInterface {
 	private:
 	const bool debug = true;
@@ -26,13 +30,27 @@ class ImuInterface {
 
 	protected:
 	thread loopThread;
+
 	ImuInterface();
 	mutex sensorMutex;
 
 	public:
+	/**
+	 * main method used to access ImuInterface
+	 * if instace wasn't created it will initialize
+	 * ImuInterface
+	 */
 	static ImuInterface* GetInstance();
+
+	/**
+	 * attaches IMU
+	 *
+	 * @return bool - true if IMU was attached
+	 */
 	bool attachIMU(); // bind serial connection
-	CJY901 getSensor();
+
+
+	//CJY901 getSensor();
 
 	double yawOffset = 0;
 	double pitchOffset = 0;
@@ -40,34 +58,34 @@ class ImuInterface {
 	const bool usingSerial = false;
 
 	// copy from library just adds mutex, to make sure there are no errors due to multitherading, as data is stored in structures, thus it is not strictly safe
+
+	/**
+	 * resetOrientation of the IMU as value
+	 * of yaw, pitch and roll are calculated
+	 * from position IMU was in when it was
+	 * started
+	 *
+	 * @return bool - always true
+	 */
 	bool resetOrientation();
 	double getTemp();						 // get temperature
-	double getAccX();						 // get X-axis acceleration
-	double getAccY();						 // get Y-axis acceleration
-	double getAccZ();						 // get Z-axis acceleration
-	double getGyroX();					 // get X-axis angular velocity
-	double getGyroY();					 // get Y-axis angular velocity
-	double getGyroZ();					 // get Z-axis angular velocity
-	double getRoll();						 // get X-axis(Roll) angle
-	double getPitch();					 // get Y-axis(Pitch) angle
-	double getYaw();						 // get Z-axis(Yaw) angle
+	double getAccX();						 // get X-axis acceleration in multiples of g
+	double getAccY();						 // get Y-axis acceleration in multiples of g
+	double getAccZ();						 // get Z-axis acceleration in multiples of g
+	double getGyroX();					 // get X-axis angular velocity - rad/s
+	double getGyroY();					 // get Y-axis angular velocity - rad/s
+	double getGyroZ();					 // get Z-axis angular velocity - rad/s
+	double getRoll();						 // get X-axis(Roll) angle - deg
+	double getPitch();					 // get Y-axis(Pitch) angle - geg
+	double getYaw();						 // get Z-axis(Yaw) angle deg
 	double getMagX();						 // get X-axis magnetic field
 	double getMagY();						 // get Y-axis magnetic field
 	double getMagZ();						 // get Z-axis magnetic field
 	int getPressure();					 // get pressure(JY-901B)
 	int getAltitude();					 // get altitude(JY-901B)
 	double getQuater(string);		 // get quaternion
-	milliseconds getLastTime(); // get last receive time
-	short getAccRawX();					 // get X-axis raw acceleration data
-	short getAccRawY();					 // get Y-axis raw acceleration data
-	short getAccRawZ();					 // get Z-axis raw acceleration data
-	short getGyroRawX();				 // get X-axis raw angular velocity data
-	short getGyroRawY();				 // get Y-axis raw angular velocity data
-	short getGyroRawZ();				 // get Z-axis raw angular velocity data
-	short getMagRawX();					 // get X-axis raw magnetic field data
-	short getMagRawY();					 // get Y-axis raw magnetic field data
-	short getMagRawZ();					 // get Z-axis raw magnetic field data
-	bool getIMUStatus();
+	milliseconds getLastTime();  // get last receive time
+	bool getIMUStatus(); 				 // get status of IMU
 };
 
 #endif /* !IMUINTERFACE_H */

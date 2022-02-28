@@ -170,7 +170,7 @@ struct pTeleBATT {
 struct pTelePWM {
 	unsigned char configuration;
 	unsigned int short motorMS;
-	unsigned int short angle[16];
+	unsigned char angle[16];
 };
 
 struct pTeleATTGPS {

@@ -38,19 +38,80 @@ class GPSInterface {
 	protected:
 	thread loopThread;
 	GPSInterface();
+
+	/**
+	 * method used byt thread to regularly
+	 * read data from serial
+	 */
 	void updateFunction();
 
 	public:
+	/**
+	 * main method used to access GPSInterface
+	 * if instace wasn't created it will initialize
+	 * GPSInterface
+	 */
 	static GPSInterface* GetInstance();
+
+	/**
+	 * start loop to read data from serial
+	 */
 	void startLoop();
+
+	/**
+	 * returns value of how often data should be read
+	 *
+	 * @return int - polling delay
+	 */
 	int getPollingDelay();
+
+	/**
+	 * sets new time how often data should be read
+	 *
+	 */
 	void setPollingDelay(int newPollingDelay);
 
+	/**
+	 * opens serial connections to the sensor
+	 *
+	 * @return bool - true if connection was open
+	 */
 	bool attachGPS();
-	double getLan();
+
+	/**
+	 * returns latitude of drone in degrees
+	 *
+	 * @return double - latitude
+	 */
+	double getLat();
+
+	/**
+	 * returns longitude of drone in degrees
+	 *
+	 * @return double - latitude
+	 */
 	double getLon();
+
+	/**
+	 * returns altitude of drone in meters
+	 *
+	 * @return double - latitude
+	 */
 	double getAltitude();
+
+	/**
+	 * returns status of GPS
+	 *
+	 * @return bool - true if it sees more than two satelites
+	 */
 	bool getGPSStatus();
+
+	/**
+	 * returns number of satelites that GPS
+	 * module sees
+	 *
+	 * @return int - number of satelites
+	 */
 	int getNOS();
 
 };

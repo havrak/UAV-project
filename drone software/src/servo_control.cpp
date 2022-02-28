@@ -61,7 +61,7 @@ ServoControl* ServoControl::GetInstance()
 	return servoControl;
 }
 
-int ServoControl::updatePichAndRoll(float pitch, float roll){
+void ServoControl::setPichAndRoll(float pitch, float roll){
 	this->pitch = pitch;
 	this->roll = roll;
 }
@@ -135,10 +135,10 @@ bool ServoControl::getPCA9865Status()
 	return pca9685Up;
 }
 
-pair<int, unsigned int short*> ServoControl::getControlSurfaceConfiguration()
+pair<int, unsigned char*> ServoControl::getControlSurfaceConfiguration()
 {
-	pair<int, unsigned int short*> toReturn;
-	toReturn.second = new unsigned int short[16];
+	pair<int, unsigned char*> toReturn;
+	toReturn.second = new unsigned char[16];
 	switch (configuration) {
 	case V_SHAPE_TAIL_WING:
 		toReturn.first = V_SHAPE_TAIL_WING;
@@ -240,7 +240,7 @@ float scalerX, scalerY;
 float tmpX, tmpY;
 int yaw, pitch;
 
-int ServoControl::processMovementForVTail(pConStr ps)
+bool ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
 
@@ -277,15 +277,15 @@ int ServoControl::processMovementForVTail(pConStr ps)
 	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
 	setAngleOfServo(vTail.leftFlapIndex, false, roll);
 	setAngleOfServo(vTail.rightFlapIndex, true, (90 - roll));
-	return 1;
+	return true;
 }
 
-int ServoControl::processMovementForStandart(pConStr ps)
+bool ServoControl::processMovementForStandart(pConStr ps)
 {
-	return 0;
+	return true;
 }
 
-int ServoControl::processControl(ProcessingStructure ps)
+bool ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), sizeof(control));
@@ -302,7 +302,7 @@ int ServoControl::processControl(ProcessingStructure ps)
 		break;
 	}
 	cout << "Control processed\n";
-	return 0;
+	return true;
 }
 
 unsigned int short ServoControl::getMainMotorMS()

@@ -82,6 +82,7 @@ void CommunicationInterface::cleanUp()
 {
 	for (client c : clients) {
 		close(c.fd);
+		c.fd = -1;
 	}
 	close(sockfd);
 }
@@ -108,7 +109,7 @@ void CommunicationInterface::shutdown()
 	SendingThreadPool::GetInstance()->endThreadPool();
 }
 
-int CommunicationInterface::buildFdSets()
+bool CommunicationInterface::buildFdSets()
 {
 
 	FD_ZERO(&read_fds);
@@ -127,7 +128,7 @@ int CommunicationInterface::buildFdSets()
 			FD_SET(c.fd, &write_fds);
 		}
 
-	return 0;
+	return true;
 }
 
 void CommunicationInterface::clearClientStruct(client cli)

@@ -34,11 +34,19 @@
 
 using namespace std;
 
+/**
+ * enum for configuration of plane
+ */
 enum wingSurfaceConfiguration{
 	V_SHAPE_TAIL_WING = 1,
 	STANDARD_TAIL_WING = 2,
 };
 
+
+/**
+ * class handeling interfacing between
+ * PCA9685 and rest of the system
+ */
 class ServoControl {
 private:
   int fd = -1;
@@ -82,12 +90,33 @@ private:
 	VShapeTailWingConfiguration vTail;
 	StandardTailWingConfiguration standard;
 
+	/**
+	 * adjust control of main motor new
+	 * value depends on position of left
+	 * and right trigger
+	 *
+	 * @param pConStr ps - struture from which position of triggers is extracted
+	 * @return bool - true if value was set successfully
+	 */
 	bool adjustMainMotorSpeed(pConStr ps);
+
+	/**
+   * sets angle of given servo
+	 * servos on right side are reversed, thus value of angle
+	 * needs to be flipped
+	 *
+	 * @param int channel - on which port is servo connected
+	 * @param bool right - is servo on the right side of the plane
+	 * @param unsigned char angle - desired angle of servo
+	 */
 	void setAngleOfServo(int channel, bool right, unsigned char angle);
 
 
 	// PID controller
 	bool pidOn = false;
+	/**
+	 * method run if pid controller is active
+	 */
 	bool pidController();
 
 
@@ -95,19 +124,95 @@ protected:
   ServoControl();
 
 public:
+	/**
+	 * main method used to access ServoControl
+	 * if instace wasn't created it will initialize
+	 * ServoControl
+	 */
   static ServoControl *GetInstance();
+
+	/**
+	 * calibrates ESC
+	 * sets ms to min value and after while to max
+	 * needs to be called only when using brand new ESC
+	 *
+	 * @return bool - true if calibration runned
+	 */
   bool calibrateESC();
+
+	/**
+	 * armESC after boot, needs to be called in order to use it
+	 *
+	 * @return bool - true if ESC was armed
+	 */
 	bool armESC();
+
+	/**
+	 * slows down main motor to min speed
+	 * necessary to be called before turing of the system
+	 */
 	void slowDownToMin();
+
+
 	void testServo();
+
+	/**
+	 * get status of PCA9685
+	 *
+	 * @return bool - true of PCA9685 is online
+	 */
 	bool getPCA9865Status();
+
+	/**
+	 * start/stops PID controller
+	 * if PID is running acces standard
+	 * controll will not be processed
+	 */
 	bool togglePIDController();
+
 	unsigned int short getMainMotorMS();
-	pair<int,unsigned int short*> getControlSurfaceConfiguration();
-	int processControl(ProcessingStructure ps);
-	int processMovementForVTail(pConStr ps);
-	int processMovementForStandart(pConStr  ps);
-	int updatePichAndRoll(float pitch, float roll);
+
+	/**
+	 * returns configuration of the plane alongside angle of all control surfaces
+	 *
+	 * @return<int, unsigned char*> - first value corresponds to configuration second to array of angles of controll surfaces
+	 */
+	pair<int,unsigned char*> getControlSurfaceConfiguration();
+
+	/**
+	 * processes new control from client
+	 * calls corresponding method depending
+	 * on configuration of the plane
+	 *
+	 * @param ProcessingStructure ps - strucure with new configuration
+	 * @return int - 0 if processesing went well
+	 */
+	bool processControl(ProcessingStructure ps);
+
+	/**
+	 * interprets controller state for V-Tail
+	 *
+	 * @param pConStr ps - structure with controller state
+	 * @return int - 0 if processesing went well
+	 */
+	bool processMovementForVTail(pConStr ps);
+
+	/**
+	 * interprets controller state for standard
+	 * plane configuration
+	 *
+	 * @param pConStr ps - structure with controller state
+	 * @return int - 0 if processesing went well
+	 */
+	bool processMovementForStandart(pConStr  ps);
+
+	/**
+	 * sets pitch and roll value used by PID
+	 *
+	 * @param float pitch - new pitch value
+	 * @param float roll - new roll value
+	 */
+	void setPichAndRoll(float pitch, float roll);
 };
 
 
