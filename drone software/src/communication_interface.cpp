@@ -370,9 +370,7 @@ int CommunicationInterface::newClientConnect()
 void CommunicationInterface::manage()
 {
 	while (process) {
-
 		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
-
 		// NOTE: this should not be here
 		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
 		// this fix is only temporary, gpio library shouldn't share this problem
@@ -422,7 +420,6 @@ void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* err
 	/* if(logOn){ */
 	/* 	// TODO: log errors into file */
 	/* } */
-
 	pTeleErr err(errCode, errMessage);
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_ERR, 0x04, sizeof(err));
 	memcpy(ss.getMessageBuffer(), &err, sizeof(err));

@@ -234,34 +234,28 @@ void MainWindow::initAttitudeIndicator()
 
 void MainWindow::updateAttitudeIndicator()
 	{
-	cout << imgBackOri->get_width() << '\n';
-	cout << "size: " << artHorizon->get_width() << " x " << artHorizon->get_height() << "\n";
 	float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height();
 	float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width();
 	float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
-	// create scaled copies
-	imgBackCpy = imgBackOri->copy()->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
-	imgRingCpy = imgRingOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgRingOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
-	imgCaseCpy = imgCaseOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgCaseOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
-	imgFaceCpy = imgFaceOri->copy()->scale_simple(imgCaseOri->get_width() * scaleFactor, imgFaceOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
 
+	imgBackCpy = imgBackOri->copy();
 	int width  = imgBackCpy->get_width();
 	int height = imgBackCpy->get_height();
-	// rotate copies;
+
+	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
+	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
 	imgBackCpy = rotatePixbuf(imgBackCpy, roll);
+
 	imgFaceCpy = rotatePixbuf(imgFaceCpy, roll);
 	imgRingCpy = rotatePixbuf(imgRingCpy, roll);
 	Glib::RefPtr<Gdk::Pixbuf> tmpbuf = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, width, height);
 
-  double roll_rad = M_PI *roll / 180.0;
-
-  double delta  = 1.7 * pitch;
-
-  float faceDeltaX = delta * sin( roll_rad );
-  float faceDeltaY = delta * cos( roll_rad );
-	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
-	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
-	imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
+  double rollRad = M_PI * roll / 180.0;
+  double delta  = (1.7*scaleFactor) * pitch;
+  float faceDeltaX = delta * sin( rollRad );
+  float faceDeltaY = delta * cos( rollRad );
+	imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, faceDeltaY, faceDeltaX,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
+	imgBackCpy->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
 	artHorizon->set(imgBackCpy);
 }
 
