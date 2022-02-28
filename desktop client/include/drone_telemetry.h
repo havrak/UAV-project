@@ -46,7 +46,10 @@ struct VShapeTailWingConfiguration{
 
 
 
-// will handle prepping of all telemetry -- especially prepearing packets to send
+/**
+ * Class that contains all telemetry from the drone, it also sends request
+ * to update data on screen
+ */
 class DroneTelemetry{
 	private:
 		static DroneTelemetry* telemetry;
@@ -69,13 +72,65 @@ class DroneTelemetry{
 		clock_t ioLastTimeReceived;
 
 	public:
+
+		/**
+		 * main method used to access DroneTelemetry,
+		 * if instace isn't created it will create it
+		 */
 		static DroneTelemetry* GetInstance();
-		int setUpSensors();
+
+		/**
+		 * processes data from general telemetry packet
+		 * after data is processed it will update data
+		 * on screen
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
+
 		int processGeneralTelemetry(ProcessingStructure ps);
+		/**
+		 * processes data from attitude+GPS telemetry packet
+		 * after data is processed it will update data
+		 * on screen
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
+
 		int processAttGPS(ProcessingStructure ps);
+		/**
+		 * processes data from battery telemetry packet
+		 * after data is processed it will update data
+		 * on screen
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
+
 		int processBattery(ProcessingStructure ps);
+		/**
+		 * processes data from pwm telemetry packet
+		 * after data is processed it will update data
+		 * on screen
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
+
 		int processPWM(ProcessingStructure ps);
+		/**
+		 * processes data from io telemetry packet
+		 * after data is processed it will update data
+		 * on screen
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
+
 		int processIO(ProcessingStructure ps);
+		/**
+		 * processes error packet
+		 * after error is processed it will update data
+		 * display on screen dialog with error message
+		 *
+		 * @param ProcessingStructure ps - data to be processed
+		 */
 		int processError(ProcessingStructure ps);
 
 };

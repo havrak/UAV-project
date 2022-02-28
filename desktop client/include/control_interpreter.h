@@ -14,6 +14,11 @@
 using namespace std;
 
 
+/**
+ * abstract class used by different implementation
+ * contains standart method by observer design
+ * pattern
+ */
 class ControlInterpreter{
 	public:
 		virtual int update(ControlSurface cs, int x, int y){return 0;}

@@ -229,10 +229,10 @@ void CommunicationInterface::checkActivityOnSocket()
 	this_thread::sleep_for(chrono::milliseconds(10));
 }
 
-int CommunicationInterface::buildFdSets()
+bool CommunicationInterface::buildFdSets()
 {
 	if (sockfd == -1)
-		return -1;
+		return false;
 
 	FD_ZERO(&read_fds);
 	FD_ZERO(&write_fds);
@@ -244,7 +244,7 @@ int CommunicationInterface::buildFdSets()
 	FD_SET(sockfd, &read_fds);
 	FD_SET(sockfd, &write_fds);
 
-	return 0;
+	return true;
 }
 
 bool CommunicationInterface::sendData(SendingStructure ss)
@@ -480,6 +480,14 @@ void SendingThreadPool::scheduleToSend(SendingStructure ss)
 // ControllerDroneBridge
 -----------------------------------*/
 
+void ControllerDroneBridge::setActive(bool active){
+	this->active = active;
+}
+
+bool ControllerDroneBridge::getActive(){
+	return active;
+}
+
 int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 {
 	controllerStateMutex.lock();
@@ -521,12 +529,14 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerState.rBumber = val;
 		controllerStateMutex.unlock();
 	} else if (active) {
-		pConSpc pcs;
-		pcs.cs = cs;
-		pcs.val = val;
-		SendingStructure ss(P_CON_SPC, 0x01, sizeof(pcs));
-		memcpy(ss.getMessageBuffer(), &pcs, sizeof(pcs));
-		SendingThreadPool::GetInstance()->scheduleToSend(ss);
+		if(val == 1){
+			pConSpc pcs;
+			pcs.cs = cs;
+			pcs.val = val;
+			SendingStructure ss(P_CON_SPC, 0x01, sizeof(pcs));
+			memcpy(ss.getMessageBuffer(), &pcs, sizeof(pcs));
+			SendingThreadPool::GetInstance()->scheduleToSend(ss);
+		}
 	}
 	return 1;
 }

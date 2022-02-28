@@ -27,8 +27,17 @@ using namespace std;
 #define CONTROLLER_AXIS_VALUE 32767
 
 
+/**
+ * Class used to interface with controller from Linux machine
+ * it extends ControllerInterface which handles observer logic
+ */
 class LinuxControllerImplementation : public ControllerInterface {
 	protected:
+		/**
+		 * Loop that will try to initialize controller
+		 * after it successeds it will handle processing new
+		 * control sate and call notifies observers
+		 */
 		void eventLoop() override;
 
 	private:
@@ -65,7 +74,17 @@ class LinuxControllerImplementation : public ControllerInterface {
 	public:
 		LinuxControllerImplementation(bool){};
 		LinuxControllerImplementation();
+
+		/**
+		 * tries to setup controller, if it fails on the
+		 * first try it will  generate errro message
+		 */
 		void setupController();
+
+		/**
+		 * Method  used to generate event for every button on the controller
+		 * used to setup initial state for the observer
+		 */
 		void generateEventForEveryButton() override;
 };
 

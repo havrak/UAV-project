@@ -22,6 +22,9 @@
 #define MAX_SEND_MESSAGE_SIZE 255
 #define MAX_MESSAGE_SIZE 510 // roughly 100 numbers with some metadata end terminators
 
+/**
+ * Enum to make working with controller more friendly
+ */
 enum ControlSurface{
 	L_ANALOG = 0x11, R_ANALOG = 0x12, L_TRIGGER = 0x13, R_TRIGGER = 0x14, L_BUMPER = 0x15, R_BUMPER = 0x16,
 	X =0x01, Y =0x02, A =0x03, B =0x04,
@@ -32,7 +35,11 @@ enum ControlSurface{
 };
 
 
-
+/**
+ * structure to save data about server
+ * it also contains information about message being read
+ * currrently being read
+ */
 struct serverStruct {
 	int curIndexInBuffer = 0; // position where we have left off, first not filled index
 	unsigned char curMessageType = 0;
@@ -43,6 +50,11 @@ struct serverStruct {
 };
 
 // struct are nice, but i would end up wasting a lot of space
+
+
+/**
+ * Object used to store data waiting to be processed
+ */
 class ProcessingStructure {
 	public:
 	unsigned char messageType = 0;
@@ -61,6 +73,9 @@ class ProcessingStructure {
 	};
 };
 
+/**
+ * Object used to store data waiting to be send
+ */
 class SendingStructure {
 	public:
 	unsigned char messageType = 0;
