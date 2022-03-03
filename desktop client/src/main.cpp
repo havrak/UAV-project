@@ -63,7 +63,6 @@ int main(int argc, char** argv)
 
 	CommunicationInterface::GetInstance()->setupSocket();
 	cout << "MAIN | main | socket setted up \n";
-
 	lci = new LinuxControllerImplementation();
 	cout << "MAIN | main | controller setted up \n";
 
@@ -73,7 +72,6 @@ int main(int argc, char** argv)
 
 	lci->addObserver(ci);
 	cout << "MAIN | main | drone bridge setted up \n";
-
 	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
 
 		dispatcher.connect([&]() {
@@ -88,6 +86,7 @@ int main(int argc, char** argv)
 		/* 	asm("nop"); */
 		/* this_thread::sleep_for(chrono::milliseconds(100)); */
 		/* } */
+
 		Gtk::Main::run(*mainWindow);
 
 		// NOTE: cleanup after window is closed
