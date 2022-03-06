@@ -88,11 +88,10 @@ void MainWindow::updateImage(cv::Mat& frame)
 bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
 {
 	/* GtkTextIter end; */
-	cout << "updating\n";
 	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
 
-	cout << "updating AI\n";
-	mainWindow->updateAttitudeIndicator();
+/* 	cout << "updating AI\n"; */
+/* 	mainWindow->updateAttitudeIndicator(); */
 	/* gtk_text_buffer_get_end_iter(, &end); */
 	/* cout << "text: " << update.text << " length: " << update.text.size(); */
 	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
@@ -234,28 +233,28 @@ void MainWindow::initAttitudeIndicator()
 
 void MainWindow::updateAttitudeIndicator()
 	{
-	float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height();
-	float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width();
-	float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
+	/* float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height(); */
+	/* float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width(); */
+	/* float scaleFactor = (scaleX > scaleY ? scaleY : scaleX); */
 
 	imgBackCpy = imgBackOri->copy();
-	int width  = imgBackCpy->get_width();
-	int height = imgBackCpy->get_height();
+	/* int width  = imgBackCpy->get_width(); */
+	/* int height = imgBackCpy->get_height(); */
 
-	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
-	imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
-	imgBackCpy = rotatePixbuf(imgBackCpy, roll);
+	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
+	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
+	/* imgBackCpy = rotatePixbuf(imgBackCpy, roll); */
 
-	imgFaceCpy = rotatePixbuf(imgFaceCpy, roll);
-	imgRingCpy = rotatePixbuf(imgRingCpy, roll);
-	Glib::RefPtr<Gdk::Pixbuf> tmpbuf = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, width, height);
+	/* imgFaceCpy = rotatePixbuf(imgFaceCpy, roll); */
+	/* imgRingCpy = rotatePixbuf(imgRingCpy, roll); */
+	/* Glib::RefPtr<Gdk::Pixbuf> tmpbuf = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, width, height); */
 
-  double rollRad = M_PI * roll / 180.0;
-  double delta  = (1.7*scaleFactor) * pitch;
-  float faceDeltaX = delta * sin( rollRad );
-  float faceDeltaY = delta * cos( rollRad );
-	imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, faceDeltaY, faceDeltaX,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1);
-	imgBackCpy->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR);
+  /* double rollRad = M_PI * roll / 180.0; */
+  /* double delta  = (1.7*scaleFactor) * pitch; */
+  /* float faceDeltaX = delta * sin( rollRad ); */
+  /* float faceDeltaY = delta * cos( rollRad ); */
+	/* imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, faceDeltaY, faceDeltaX,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
+	/* imgBackCpy->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR); */
 	artHorizon->set(imgBackCpy);
 }
 

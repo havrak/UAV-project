@@ -381,16 +381,16 @@ void ProcessingThreadPool::worker()
 			DroneTelemetry::GetInstance()->processIO(*ps);
 			break;
 		case P_TELE_GEN: // general information
-			DroneTelemetry::GetInstance()->processIO(*ps);
+			DroneTelemetry::GetInstance()->processGeneralTelemetry(*ps);
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			DroneTelemetry::GetInstance()->processIO(*ps);
+			DroneTelemetry::GetInstance()->processAttGPS(*ps);
 			break;
 		case P_TELE_BATT: // battery status
-			DroneTelemetry::GetInstance()->processIO(*ps);
+			DroneTelemetry::GetInstance()->processBattery(*ps);
 			break;
 		case P_TELE_PWM: // pwm settings
-			DroneTelemetry::GetInstance()->processIO(*ps);
+			DroneTelemetry::GetInstance()->processPWM(*ps);
 			break;
 		case P_TELE_ERR: // general error message
 			cerr << "ProcessingThreadPool | worker | server send an error \n";
@@ -498,7 +498,6 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 	case L_ANALOG:
 		controllerState.lAnalog.first = x;
 		controllerState.lAnalog.second = y;
-
 		break;
 	case R_ANALOG:
 		controllerState.rAnalog.first = x;

@@ -375,9 +375,9 @@ void CommunicationInterface::manage()
 		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
 		// this fix is only temporary, gpio library shouldn't share this problem
 		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
-		this_thread::sleep_for(chrono::milliseconds(100));
+		/* this_thread::sleep_for(chrono::milliseconds(100)); */
 		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
-		this_thread::sleep_for(chrono::milliseconds(100));
+		this_thread::sleep_for(chrono::milliseconds(500));
 	}
 }
 

@@ -97,7 +97,7 @@ bool Telemetry::processGeneralTelemetryRequest(const client cli)
 	data.batt = createTeleBattStuct();
 	data.io = createTeleIOStatStruct();
 	data.pwm = createTelePWMStruct();
-	cout << "yaw: " << data.att.yaw << "\npitch: " << data.att.pitch << "\nroll: " << data.att.roll << "\nvoltage: "<< data.batt.voltage <<"\n";
+	/* cout << "yaw: " << data.att.yaw << "\npitch: " << data.att.pitch << "\nroll: " << data.att.roll << "\nvoltage: "<< data.batt.voltage <<"\n"; */
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_GEN, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);

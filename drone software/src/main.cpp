@@ -7,7 +7,7 @@
 
 #include <wiringPi.h>
 
-#include "bcm2835.h"
+/* #include "bcm2835.h" */
 #include "communication_interface.h"
 #include "servo_control.h"
 #include "telemetry.h"
@@ -38,11 +38,11 @@ int main(int argc, char** argv)
 	/* } */
 
 
-	if (!bcm2835_init()) {
-		cerr << "MAIN | main | failed to open I2C device\n";
-	} else {
-		cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << "\n";
-	}
+	/* if (!bcm2835_init()) { */
+	/* 	cerr << "MAIN | main | failed to open I2C device\n"; */
+	/* } else { */
+	/* 	cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << "\n"; */
+	/* } */
 	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
 	ServoControl::GetInstance();
 	Telemetry::GetInstance()->setUpSensors();

@@ -23,8 +23,8 @@
 #define MAX_CONTROLLER_AXIS_VALUE 65534
 #define LEVERAGE 20;
 
-#include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h"
-
+/* #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h" */
+#include "../libraries/lib-pca9685/pca9685servo.h"
 #include <bcm2835.h>
 
 #include <chrono>

@@ -6,7 +6,7 @@
  */
 
 #include "servo_control.h"
-#include "bcm2835.h"
+/* #include "bcm2835.h" */
 #include "generic_PID.h"
 #include "protocol_spec.h"
 #include <bits/types/clock_t.h>
@@ -30,6 +30,7 @@ mutex ServoControl::mutexServoControl;
 
 ServoControl::ServoControl()
 {
+
 	servo.SetFrequency(60);
 	servo.SetLeftUs(MIN_PULSE_LENGTH);
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
@@ -41,6 +42,7 @@ ServoControl::ServoControl()
 	servo.SetAngle(CHANNEL(3), ANGLE(135));
 	servo.SetAngle(CHANNEL(4), ANGLE(135));
 	servo.SetAngle(CHANNEL(5), ANGLE(135));
+	servo.Dump();
 
 	if (debug)
 		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
@@ -69,8 +71,8 @@ void ServoControl::setPichAndRoll(float pitch, float roll){
 
 void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 {
+		cout << "Angle: "  << int(angle)<< "\n";
 	if (right) {
-		/* cout << "Right: channel: " << channel << ", i: " << (90 + angle) << "\n"; */
 		servo.SetAngle(channel, 90 + angle);
 	} else {
 		/* cout << "Left:  channel: " << channel << ", i: " << (180 - angle) << "\n"; */
