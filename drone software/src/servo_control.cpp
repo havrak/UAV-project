@@ -255,14 +255,14 @@ bool ServoControl::processMovementForVTail(pConStr ps)
 	ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
 
 	// smoothening contoller by goniometry
-	/* float tmp; */
-	/* if (ps.lAnalog.first == 0){ */
-	/* 	tmp = atan(ps.lAnalog.second / ps.rAnalog.first); */
-	/* 	if(tmp < 1.047) // we don't want to decrease value */
-	/* 		ps.lAnalog.first*=cos(tmp)*2; */
-	/* 	if(tmp > 0.524) */
-	/* 		ps.lAnalog.second*=sin(tmp)*2; */
-	/* } */
+	float tmp;
+	if (ps.lAnalog.first == 0){
+		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
+		if(tmp < 1.047) // we don't want to decrease value
+			ps.lAnalog.first*=cos(tmp)*2;
+		if(tmp > 0.524)
+			ps.lAnalog.second*=sin(tmp)*2;
+	}
 
 	if (ps.lAnalog.first == 0)
 		roll = 0;
