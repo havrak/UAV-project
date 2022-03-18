@@ -51,7 +51,8 @@ However as I have never done anything like this I'm not sure how far will I get.
 # Libraries and toolkits
 * [WT901B library](https://github.com/havrak/Raspberry-JY901-Serial-I2C)
 * [INA226 library](https://github.com/havrak/raspberry-pi-ina226)
-* [PCA9685 library](https://github.com/vanvught/rpidmx512/tree/master/lib-pca9685), uses [bcm2835 library](https://www.airspayce.com/mikem/bcm2835/)
+* [PCA9685 library](https://github.com/havrak/PCA9685-rpi)
+* [inih (INI Not Invented Here)](https://github.com/benhoyt/inih)
 * OpenCV
 * Gtk3
 * WiringPi (used by some libraries above) -- need to move to gpio library

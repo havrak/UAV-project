@@ -10,7 +10,9 @@
 #include "main_window.h"
 #include "controller_interface.h"
 #include "linux_controller_implementation.h"
+#include "camera.h"
 #include "protocol_spec.h"
+#include "config.h"
 #include <csignal>
 #include <gtkmm.h>
 #include <iostream>
@@ -23,20 +25,20 @@
 using namespace std;
 
 Glib::Dispatcher dispatcher;
-volatile bool captureVideoFromCamera = false;
+volatile bool captureVideoFromCamera = true;
 mutex imageMutex;
-cv::VideoCapture camera; // opencv camera
 cv::Mat frameBGR, frame, frameCorrected; // Matrix to store image from camera
 cv::Size imageSize;
 thread cameraThread;
 MainWindow* mainWindow = nullptr;
-bool cameraInitialized;
+bool cameraInitialized = false;
+Camera* cam = nullptr;
 LinuxControllerImplementation* lci = nullptr;
 
 void signalHandler( int sigNum){
 	CommunicationInterface::GetInstance()->cleanUp();
 	lci->process = false;
-	mainWindow->stopCamera();
+	mainWindow->closeWindow();
 	captureVideoFromCamera = false;
 	exit(127);
 }
@@ -61,26 +63,42 @@ int main(int argc, char** argv)
 	builder->get_widget_derived("MainWindow", mainWindow);
 	cout << "MAIN | main | cameraGrabberWindow created\n";
 
-	CommunicationInterface::GetInstance()->setupSocket();
+	Config config;
+
+	CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort());
+	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
 	cout << "MAIN | main | socket setted up \n";
-	lci = new LinuxControllerImplementation();
+
+
+	ControlInterpreter* droneControlInterpreter = nullptr;
+	if(config.getControlEnabled())
+		droneControlInterpreter = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
+
+
+	switch(config.getOperatingSystem()){
+		case LINUX:
+			{
+			lci = new LinuxControllerImplementation(config.getControllerType());
+			if(droneControlInterpreter){
+				lci->addObserver(droneControlInterpreter);
+				cout << "MAIN | main | observer for drone bridge added\n";
+			}
+			}
+		default:
+			break;
+	}
 	cout << "MAIN | main | controller setted up \n";
 
-	ControllerDroneBridge::GetInstance();
-	cout << "MAIN | main | drone bridge setted up \n";
-	ControlInterpreter* ci = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
 
-	lci->addObserver(ci);
-	cout << "MAIN | main | drone bridge setted up \n";
-	if (mainWindow) { // pokud se úspěšně vytvořilo, tak zobraz
+	Camera camera(config.getCameraPort());
+
+	if (mainWindow) {
 
 		dispatcher.connect([&]() {
 			imageMutex.lock();
 			mainWindow->updateImage(frame);
 			imageMutex.unlock();
 		});
-
-		thread cameraThread = thread(&setupCamera);
 
 		/* while(true){ */ // debugging
 		/* 	asm("nop"); */
@@ -99,9 +117,5 @@ int main(int argc, char** argv)
 	}
 
 
-	if (camera.isOpened()) {
-		camera.release();
-		cout << "MAIN | main | Camera released success!" << endl;
-	}
 	return 0;
 }

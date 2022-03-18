@@ -49,6 +49,7 @@ class LinuxControllerImplementation : public ControllerInterface {
 		int num_of_buttons =0;
 		char name_of_joystick[80];
 		vector<int> prevStateAxis;
+		ControllerTypes controllerType;
 
 		// A - 0
 		// B - 1
@@ -72,8 +73,8 @@ class LinuxControllerImplementation : public ControllerInterface {
 		// D-PAD Y - 7 (up is negative: value of 32767)
 		vector<int> axisStates;
 	public:
-		LinuxControllerImplementation(bool){};
-		LinuxControllerImplementation();
+		/* LinuxControllerImplementation(){}; */
+		LinuxControllerImplementation(ControllerTypes ct);
 
 		/**
 		 * tries to setup controller, if it fails on the

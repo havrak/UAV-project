@@ -38,7 +38,7 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	textBuffer = telemetryField->get_buffer();
 
 	/* telemetryField->get_buffer(); */
-	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::stopCamera));
+	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
 
@@ -67,7 +67,7 @@ void MainWindow::pauseResumeCamera()
 	}
 }
 
-void MainWindow::stopCamera()
+void MainWindow::closeWindow()
 {
 	Window::close();
 }
@@ -148,85 +148,13 @@ void MainWindow::displayError(pTeleErr error)
 }
 
 
-// courtesty of  https://stackoverflow.com/questions/37520296/can-a-gdk-pixbuf-be-rotated-by-something-less-than-90-degrees/39130357#39130357
-Glib::RefPtr<Gdk::Pixbuf> MainWindow::rotatePixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf, double angle)
-{
-	double s = sin(angle/180*M_PI), c = cos(angle/180*M_PI);
-	double as = s < 0 ? -s : s, ac = c < 0 ? -c : c;
-	int width, height, nwidth, nheight;
-	int hasalpha, nhasalpha;
-	int nr, nc, r, col;
-	double nmodr, nmodc;
-	int alpha = 0;
-	guchar *pixels, *npixels, *pt, *npt;
-	int rowstride, nrowstride, pixellen;
-	;
-
-	width = pixbuf->get_width();
-	height = pixbuf->get_height();
-	hasalpha = pixbuf->get_has_alpha();
-	rowstride = pixbuf->get_rowstride();
-	pixels = pixbuf->get_pixels();
-	pixellen = hasalpha ? 4 : 3;
-
-	if (true) {
-		nwidth = round(ac * width + as * height);
-		nheight = round(as * width + ac * height);
-		nhasalpha = TRUE;
-	} else {
-		double denom = as * as - ac * ac;
-		if (denom < .1e-7 && denom > -1.e-7) {
-			nwidth = nheight = round(width / sqrt(2.0));
-		} else {
-			nwidth = round((height * as - width * ac) / denom);
-			nheight = round((width * as - height * ac) / denom);
-		}
-		nhasalpha = hasalpha;
-	}
-	Glib::RefPtr<Gdk::Pixbuf> toReturn = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, nwidth, nheight);
-
-	nrowstride = toReturn->get_rowstride();
-	npixels = toReturn->get_pixels();
-
-	for (nr = 0; nr < nheight; ++nr) {
-		nmodr = nr - nheight / 2.0;
-		npt = npixels + nr * nrowstride;
-		for (nc = 0; nc < nwidth; ++nc) {
-			nmodc = nc - nwidth / 2.0;
-			/* Where did this pixel come from? */
-			r = round(height / 2 - nmodc * s + nmodr * c);
-			col = round(width / 2 + nmodc * c + nmodr * s);
-			if (r < 0 || col < 0 || r >= height || col >= width) {
-				alpha = 0;
-				if (r < 0)
-					r = 0;
-				else if (r >= height)
-					r = height - 1;
-				if (col < 0)
-					col = 0;
-				else if (col >= width)
-					col = width - 1;
-			} else
-				alpha = 0xff;
-			pt = pixels + r * rowstride + col * pixellen;
-			*npt++ = *pt++;
-			*npt++ = *pt++;
-			*npt++ = *pt++;
-			if (hasalpha && alpha != 0)
-				alpha = *pt;
-			if (nhasalpha)
-				*npt++ = alpha;
-		}
-	}
-	return toReturn;
-}
 
 void MainWindow::initAttitudeIndicator()
 {
-	imgBackOri = Gdk::Pixbuf::create_from_file("images/ai_back.png");
-	imgCaseOri = Gdk::Pixbuf::create_from_file("images/ai_case.png");
-	imgFaceOri = Gdk::Pixbuf::create_from_file("images/ai_face.png");
-	imgRingOri = Gdk::Pixbuf::create_from_file("images/ai_ring.png");
+	imgBackOri = cairo_image_surface_create_from_png("images/ai_back.png");
+	imgCaseOri = cairo_image_surface_create_from_png("images/ai_case.png");
+	imgFaceOri = cairo_image_surface_create_from_png("images/ai_face.png");
+	imgRingOri = cairo_image_surface_create_from_png("images/ai_ring.png");
 
 }
 
@@ -237,13 +165,32 @@ void MainWindow::updateAttitudeIndicator()
 	/* float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width(); */
 	/* float scaleFactor = (scaleX > scaleY ? scaleY : scaleX); */
 
-	imgBackCpy = imgBackOri->copy();
+	/* imgBackCpy = imgBackOri->copy(); */
 	/* int width  = imgBackCpy->get_width(); */
 	/* int height = imgBackCpy->get_height(); */
 
 	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
 	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
+
 	/* imgBackCpy = rotatePixbuf(imgBackCpy, roll); */
+	cairo_surface_t *merged = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, UI_SIZE, UI_SIZE);
+
+	cairo_t *cr = cairo_create(merged);
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
+	cairo_set_source_surface(cr, imgBackCpy, 0, 0);
+	cairo_set_source_surface(cr, imgRingCpy, 0, 0);
+	// rotate
+
+
+	/* cairo_set_source_surface(cr, surface1, 0, 0); */
+	/* cairo_paint(cr); */
+
+	/* cairo_set_source_surface(cr, surface2, 0, height); */
+	/* cairo_rectangle(cr, 0, height, width, height); */
+	/* cairo_fill(cr); */
+
+	cairo_destroy(cr);
 
 	/* imgFaceCpy = rotatePixbuf(imgFaceCpy, roll); */
 	/* imgRingCpy = rotatePixbuf(imgRingCpy, roll); */
@@ -255,68 +202,9 @@ void MainWindow::updateAttitudeIndicator()
   /* float faceDeltaY = delta * cos( rollRad ); */
 	/* imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, faceDeltaY, faceDeltaX,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
 	/* imgBackCpy->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR); */
-	artHorizon->set(imgBackCpy);
+	Cairo::Surface sur = Cairo::Surface(imgBackCpy, false);
+	sur.finish();
+
+	/* artHorizon->set(); */
 }
 
-bool setupCamera()
-{
-	while (!captureVideoFromCamera) {
-		cout << "MAINWINDOW | setupCamera | setting up camera\n";
-		cameraInitialized = initializeCamera();
-		if (cameraInitialized) {
-			captureVideoFromCamera = true;
-			cameraThread = thread(&cameraLoop);
-
-		} else {
-			cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
-			/* mainWindow->resumePauseButton->set_label("start cam"); */
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-	return cameraInitialized;
-}
-
-void cameraLoop()
-{
-	while (captureVideoFromCamera) {
-		bool continueToGrabe = true;
-		bool paused = mainWindow->isPaused();
-		if (!paused) {
-			continueToGrabe = camera.read(frameBGR);
-			if (continueToGrabe) {
-				imageMutex.lock();
-				cv::cvtColor(frameBGR, frame, cv::COLOR_RGB2BGR);
-				/* frameCorrected = cv::getOptimalNewCameraMatrix(frame, , imageSize, 1, imageSize, 0); */
-				/* cv::undistort( frame, frame, frameCorrected, , frameCorrected); */
-				imageMutex.unlock();
-				dispatcher.emit();
-			}
-		}
-		if (!continueToGrabe) {
-			captureVideoFromCamera = false;
-			cerr << "MAINWINDOW | main | Failed to retrieve frame from the device" << endl;
-		} else if (paused) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(30));
-		}
-	}
-}
-
-bool initializeCamera()
-{
-	bool result = camera.open("udpsrc port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
-	cout << "Camera was initialized\n";
-
-	if (result) {
-		for (int i = 0; i < 3; i++) {
-			camera.grab();
-		}
-		for (int i = 0; result && i < 3; i++) { // calculate checksum
-			result = result && camera.read(frameBGR);
-		}
-		imageSize = cv::Size(frameBGR.cols, frameBGR.rows);
-	} else {
-		cerr << "MAINWINDOW | initializeCamera | Camera failed to initialize\n";
-	}
-
-	return result;
-}

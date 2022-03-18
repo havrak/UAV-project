@@ -13,16 +13,15 @@
 #include "gtkmm/textbuffer.h"
 #include "gtkmm/textview.h"
 #include "protocol_spec.h"
+#include <cairomm/refptr.h>
+#include <cairomm/surface.h>
 #include <gdk/gdk.h>
 #include <gtkmm.h>
 #include <mutex>
 #include <opencv2/opencv.hpp>
 #include <thread>
 
-bool setupCamera();
-void cameraLoop();
-bool initializeCamera();
-
+#define UI_SIZE 240
 
 /**
  * wrapper to store pointer to TexBuffer and message to be
@@ -48,10 +47,10 @@ class MainWindow : public Gtk::Window {
 	virtual ~MainWindow();
 
 	/**
-	 * Stops Camera streaming
+	 * Closes application
 	 *
 	 */
-	void stopCamera();
+	void closeWindow();
 
 	/**
 	 * Pauses processing of new frames,
@@ -66,7 +65,6 @@ class MainWindow : public Gtk::Window {
 	 * @param cv::Mat& frame - frame to be set
 	 */
 	void updateImage(cv::Mat& frame);
-
 
 	/**
 	 * Callback to reset server on Raspberry Pi
@@ -91,19 +89,17 @@ class MainWindow : public Gtk::Window {
 	 */
 	void updateData(pTeleGen data, mutex* dataMutex);
 
-
-
 	void displayError(pTeleErr error);
 
 	private:
-	Glib::RefPtr<Gdk::Pixbuf> imgBackOri;
-	Glib::RefPtr<Gdk::Pixbuf> imgBackCpy;
-	Glib::RefPtr<Gdk::Pixbuf> imgFaceOri;
-	Glib::RefPtr<Gdk::Pixbuf> imgFaceCpy;
-	Glib::RefPtr<Gdk::Pixbuf> imgRingOri;
-	Glib::RefPtr<Gdk::Pixbuf> imgRingCpy;
-	Glib::RefPtr<Gdk::Pixbuf> imgCaseOri;
-	Glib::RefPtr<Gdk::Pixbuf> imgCaseCpy;
+	cairo_surface_t* imgBackOri;
+	cairo_surface_t* imgBackCpy;
+	cairo_surface_t* imgFaceOri;
+	cairo_surface_t* imgFaceCpy;
+	cairo_surface_t* imgRingOri;
+	cairo_surface_t* imgRingCpy;
+	cairo_surface_t* imgCaseOri;
+	cairo_surface_t* imgCaseCpy;
 
 	mutex attitudeValuesMutex;
 	float pitch = 0;
@@ -138,14 +134,13 @@ class MainWindow : public Gtk::Window {
 	 */
 	static bool updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
 
-
 	/**
 	 * rotates buffer
 	 *
-	 * @param Glib::RefPtr<Gdk::Pixbuf> - bufer to be rotated
+	 * @param Glib::RefPtr<Gdk::Pixbuf> - buffer to be rotated
 	 * @param double angle - angle to rotate Pixbuf with
 	 */
-	Glib::RefPtr<Gdk::Pixbuf>  rotatePixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf, double angle);
+	/* Glib::RefPtr<Gdk::Pixbuf>  rotatePixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf, double angle); */
 
 	bool paused;
 
@@ -155,11 +150,9 @@ class MainWindow : public Gtk::Window {
 extern std::mutex imageMutex;
 extern Glib::Dispatcher dispatcher;
 extern volatile bool captureVideoFromCamera;
-extern cv::VideoCapture camera;
 extern cv::Mat frameBGR, frame, frameCorrected;
 extern MainWindow* mainWindow;
 extern bool cameraInitialized;
-extern std::thread cameraThread;
 extern cv::Size imageSize;
 
 #endif // MAINWINDOW_H_

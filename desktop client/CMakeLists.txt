@@ -19,16 +19,24 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
+add_library(inih STATIC
+	"${PROJECT_SOURCE_DIR}/libraries/inih/INIReader.cpp")
+target_include_directories(
+	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
+
 include_directories(include)
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME}
+	${OpenCV_LIBS}
+	${GTKMM_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
+	X11
+	inih
+	)
 
-target_link_libraries(${PROJECT_NAME} ${GTKMM_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME}  ${CMAKE_THREAD_LIBS_INIT})
 
-target_link_libraries(${PROJECT_NAME}  X11)
 

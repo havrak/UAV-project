@@ -11,7 +11,6 @@ find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(wiringPi REQUIRED)
-# find_package(bcm2835 REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
@@ -33,9 +32,13 @@ add_library(pca9685 STATIC
 target_include_directories(
 	pca9685 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/lib-pca9685/")
 
+add_library(inih STATIC
+	"${PROJECT_SOURCE_DIR}/libraries/inih/INIReader.cpp")
+target_include_directories(
+	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(${WIRINGPI_INCLUDE_DIRS})
-# include_directories(${BCM2835_INCLUDE_DIRS})
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -44,10 +47,8 @@ target_link_libraries(
 	${PROJECT_NAME}
 	PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 	${WIRINGPI_LIBRARIES}
-	# ${BCM2835_LIBRARIES}
 	${OpenCV_LIBS}
 	cjy901
 	ina226
 	pca9685
-	# "${PROJECT_SOURCE_DIR}/libraries/rpidmx512-Lib-PCA9685/libpca9685.a"
 	)

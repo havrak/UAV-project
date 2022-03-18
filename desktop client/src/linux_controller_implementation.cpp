@@ -10,9 +10,10 @@
 #include "main_window.h"
 #include "protocol_spec.h"
 
-LinuxControllerImplementation::LinuxControllerImplementation()
+LinuxControllerImplementation::LinuxControllerImplementation(ControllerTypes ct)
 {
 	loopThread = thread(&LinuxControllerImplementation::eventLoop, this);
+	controllerType = ct;
 }
 
 void LinuxControllerImplementation::setupController()

@@ -85,7 +85,7 @@
 
 % Abstrakt (doporučený rozsah cca 80-200 slov; nejedná se o zadání práce)
 \def\Abstrakt{%
-Cílem práce je vytvořit autonomní letadlo, které bude pilot dálokvě ovládat prostřednictvím softwaru na počítači.
+Cílem práce je vytvořit autonomní letadlo, které bude pilot dálkově ovládat prostřednictvím softwaru na počítači.
 Z letadla bude během provozu dostávat potřebnou telemetrii a přesnos videa.
 Software by měl být napsán stylem, který umožňuje budoucí vývoj.
 }
@@ -102,13 +102,13 @@ Software sollte in einem Stil geschrieben werden, der eine zukünftige Entwicklu
 }
 % 3 až 5 klíčových slov (doporučeno), každé uzavřeno ve složených závorkách
 \def\KlicovaSlova{%
-  (UAV), (Gtk), (C++), (Raspberry zero 2)
+  (UAV), (Gtk), (C++), (Raspberry Pi zero 2)
 }
 \def\KlicovaSlovaEN{%
-  (UAV), (Gtk), (C++), (Raspberry zero 2)
+  (UAV), (Gtk), (C++), (Raspberry Pi zero 2)
 }
 \def\KlicovaSlovaDE{%
-  (UAV), (Gtk), (C++), (Raspberry zero 2)
+  (UAV), (Gtk), (C++), (Raspberry Pi zero 2)
 }
 
 %% Balíček hyperref, kterým jdou vyrábět klikací odkazy v PDF,
@@ -162,7 +162,7 @@ Jádro samotného dronu představuje malý počítač Raspberry Pi Zero 2.
 Vyšší výkon verze Zero 2 není nutný pro fungování, práce může fungovat na libovolném Raspberry Pi.
 Program využívá jen zlomek zdrojů  a to jak po stránce paměti, tak výpočetního výkonu.
 
-Obě části mezi sebou komunikují prostřednictvím protitoku založené na TCP rodině.
+Obě části mezi sebou komunikují prostřednictvím protokolu založené na TCP rodině.
 Přenos videa je zprostředkovávám pomocí UDP.
 Samotné video je kódováno do jpg, v porovnání s dalšími styly přenosu byla latence u jpg menší.
 
@@ -325,7 +325,7 @@ Pro zpracování dat z INA226 a WT901B byly napsány nové knihovny.
 Jelikož knihovny pro Raspberry Pi totiž buďto neexistovaly, nebo nebyly zdaleka kompletní.
 
 Knihovna pro WT901B vznikla forkem knihovny pro Arduino\footnote{\bibentry{WT901BL}} a byla předělána v souladu s dokumentací protokolu\footnote{\bibentry{WT901B}}
-Kvůli problémům se seznorem byla i dopsána I2C komunikace, kterou původní knihovna neimplementovala
+Kvůli problémům se senzorem byla i dopsána I2C komunikace, kterou původní knihovna neimplementovala
 
 V případě knihovny pro INA226 bylo forknuto demo\footnote{\bibentry{INA226L}} z GitHubu a dopsáno v plnohodnotnou knihovnu.
 
@@ -372,15 +372,15 @@ Standardně se totiž mapují ovladače na kruh -- páčka čistě nahoru tak m�
 Bez této korekce ovládání působilo velmi neresponzivně, kdy praktické byly pouze polohy jih, sever, západ, východ.
 
 V případě konfigurace ocasu do tvaru písmena V je interpretace ovládání relativně jednoduchá.
-Ocasní plochy (Ruddervator) ovládání bočení a klopení.
-Plochy na křídlech pak pouze klonění, teoreticky mohou ovládat i klopení, v tomto případě to však nebylo třeba.
+Ocasní plochy (Ruddervator) ovládání pitch a yaw.
+Plochy na křídlech pak pouze klonění, teoreticky mohou ovládat i roll, v tomto případě to však nebylo třeba.
 
 \subsection{Autopilot}
 
 Projekt implementuje i jednoduchého autopilota, který je schopen držet letovou hladinu.
 Vyrovnávání řeší dva proporčně-integračně-derivační ovladače, které se snaží minimalizovat chybu.
 Jeden minimalizuje odchylku v klopení, druhý pak odchylku v klonění.
-Bočení minimalizovat není třeba -- pro bočení musí být letadlo nakloněno.
+Roll minimalizovat není třeba -- pro roll musí být letadlo nakloněno.
 
 Teoreticky by mohlo jít tento sytém rozšířit aby se snažil minimalizovat odchylku nikoliv od původního směru, ale od pomyslného bodu určeného souřadnicemi GPS.
 Letadlo by tak nejenže letělo více rovně (aktuálně je autopilot náchylní na změnu posunutí v příčné ose), ale mohlo samo doletět na specifikovaný bod.

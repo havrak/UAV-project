@@ -301,8 +301,8 @@ bool CommunicationInterface::establishConnectionToDrone()
 	while (true) {
 		// NOTE; user will be able to change parameters, thus sockaddr_in in needs to be recreated on each iteration
 		/* serverMutex.lock(); */
-		serverAddress.sin_port = htons(SERVER_PORT);
-		serverAddress.sin_addr.s_addr = inet_addr(SERVER_IPV4_ADDR);
+		serverAddress.sin_port = htons(serverPort);
+		serverAddress.sin_addr.s_addr = inet_addr(serverIP.c_str());
 		/* serverMutex.unlock(); */
 		cout << "COMMUNICATION_INTERFACE | establishConnectionToDrone | trying to connect\n";
 		if (connect(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == 0) {
@@ -310,7 +310,7 @@ bool CommunicationInterface::establishConnectionToDrone()
 			connectionEstablished = true;
 			checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
 			pingServer();
-			sendConfigurationOfCamera();
+			requestCameraStream();
 			break;
 		} else {
 			cerr << "COMMUNICATION_INTERFACE | establishConnectionToDrone | failed to establish connection\n";
@@ -320,13 +320,16 @@ bool CommunicationInterface::establishConnectionToDrone()
 	return true;
 }
 
-bool CommunicationInterface::setupSocket()
+bool CommunicationInterface::setupSocket(string serverIP, string myIP, int serverPort)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {
 		cerr << "COMMUNICATION_INTERFACE | setupSocket | failed to setup socket" << endl;
 		return false;
 	}
+	this->serverIP = serverIP;
+	this->serverPort = serverPort;
+	this->myIP = myIP;
 	cout << "COMMUNICATION_INTERFACE | setupSocket | socket was successfully setted up \n";
 	establishConnectionToDroneThread = thread(&CommunicationInterface::establishConnectionToDrone, this);
 	return true;
@@ -337,6 +340,26 @@ void CommunicationInterface::pingServer()
 	SendingStructure ss(P_PING, 0x01, 1);
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
+
+void CommunicationInterface::requestCameraStream()
+{
+	cout << "COMMUNICATION_INTERFACE | sendConfigurationOfCamera | sending the configuration of the camera\n";
+	pSetCamera cameraSetup;
+	int indexes[3];
+	int j = 0;
+	for (int i = 0; i < myIP.length(); i++) if(myIP[i] == '.') indexes[j++] = i;
+
+	cameraSetup.ip[0] = stoi(myIP.substr(0, indexes[0]));
+	cameraSetup.ip[1] = stoi(myIP.substr(indexes[0]+1, indexes[1]));
+	cameraSetup.ip[2] = stoi(myIP.substr(indexes[1]+1, indexes[2]));
+	cameraSetup.ip[3] = stoi(myIP.substr(indexes[2]+1, myIP.length()));
+	cameraSetup.port = cameraPort;
+	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
+	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
+	CommunicationInterface::GetInstance()->sendData(ss);
+}
+
+
 
 /*-----------------------------------
 // ProcessingThreadPool section
@@ -552,22 +575,4 @@ void ControllerDroneBridge::sendControlComand()
 		this_thread::sleep_for(chrono::milliseconds(20));
 
 	}
-}
-
-/*-----------------------------------
-// Other
------------------------------------*/
-
-void sendConfigurationOfCamera()
-{
-	cout << "COMMUNICATION_INTERFACE | sendConfigurationOfCamera | sending the configuration of the camera\n";
-	pSetCamera cameraSetup;
-	cameraSetup.ip[0] = 192;
-	cameraSetup.ip[1] = 168;
-	cameraSetup.ip[2] = 6;
-	cameraSetup.ip[3] = 11;
-	cameraSetup.port = 5000;
-	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
-	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
-	CommunicationInterface::GetInstance()->sendData(ss);
 }

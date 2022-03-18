@@ -33,8 +33,6 @@
 #define NUMBER_OF_THREADS 5
 
 
-void sendConfigurationOfCamera();
-
 using namespace std;
 
 /**
@@ -123,6 +121,10 @@ class CommunicationInterface {
 	clock_t lastTimeDataReceived;
 
 	string serverIP = "192.168.6.1";
+	string myIP;
+	int serverPort = 8066;
+	int cameraPort;
+
 	int sockfd;
 	sockaddr_in serverAddress;
 	serverStruct server;
@@ -193,8 +195,14 @@ class CommunicationInterface {
 	 *
 	 * @return bool - true id socket was setup
 	 */
-	bool setupSocket();
+	bool setupSocket(string serverIP, string myIP, int serverPort);
 
+	/**
+	 * sets camera port
+	 *
+	 * @param int cameraPort - port number
+	 */
+	void setCameraPort(int cameraPort);
 
 	/**
 	 * will try to establish connection until
@@ -222,6 +230,12 @@ class CommunicationInterface {
 	 * sends ping to sever
 	 */
 	void pingServer();
+
+	/**
+	 * sends request to server to create camera stream
+	 *
+	 */
+	void requestCameraStream();
 };
 
 /**
@@ -291,6 +305,8 @@ class SendingThreadPool {
 	 * @return SendingStructure ss - sending structure with data to be sent
 	 */
 	void scheduleToSendControl(SendingStructure ss); // Schedules to send control sequence, if data in queue is older than 10 ms it is dropped
+
+
 };
 
 /**
@@ -333,5 +349,4 @@ class ProcessingThreadPool {
 	 */
 	void addJob(ProcessingStructure ps);
 };
-
 #endif /* !COMMUNICATION_INTERFACE_H */
