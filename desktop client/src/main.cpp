@@ -65,8 +65,8 @@ int main(int argc, char** argv)
 
 	Config config;
 
-	CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort());
-	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
+	/* CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort()); */
+	/* CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic */
 	cout << "MAIN | main | socket setted up \n";
 
 
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	cout << "MAIN | main | controller setted up \n";
 
 
-	Camera camera(config.getCameraPort());
+	Camera camera(config.getCameraPort(), config.getMyIP());
 
 	if (mainWindow) {
 

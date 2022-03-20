@@ -51,6 +51,10 @@ bool Config::loadConfiguration()
 	return true;
 }
 
+OperatingSystems Config::getOperatingSystem(){
+	return os;
+}
+
 string Config::getMyIP()
 {
 	return myIP;

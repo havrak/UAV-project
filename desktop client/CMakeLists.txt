@@ -20,7 +20,9 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 add_library(inih STATIC
-	"${PROJECT_SOURCE_DIR}/libraries/inih/INIReader.cpp")
+	"${PROJECT_SOURCE_DIR}/libraries/inih/cpp/INIReader.cpp"
+	"${PROJECT_SOURCE_DIR}/libraries/inih/ini.c"
+	)
 target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 

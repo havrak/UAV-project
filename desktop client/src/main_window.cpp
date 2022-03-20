@@ -26,34 +26,48 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 		: Gtk::Window(cobject)
 		, builder(refGlade)
 {
+	imgBack = cairo_image_surface_create_from_png("images/ai_back.png");
+	imgCase = cairo_image_surface_create_from_png("images/ai_case.png");
+	imgFace = cairo_image_surface_create_from_png("images/ai_face_t.png");
+	imgRing = cairo_image_surface_create_from_png("images/ai_ring.png");
 
 	this->paused = false;
 	this->builder->get_widget("drawingImage", this->drawingImage);
 	this->builder->get_widget("closeButton", this->closeButton);
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
-	this->builder->get_widget("artHorizon", this->artHorizon);
+	this->builder->get_widget("indicator", this->indicator);
 	this->builder->get_widget("telemetryField", this->telemetryField);
 	this->builder->get_widget("restartButton", this->resartButton);
-
+	indicatorCObj = indicator->gobj();
 	textBuffer = telemetryField->get_buffer();
-
 	/* telemetryField->get_buffer(); */
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
 
-	this->artHorizon->set("images/image_not_found.png");
 	this->drawingImage->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
+	gtk_widget_set_size_request((GtkWidget*)indicatorCObj, 240, 240);
+
+	if (GTK_IS_DRAWING_AREA(indicator)) {
+		cout << "TRUE\n";
+	}
+	g_signal_connect((GtkWidget*)indicatorCObj, "draw", G_CALLBACK(MainWindow::drawIndicator), NULL);
+	/* g_signal_connect(G_OBJECT(artHorizon), "draw", G_CALLBACK(drawIndicator), NULL); */
+	/* gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(artHorizon), */
+	/* 		sigc::mem_fun(*this, &MainWindow::closeWindow), */
+	/* 		NULL, NULL); */
 	initAttitudeIndicator();
-	updateAttitudeIndicator();
+	indicator->queue_draw();
+	/* updateAttitudeIndicator(); */
 }
 
 MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::restartServer(){
+void MainWindow::restartServer()
+{
 	SendingThreadPool::GetInstance()->scheduleToSend(SendingStructure(P_SET_RESTART, 0x10, 0));
 }
 
@@ -90,8 +104,8 @@ bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
 	/* GtkTextIter end; */
 	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
 
-/* 	cout << "updating AI\n"; */
-/* 	mainWindow->updateAttitudeIndicator(); */
+	/* 	cout << "updating AI\n"; */
+	/* 	mainWindow->updateAttitudeIndicator(); */
 	/* gtk_text_buffer_get_end_iter(, &end); */
 	/* cout << "text: " << update.text << " length: " << update.text.size(); */
 	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
@@ -124,7 +138,6 @@ void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 		this->roll = data.att.roll;
 	}
 	g_idle_add(G_SOURCE_FUNC(updateOnScreenTelemetry), new textBufferUpdate(textBuffer, message));
-
 }
 
 void MainWindow::displayError(pTeleErr error)
@@ -144,67 +157,58 @@ void MainWindow::displayError(pTeleErr error)
 			G_CALLBACK(gtk_widget_destroy),
 			dialog);
 
-	gtk_widget_show_all(dialog);
+	// gtk_widget_show_all(dialog); // NOTE: warning suppresed
 }
-
-
 
 void MainWindow::initAttitudeIndicator()
 {
-	imgBackOri = cairo_image_surface_create_from_png("images/ai_back.png");
-	imgCaseOri = cairo_image_surface_create_from_png("images/ai_case.png");
-	imgFaceOri = cairo_image_surface_create_from_png("images/ai_face.png");
-	imgRingOri = cairo_image_surface_create_from_png("images/ai_ring.png");
-
+	/* imgBack = cairo_image_surface_create_from_png("images/ai_back.png"); */
+	/* imgCase = cairo_image_surface_create_from_png("images/ai_case.png"); */
+	/* imgFace = cairo_image_surface_create_from_png("images/ai_face.png"); */
+	/* imgRing = cairo_image_surface_create_from_png("images/ai_ring.png"); */
 }
 
+void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
+{
+	guint width, height;
+	GtkStyleContext* context;
 
-void MainWindow::updateAttitudeIndicator()
-	{
-	/* float scaleX = (float)artHorizon->get_height() / imgBackOri->get_height(); */
-	/* float scaleY = (float)artHorizon->get_width() / imgBackOri->get_width(); */
-	/* float scaleFactor = (scaleX > scaleY ? scaleY : scaleX); */
+	context = gtk_widget_get_style_context(widget);
 
-	/* imgBackCpy = imgBackOri->copy(); */
-	/* int width  = imgBackCpy->get_width(); */
-	/* int height = imgBackCpy->get_height(); */
+	width = gtk_widget_get_allocated_width(widget);
+	height = gtk_widget_get_allocated_height(widget);
 
-	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
-	/* imgBackCpy->composite(imgRingCpy, 0, 0, width, height, 0,0,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
+	gtk_render_background(context, cr, 0, 0, width, height);
 
-	/* imgBackCpy = rotatePixbuf(imgBackCpy, roll); */
-	cairo_surface_t *merged = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, UI_SIZE, UI_SIZE);
+	double angle  = roll*M_PI/180;
 
-	cairo_t *cr = cairo_create(merged);
+	cairo_translate (cr, 120, 120);
+	cairo_rotate(cr, angle);
+	cairo_translate (cr, -120, -120);
+
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-	cairo_set_source_surface(cr, imgBackCpy, 0, 0);
-	cairo_set_source_surface(cr, imgRingCpy, 0, 0);
+	cairo_set_source_surface(cr, imgBack, 0, 0);
+	cairo_paint(cr);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_set_source_surface(cr, imgRing, 0, 0);
+	cairo_paint(cr);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_set_source_surface(cr, imgFace, 0, -pitch);
+	cairo_paint(cr);
+
 	// rotate
+	cairo_translate (cr, 120, 120);
+	cairo_rotate(cr, -angle);
+	cairo_translate (cr, -120, -120);
 
 
-	/* cairo_set_source_surface(cr, surface1, 0, 0); */
-	/* cairo_paint(cr); */
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_set_source_surface(cr, imgCase, 0, 0);
+	cairo_paint(cr);
 
-	/* cairo_set_source_surface(cr, surface2, 0, height); */
-	/* cairo_rectangle(cr, 0, height, width, height); */
-	/* cairo_fill(cr); */
-
-	cairo_destroy(cr);
-
-	/* imgFaceCpy = rotatePixbuf(imgFaceCpy, roll); */
-	/* imgRingCpy = rotatePixbuf(imgRingCpy, roll); */
-	/* Glib::RefPtr<Gdk::Pixbuf> tmpbuf = Gdk::Pixbuf::create((Gdk::Colorspace)GDK_COLORSPACE_RGB, true, 8, width, height); */
-
-  /* double rollRad = M_PI * roll / 180.0; */
-  /* double delta  = (1.7*scaleFactor) * pitch; */
-  /* float faceDeltaX = delta * sin( rollRad ); */
-  /* float faceDeltaY = delta * cos( rollRad ); */
-	/* imgBackCpy->composite(imgFaceCpy, 0, 0, width, height, faceDeltaY, faceDeltaX,1, 1, (Gdk::InterpType) GDK_INTERP_BILINEAR, 1); */
-	/* imgBackCpy->scale_simple(imgBackOri->get_width() * scaleFactor, imgBackOri->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR); */
-	Cairo::Surface sur = Cairo::Surface(imgBackCpy, false);
-	sur.finish();
-
-	/* artHorizon->set(); */
+	cairo_fill(cr);
 }
 

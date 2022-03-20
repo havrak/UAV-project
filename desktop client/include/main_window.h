@@ -43,6 +43,8 @@ struct textBufferUpdate {
 class MainWindow : public Gtk::Window {
 
 	public:
+
+
 	MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refGlade);
 	virtual ~MainWindow();
 
@@ -91,19 +93,16 @@ class MainWindow : public Gtk::Window {
 
 	void displayError(pTeleErr error);
 
+
 	private:
-	cairo_surface_t* imgBackOri;
-	cairo_surface_t* imgBackCpy;
-	cairo_surface_t* imgFaceOri;
-	cairo_surface_t* imgFaceCpy;
-	cairo_surface_t* imgRingOri;
-	cairo_surface_t* imgRingCpy;
-	cairo_surface_t* imgCaseOri;
-	cairo_surface_t* imgCaseCpy;
+	inline static cairo_surface_t* imgBack;
+	inline static cairo_surface_t* imgFace;
+	inline static cairo_surface_t* imgRing;
+	inline static cairo_surface_t* imgCase;
 
 	mutex attitudeValuesMutex;
-	float pitch = 0;
-	float roll = 0;
+	inline static float pitch = 10;
+	inline static float roll = 10;
 
 	/**
 	 * Initializes attitude indicator
@@ -111,17 +110,14 @@ class MainWindow : public Gtk::Window {
 	 */
 	void initAttitudeIndicator();
 
-	/**
-	 * updates attitude indicator
-	 *
-	 */
-	void updateAttitudeIndicator();
 
 	/* protected: */
 	Glib::RefPtr<Gtk::Builder> builder;
 	Gtk::Button* closeButton;
 	Gtk::Button* resartButton;
-	Gtk::Image* artHorizon;
+	/* Gtk::Image* indicator; */
+	Gtk::DrawingArea* indicator;
+	GtkDrawingArea* indicatorCObj;
 	Gtk::Image* drawingImage;
 	Glib::RefPtr<Gtk::TextBuffer> textBuffer;
 	GtkTextBuffer* telemetryBuffer;
@@ -133,6 +129,12 @@ class MainWindow : public Gtk::Window {
 	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
 	 */
 	static bool updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
+
+	/**
+	 * updates attitude indicator
+	 * used as a callback for draw method on DrawingArea
+	 */
+	static void drawIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
 
 	/**
 	 * rotates buffer

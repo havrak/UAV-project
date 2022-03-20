@@ -8,7 +8,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "../libraries/inih/INIReader.h"
+#include "../libraries/inih/cpp/INIReader.h"
 #include "main_window.h"
 #include "protocol_spec.h"
 
@@ -42,6 +42,7 @@ class Config {
 	string getServerIP();
 	int getCameraPort();
 	int getServerPort();
+
 	ControllerTypes getControllerType();
 	bool getControlEnabled();
 

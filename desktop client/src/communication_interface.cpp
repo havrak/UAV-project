@@ -335,6 +335,10 @@ bool CommunicationInterface::setupSocket(string serverIP, string myIP, int serve
 	return true;
 }
 
+void CommunicationInterface::setCameraPort(int cameraPort){
+	this->cameraPort = cameraPort;
+}
+
 void CommunicationInterface::pingServer()
 {
 	SendingStructure ss(P_PING, 0x01, 1);
