@@ -50,7 +50,6 @@ int main(int argc, char** argv)
 
 	XInitThreads();
 
-
 	Gtk::Main app(argc, argv);
 	Glib::RefPtr<Gtk::Builder> builder;
 	try {
@@ -58,31 +57,31 @@ int main(int argc, char** argv)
 	} catch (const std::exception& p_exception) {
 		cerr << p_exception.what();
 	}
-	cout << "MAIN | main | GTK window created\n";
 
 	builder->get_widget_derived("MainWindow", mainWindow);
-	cout << "MAIN | main | cameraGrabberWindow created\n";
+	cout << "MAIN | main | GTK window created\n";
 
 	Config config;
+	config.loadConfiguration();
 
-	/* CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort()); */
-	/* CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic */
+	CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort());
+	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
 	cout << "MAIN | main | socket setted up \n";
 
-
-	ControlInterpreter* droneControlInterpreter = nullptr;
-	if(config.getControlEnabled())
-		droneControlInterpreter = (ControlInterpreter* ) ControllerDroneBridge::GetInstance();
+	/* ControlInterpreter* droneControlInterpreter = nullptr; */
+	/* if(config.getControlEnabled()) */
+	/* 	droneControlInterpreter = (ControlInterpreter* ) cdb; */
 
 
 	switch(config.getOperatingSystem()){
 		case LINUX:
 			{
 			lci = new LinuxControllerImplementation(config.getControllerType());
-			if(droneControlInterpreter){
-				lci->addObserver(droneControlInterpreter);
+			if(config.getControlEnabled()){
+				lci->addObserver((ControlInterpreter*) new ControllerDroneBridge);
 				cout << "MAIN | main | observer for drone bridge added\n";
 			}
+				lci->addObserver((ControlInterpreter*) new ControllerUIBridge);
 			}
 		default:
 			break;

@@ -36,13 +36,12 @@ ServoControl::ServoControl()
 	servo.SetCenterUs(CEN_PULSE_LENGTH);
 	servo.SetRightUs(MAX_PULSE_LENGTH);
 	servo.SetInvert(false);
-	armESC();
+	/* armESC(); */
 
 	servo.SetAngle(CHANNEL(2), ANGLE(135));
 	servo.SetAngle(CHANNEL(3), ANGLE(135));
 	servo.SetAngle(CHANNEL(4), ANGLE(135));
 	servo.SetAngle(CHANNEL(5), ANGLE(135));
-	servo.Dump();
 
 	if (debug)
 		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
@@ -63,15 +62,15 @@ ServoControl* ServoControl::GetInstance()
 	return servoControl;
 }
 
-void ServoControl::setPichAndRoll(float pitch, float roll){
+void ServoControl::setPichAndRoll(float pitch, float roll)
+{
 	this->pitch = pitch;
 	this->roll = roll;
 }
 
-
 void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 {
-		cout << "Angle: "  << int(angle)<< "\n";
+	cout << "Angle: " << int(angle) << "\n";
 	if (right) {
 		servo.SetAngle(channel, 90 + angle);
 	} else {
@@ -111,25 +110,10 @@ void ServoControl::slowDownToMin()
 	servo.Set(CHANNEL(0), mainMotorMS);
 }
 
-void ServoControl::testServo()
+void ServoControl::setOperationalParameters(WingSurfaceConfiguration wsc, ControlMethodAdjuster cma)
 {
-	cout << "SERVOCONTROL | testServo | reaching max speed on motor\n";
-	for (mainMotorMS = MIN_PULSE_LENGTH; mainMotorMS <= MAX_PULSE_LENGTH; mainMotorMS += 10) {
-		cout << mainMotorMS << "\n";
-		servo.Set(CHANNEL(0), mainMotorMS);
-		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
-	}
-	nanosleep((const struct timespec[]) { { 3, 0L } }, NULL);
-
-	cout << "SERVOCONTROL | testServo | slowing down motor motor\n";
-	for (mainMotorMS = MAX_MOTOR_PULSE_LENGTH; mainMotorMS >= MAX_MOTOR_PULSE_LENGTH; mainMotorMS -= 10) {
-		cout << mainMotorMS << "\n";
-		servo.Set(CHANNEL(0), mainMotorMS);
-		nanosleep((const struct timespec[]) { { 0, 50000000L } }, NULL);
-	}
-	cout << "SERVOCONTROL | testServo | ZERO\n";
-
-	nanosleep((const struct timespec[]) { { 5, 0L } }, NULL);
+	planeConfiguration = wsc;
+	controllAdjuster = cma;
 }
 
 bool ServoControl::getPCA9865Status()
@@ -141,7 +125,7 @@ pair<int, unsigned char*> ServoControl::getControlSurfaceConfiguration()
 {
 	pair<int, unsigned char*> toReturn;
 	toReturn.second = new unsigned char[16];
-	switch (configuration) {
+	switch (planeConfiguration) {
 	case V_SHAPE_TAIL_WING:
 		toReturn.first = V_SHAPE_TAIL_WING;
 		toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
@@ -197,35 +181,36 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 
 bool ServoControl::pidController()
 {
-	//ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
+	// ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
 
 	GenericPID pitchPID(7, 0.5, 2, 1);
 	GenericPID rollPID(7, 1, 3, 1);
 	while (pidOn) {
 
-		if(abs(pitch) <1.5 &&  abs(roll) <1 ){
+		if (abs(pitch) < 1.5 && abs(roll) < 1) {
 			this_thread::sleep_for(chrono::milliseconds(100));
 			continue;
 		}
-		float pitchOutput = pitchPID.calculateOutput(pitch/2);
-		float rollOutput = rollPID.calculateOutput(roll/2);
+		float pitchOutput = pitchPID.calculateOutput(pitch / 2);
+		float rollOutput = rollPID.calculateOutput(roll / 2);
 
-		switch (configuration) {
+		switch (planeConfiguration) {
 		case V_SHAPE_TAIL_WING:
-				//roll
-				setAngleOfServo(vTail.leftFlapIndex, false, 45-rollOutput);
-				setAngleOfServo(vTail.rightFlapIndex, true, 45+rollOutput);
-				//pitch
-				setAngleOfServo(vTail.leftRuddervatorIndex, false, 45-pitchOutput);
-				setAngleOfServo(vTail.rightRuddervatorIndex, true, 45+pitchOutput);
+			// roll
+			setAngleOfServo(vTail.leftFlapIndex, false, 45 - rollOutput);
+			setAngleOfServo(vTail.rightFlapIndex, true, 45 + rollOutput);
+			// pitch
+			setAngleOfServo(vTail.leftRuddervatorIndex, false, 45 - pitchOutput);
+			setAngleOfServo(vTail.rightRuddervatorIndex, true, 45 + pitchOutput);
 
 			break;
 		case STANDARD_TAIL_WING:
 
 			break;
 		}
-			this_thread::sleep_for(chrono::milliseconds(100));
+		this_thread::sleep_for(chrono::milliseconds(100));
 	}
+	return true;
 }
 
 bool ServoControl::togglePIDController()
@@ -245,34 +230,6 @@ int yaw, pitch;
 bool ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
-
-	// squaring circle - https://squircular.blogspot.com/2015/09/mapping-circle-to-square.html
-	tmpX = ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE;
-	tmpY = ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE;
-	scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2);
-	scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2);
-	ps.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX;
-	ps.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
-
-	// smoothening contoller by goniometry
-	float tmp;
-	if (ps.lAnalog.first == 0){
-		tmp = atan(ps.lAnalog.second / ps.rAnalog.first);
-		if(tmp < 1.047) // we don't want to decrease value
-			ps.lAnalog.first*=cos(tmp)*2;
-		if(tmp > 0.524)
-			ps.lAnalog.second*=sin(tmp)*2;
-	}
-
-	if (ps.lAnalog.first == 0)
-		roll = 0;
-	else
-		roll = ((float)ps.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
-	if (ps.lAnalog.second == 0)
-		pitch = 0;
-	else
-		pitch = ((float)ps.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
-
 	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
 	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
 	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
@@ -295,7 +252,32 @@ bool ServoControl::processControl(ProcessingStructure ps)
 		adjustMainMotorSpeed(control);
 		return 0;
 	}
-	switch (configuration) {
+
+
+	switch (controllAdjuster) {
+
+	case TRIGONOMETRIC: {
+		float tmp;
+		if (control.lAnalog.first == 0) {
+			tmp = atan(control.lAnalog.second / control.rAnalog.first);
+			if (tmp < 1.047) // we don't want to decrease value
+				control.lAnalog.first *= cos(tmp) * 2;
+			if (tmp > 0.524)
+				control.lAnalog.second *= sin(tmp) * 2;
+		}
+	}
+	case SQUARING: {
+		tmpX = control.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE;
+		tmpY = control.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE;
+		scalerX = tmpX * sqrt(1 - tmpY * tmpY / 2);
+		scalerY = tmpY * sqrt(1 - tmpX * tmpX / 2);
+		control.lAnalog.first = MAX_CONTROLLER_AXIS_VALUE * scalerX;
+		control.lAnalog.second = MAX_CONTROLLER_AXIS_VALUE * scalerY;
+	} break;
+	}
+
+
+	switch (planeConfiguration) {
 	case V_SHAPE_TAIL_WING:
 		return processMovementForVTail(control);
 		break;

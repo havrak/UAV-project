@@ -93,7 +93,7 @@ void CommunicationInterface::restart(){
 	managementThread.join();
 	cleanUp();
 	process = true;
-	setupSocket();
+	setupSocket(myIP, serverPort);
 	ProcessingThreadPool::GetInstance()->restart();
 	SendingThreadPool::GetInstance()->restart();
 }
@@ -381,7 +381,7 @@ void CommunicationInterface::manage()
 	}
 }
 
-bool CommunicationInterface::setupSocket()
+bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {
@@ -393,15 +393,19 @@ bool CommunicationInterface::setupSocket()
 		cerr << "COMMUNICATION_INTERFACE | setupSocket | failed to setup socket options\n";
 		return false;
 	}
-
+	this->serverPort = serverPort;
+	this->myIP = myIP;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(SERVER_PORT);
+	serv_addr.sin_port = htons(serverPort);
 	if (bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
 		cerr << "COMMUNICATION_INTERFACE | setupSocket | error with binding\n";
 		return false;
 	}
 	cout << "COMMUNICATION_INTERFACE | setupSocket | socket created successfully\n";
+	cout << "  server port: " << serverPort << "\n";
+	cout << "  my IP:       " << myIP << "\n";
+
 	listen(sockfd, 8);
 	clientLength = sizeof(serv_addr);
 	checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
@@ -444,11 +448,8 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 		ServoControl::GetInstance()->togglePIDController();
 	case A:
 	case B:
-	case XBOX:
-	case START:
-	case SELECT:
-	case L_STICK_BUTTON:
-	case R_STICK_BUTTON:
+		break;
+	default:
 		break;
 	}
 }

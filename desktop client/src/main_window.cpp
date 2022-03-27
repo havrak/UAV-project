@@ -38,8 +38,8 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->builder->get_widget("indicator", this->indicator);
 	this->builder->get_widget("telemetryField", this->telemetryField);
 	this->builder->get_widget("restartButton", this->resartButton);
-	indicatorCObj = indicator->gobj();
 	textBuffer = telemetryField->get_buffer();
+	/* indicatorCObj = ; */
 	/* telemetryField->get_buffer(); */
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
@@ -47,12 +47,14 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 
 	this->drawingImage->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
-	gtk_widget_set_size_request((GtkWidget*)indicatorCObj, 240, 240);
+	/* gtk_widget_set_size_request((GtkWidget*)indicatorCObj, 240, 240); */
+	indicator->set_size_request(240, 240);
 
 	if (GTK_IS_DRAWING_AREA(indicator)) {
 		cout << "TRUE\n";
 	}
-	g_signal_connect((GtkWidget*)indicatorCObj, "draw", G_CALLBACK(MainWindow::drawIndicator), NULL);
+	/* indicator-> */
+	g_signal_connect((GtkWidget*)indicator->gobj(), "draw", G_CALLBACK(MainWindow::drawIndicator), NULL);
 	/* g_signal_connect(G_OBJECT(artHorizon), "draw", G_CALLBACK(drawIndicator), NULL); */
 	/* gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(artHorizon), */
 	/* 		sigc::mem_fun(*this, &MainWindow::closeWindow), */
@@ -99,16 +101,17 @@ void MainWindow::updateImage(cv::Mat& frame)
 	}
 }
 
-bool MainWindow::updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate)
+bool MainWindow::updateOnScreenTelemetry(onScreenTelemetryUpdate telmetryBufferUpdate)
 {
 	/* GtkTextIter end; */
 	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
-
+	telmetryBufferUpdate.indicator->queue_draw();
 	/* 	cout << "updating AI\n"; */
 	/* 	mainWindow->updateAttitudeIndicator(); */
 	/* gtk_text_buffer_get_end_iter(, &end); */
 	/* cout << "text: " << update.text << " length: " << update.text.size(); */
 	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
+
 	return true;
 }
 
@@ -137,7 +140,7 @@ void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 		this->pitch = data.att.pitch;
 		this->roll = data.att.roll;
 	}
-	g_idle_add(G_SOURCE_FUNC(updateOnScreenTelemetry), new textBufferUpdate(textBuffer, message));
+	g_idle_add(G_SOURCE_FUNC(updateOnScreenTelemetry), new onScreenTelemetryUpdate(textBuffer, Glib::RefPtr<Gtk::DrawingArea>(indicator), message));
 }
 
 void MainWindow::displayError(pTeleErr error)
@@ -180,11 +183,11 @@ void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
 
 	gtk_render_background(context, cr, 0, 0, width, height);
 
-	double angle  = roll*M_PI/180;
+	double angle = roll * M_PI / 180;
 
-	cairo_translate (cr, 120, 120);
+	cairo_translate(cr, 120, 120);
 	cairo_rotate(cr, angle);
-	cairo_translate (cr, -120, -120);
+	cairo_translate(cr, -120, -120);
 
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
@@ -200,10 +203,9 @@ void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
 	cairo_paint(cr);
 
 	// rotate
-	cairo_translate (cr, 120, 120);
+	cairo_translate(cr, 120, 120);
 	cairo_rotate(cr, -angle);
-	cairo_translate (cr, -120, -120);
-
+	cairo_translate(cr, -120, -120);
 
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 	cairo_set_source_surface(cr, imgCase, 0, 0);
@@ -212,3 +214,34 @@ void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
 	cairo_fill(cr);
 }
 
+ControllerUIBridge::ControllerUIBridge()
+{
+	//
+}
+
+int ControllerUIBridge::update(ControlSurface cs, int val)
+{
+	switch (cs) {
+	case START:
+		break;
+	case SELECT:
+		break;
+	case XBOX:
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int ControllerUIBridge::update(ControlSurface cs, int x, int y)
+{
+	switch (cs) {
+	case D_PAD: {
+
+	} break;
+	default:
+		break;
+	}
+	return 0;
+}

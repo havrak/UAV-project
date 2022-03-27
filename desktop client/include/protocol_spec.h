@@ -27,7 +27,7 @@
  * Enum to distinguish different type of controllers
  */
 enum ControllerTypes{
-	XBOX_CONTROLLER
+	XBOX_CONTROLLER, PS4_DUALSHOCK
 };
 
 /**

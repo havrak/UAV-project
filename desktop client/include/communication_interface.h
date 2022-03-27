@@ -44,9 +44,8 @@ using namespace std;
  */
 class ControllerDroneBridge : ControlInterpreter {
 	private:
-	static ControllerDroneBridge* controllerDroneBridge;
-	static mutex mutexControllerDroneBridge;
-	ControllerDroneBridge();
+	/* static ControllerDroneBridge* controllerDroneBridge; */
+	/* static mutex mutexControllerDroneBridge; */
 
 	thread sendControlComandThread;
 
@@ -62,6 +61,7 @@ class ControllerDroneBridge : ControlInterpreter {
 	void sendControlComand();
 
 	public:
+	ControllerDroneBridge();
 
 	/**
 	 * update method called by Controller Interface
@@ -70,7 +70,7 @@ class ControllerDroneBridge : ControlInterpreter {
 	 * @param int x - value of X axis
 	 * @param int y - value of Y axis
 	 */
-	int update(ControlSurface cs, int x, int y);
+	int update(ControlSurface cs, int x, int y) override;
 
 	/**
 	 * update method called by Controller Interface
@@ -78,7 +78,7 @@ class ControllerDroneBridge : ControlInterpreter {
 	 * @param ControlSurface cs - type of control surface for which callback is generated
 	 * @param int val - value of button
 	 */
-	int update(ControlSurface cs, int val);
+	int update(ControlSurface cs, int val) override;
 
 	/**
 	 * getter on active variable
@@ -100,7 +100,7 @@ class ControllerDroneBridge : ControlInterpreter {
 	 * this method will create it and
 	 * start sendControlComandThread
 	 */
-	static ControllerDroneBridge* GetInstance();
+	/* static ControllerDroneBridge* GetInstance(); */
 };
 
 /**

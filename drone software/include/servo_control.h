@@ -37,9 +37,13 @@ using namespace std;
 /**
  * enum for configuration of plane
  */
-enum wingSurfaceConfiguration{
+enum WingSurfaceConfiguration{
 	V_SHAPE_TAIL_WING = 1,
 	STANDARD_TAIL_WING = 2,
+};
+
+enum ControlMethodAdjuster{
+	TRIGONOMETRIC, SQUARING
 };
 
 
@@ -56,7 +60,8 @@ private:
 	thread pidControllerThread;
 	float pitch = 0, roll = 0;
 
-	const wingSurfaceConfiguration configuration = V_SHAPE_TAIL_WING;
+	 WingSurfaceConfiguration planeConfiguration = V_SHAPE_TAIL_WING;
+	 ControlMethodAdjuster controllAdjuster = SQUARING;
 	bool pca9685Up = false;
 	unsigned int short mainMotorMS;
 
@@ -153,8 +158,13 @@ public:
 	 */
 	void slowDownToMin();
 
-
-	void testServo();
+	/**
+	 * configures how controlls should be interpreted
+	 *
+	 * @param WingSurfaceConfiguration wsc - plane configuration
+	 * @param ControlMethodAdjuster cma - method how controller input should be adjusted
+	 */
+	void setOperationalParameters(WingSurfaceConfiguration wsc, ControlMethodAdjuster cma);
 
 	/**
 	 * get status of PCA9685

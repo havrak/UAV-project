@@ -44,10 +44,14 @@ bool ImuInterface::attachIMU()
 
 bool ImuInterface::resetOrientation(){
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	yawOffset = JY901.getYaw();
-	pitchOffset = JY901.getPitch();
-	rollOffset = JY901.getRoll();
+	/* yawOffset = JY901.getYaw(); */
+	/* pitchOffset = JY901.getPitch(); */
+	/* rollOffset = JY901.getRoll(); */
 	return true;
+}
+
+void ImuInterface::setIMUOrientation(IMU_Orientation orientation){
+	this->orientation = orientation;
 }
 
 bool ImuInterface::getIMUStatus(){
@@ -94,12 +98,22 @@ double ImuInterface::getGyroZ() {
 // pitch and roll is switched on hardware
 double ImuInterface::getRoll() {  // X-axis
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	return JY901.getPitch() - pitchOffset;
+	if(orientation== X_Y_INVERTED){
+		return JY901.getPitch() - pitchOffset;
+	}else{
+		return JY901.getRoll() - rollOffset;
+
+	}
 }  // getRoll() unit: degree(s)
 
 double ImuInterface::getPitch() {  // Y-axis
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+	if(orientation== X_Y_INVERTED){
 	return JY901.getRoll() - rollOffset;
+	}else{
+	return JY901.getPitch() - pitchOffset;
+
+	}
 }  // getPitch() unit: degree(s)
 
 double ImuInterface::getYaw() {  // Z-axis

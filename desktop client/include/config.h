@@ -11,6 +11,7 @@
 #include "../libraries/inih/cpp/INIReader.h"
 #include "main_window.h"
 #include "protocol_spec.h"
+#include <pwd.h>
 
 enum OperatingSystems{
 	WIN, MAC, LINUX, FREEBSD
@@ -23,14 +24,14 @@ class Config {
 	const char* configDirectory;
 	/* {"$HOME/.config/uav_control/config.ini","$HOME/.config/uav_control/"}; */
 
-	// configuration
+	// configuration, default values need to be set, in case configuration doesn't exist
 	OperatingSystems os;
-	string myIP;
-	string serverIP;
-	int cameraPort;
-	int serverPort;
-	ControllerTypes controllerType;
-	bool controlEnabled;
+	string myIP = "192.168.6.11";
+	string serverIP= "192.168.6.1";
+	int cameraPort = 5000;
+	int serverPort = 8066;
+	ControllerTypes controllerType = XBOX_CONTROLLER;
+	bool controlEnabled = true;
 
 
 	public:

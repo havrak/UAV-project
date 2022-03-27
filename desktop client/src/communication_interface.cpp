@@ -23,8 +23,8 @@
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
 mutex CommunicationInterface::serverMutex;
-ControllerDroneBridge* ControllerDroneBridge::controllerDroneBridge = nullptr;
-mutex ControllerDroneBridge::mutexControllerDroneBridge;
+/* ControllerDroneBridge* ControllerDroneBridge::controllerDroneBridge = nullptr; */
+/* mutex ControllerDroneBridge::mutexControllerDroneBridge; */
 
 SendingThreadPool* SendingThreadPool::threadPool = nullptr;
 ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
@@ -39,18 +39,18 @@ ControllerDroneBridge::ControllerDroneBridge()
 	sendControlComandThread = std::thread(&ControllerDroneBridge::sendControlComand, this);
 }
 
-ControllerDroneBridge* ControllerDroneBridge::GetInstance()
-{
-	if (controllerDroneBridge == nullptr) {
-		mutexControllerDroneBridge.lock();
-		if (controllerDroneBridge == nullptr) {
-			controllerDroneBridge = new ControllerDroneBridge();
-		}
-		mutexControllerDroneBridge.unlock();
-	}
+/* ControllerDroneBridge* ControllerDroneBridge::GetInstance() */
+/* { */
+/* 	if (controllerDroneBridge == nullptr) { */
+/* 		mutexControllerDroneBridge.lock(); */
+/* 		if (controllerDroneBridge == nullptr) { */
+/* 			controllerDroneBridge = new ControllerDroneBridge(); */
+/* 		} */
+/* 		mutexControllerDroneBridge.unlock(); */
+/* 	} */
 
-	return controllerDroneBridge;
-}
+/* 	return controllerDroneBridge; */
+/* } */
 
 SendingThreadPool::SendingThreadPool()
 {
@@ -331,6 +331,9 @@ bool CommunicationInterface::setupSocket(string serverIP, string myIP, int serve
 	this->serverPort = serverPort;
 	this->myIP = myIP;
 	cout << "COMMUNICATION_INTERFACE | setupSocket | socket was successfully setted up \n";
+	cout << "  server IP:   " << serverIP << "\n";
+	cout << "  server port: " << serverPort << "\n";
+	cout << "  my IP:       " << myIP.c_str() << "\n";
 	establishConnectionToDroneThread = thread(&CommunicationInterface::establishConnectionToDrone, this);
 	return true;
 }
@@ -534,8 +537,8 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 		controllerState.rTrigger = x;
 		break;
 	case D_PAD:
-		controllerState.dpad.first = x;
-		controllerState.dpad.second = y;
+		/* controllerState.dpad.first = x; */
+		/* controllerState.dpad.second = y; */
 		break;
 	default:
 		break;
@@ -556,6 +559,7 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerStateMutex.unlock();
 	} else if (active) {
 		if(val == 1){
+			/* if(cs == D) */
 			pConSpc pcs;
 			pcs.cs = cs;
 			pcs.val = val;

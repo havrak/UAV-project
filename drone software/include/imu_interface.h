@@ -16,6 +16,11 @@
 
 using namespace std;
 
+enum IMU_Orientation{
+	STANDART,
+	X_Y_INVERTED
+};
+
 /**
  * wrapper for WT901B library
  * all getters are made thread safe
@@ -55,6 +60,7 @@ class ImuInterface {
 	double yawOffset = 0;
 	double pitchOffset = 0;
 	double rollOffset = 0;
+	IMU_Orientation orientation;
 	const bool usingSerial = false;
 
 	// copy from library just adds mutex, to make sure there are no errors due to multitherading, as data is stored in structures, thus it is not strictly safe
@@ -67,6 +73,7 @@ class ImuInterface {
 	 *
 	 * @return bool - always true
 	 */
+	void setIMUOrientation(IMU_Orientation orientation);
 	bool resetOrientation();
 	double getTemp();						 // get temperature
 	double getAccX();						 // get X-axis acceleration in multiples of g

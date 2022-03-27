@@ -33,7 +33,9 @@ target_include_directories(
 	pca9685 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/lib-pca9685/")
 
 add_library(inih STATIC
-	"${PROJECT_SOURCE_DIR}/libraries/inih/INIReader.cpp")
+	"${PROJECT_SOURCE_DIR}/libraries/inih/cpp/INIReader.cpp"
+	"${PROJECT_SOURCE_DIR}/libraries/inih/ini.c"
+	)
 target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 
@@ -51,4 +53,5 @@ target_link_libraries(
 	cjy901
 	ina226
 	pca9685
+	inih
 	)

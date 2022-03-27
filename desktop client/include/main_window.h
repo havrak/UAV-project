@@ -20,6 +20,7 @@
 #include <mutex>
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include "control_interpreter.h"
 
 #define UI_SIZE 240
 
@@ -28,11 +29,13 @@
  * set, used to schedule update
  *
  */
-struct textBufferUpdate {
+struct onScreenTelemetryUpdate {
 	Glib::RefPtr<Gtk::TextBuffer> buffer;
+	Glib::RefPtr<Gtk::DrawingArea> indicator;
 	string text;
-	textBufferUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, string text)
+	onScreenTelemetryUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, Glib::RefPtr<Gtk::DrawingArea> indicator, string text)
 			: buffer(buffer)
+			, indicator(indicator)
 			, text(text) {};
 };
 
@@ -128,7 +131,7 @@ class MainWindow : public Gtk::Window {
 	 *
 	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
 	 */
-	static bool updateOnScreenTelemetry(textBufferUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
+	static bool updateOnScreenTelemetry(onScreenTelemetryUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
 
 	/**
 	 * updates attitude indicator
@@ -147,6 +150,33 @@ class MainWindow : public Gtk::Window {
 	bool paused;
 
 	// bool process = true;
+};
+
+class ControllerUIBridge : ControlInterpreter {
+	private:
+
+	public:
+
+	ControllerUIBridge();
+
+	/**
+	 * update method called by Controller Interface
+	 *
+	 * @param ControlSurface cs - type of control surface for which callback is generated
+	 * @param int x - value of X axis
+	 * @param int y - value of Y axis
+	 */
+	int update(ControlSurface cs, int x, int y) override;
+
+	/**
+	 * update method called by Controller Interface
+	 *
+	 * @param ControlSurface cs - type of control surface for which callback is generated
+	 * @param int val - value of button
+	 */
+	int update(ControlSurface cs, int val) override;
+
+
 };
 
 extern std::mutex imageMutex;

@@ -20,34 +20,42 @@ Config::Config()
 	configDirectory = "";
 #elif __linux__
 	os = LINUX;
-	configDirectory = "$HOME/.config/uav_control/config.ini";
+	char *homedir = getpwuid(getuid())->pw_dir;
+	configDirectory = strcat(homedir,"/.config/uav_control/config.ini");
 #elif __FreeBSD__
 	os = BSD;
-	configDirectory = "$HOME/.config/uav_control/config.ini";
+	char *homedir = getpwuid(getuid())->pw_dir;
+	configDirectory = strcat(homedir,"/.config/uav_control/config.ini");
 #endif
 }
 
 bool Config::loadConfiguration()
 {
 	INIReader reader(configDirectory);
+	cout << "CONFIG | loadConfiguration | loading from: " << configDirectory << "\n";
 
 	if (reader.ParseError() < 0) {
+		cerr  << "CONFIG | loadConfiguration | parsing failed \n";
 		pTeleErr err(1, "Config wasn't found, or contains an error");
 		mainWindow->displayError(err);
 		return false;
+	}else{
+
 	}
 	cameraPort = reader.GetInteger("camera", "port", 5000);
-	serverIP = reader.Get("connection", "piIP", "192.168.6.1");
-	myIP = reader.Get("connection", "myIP", "192.168.6.11");
-	serverPort = reader.GetInteger("connection", "serverPort", 8066);
+	serverIP = reader.Get("connection", "pi_IP", "192.168.6.1");
+	myIP = reader.Get("connection", "my_IP", "192.168.6.11");
+	serverPort = reader.GetInteger("connection", "server_port", 8066);
 
-	string tmp = reader.Get("control", "controllerType", "XBOX_CONTROLLER");
-	if (tmp.compare("XBOX_CONTROLLER")) {
-		controllerType = XBOX_CONTROLLER;
+	cout << "camera :" << getCameraPort() << "\n";
+
+	string tmp = reader.Get("control", "controller_type", "XBOX_CONTROLLER");
+	if (tmp.compare("PS4_DUALSHOCK")) {
+		controllerType = PS4_DUALSHOCK;
 	} else {
 		controllerType = XBOX_CONTROLLER;
 	}
-	controlEnabled = reader.GetBoolean("control", "controlEnabled", true);
+	controlEnabled = reader.GetBoolean("control", "control_enabled", true);
 	return true;
 }
 

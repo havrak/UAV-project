@@ -36,7 +36,6 @@ enum ControlSurface{
 	NON_DEFINED
 };
 
-
 const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
 
 /**

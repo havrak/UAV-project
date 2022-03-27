@@ -9,6 +9,7 @@
 
 /* #include "bcm2835.h" */
 #include "communication_interface.h"
+#include "config.h"
 #include "servo_control.h"
 #include "telemetry.h"
 #include <cstring>
@@ -29,24 +30,25 @@ int main(int argc, char** argv)
 {
 	signal(SIGKILL, signalHandler);
 	signal(SIGPIPE, SIG_IGN);
-	/* if (argc > 1){ */
-	/* 	if(strcmp(argv[1], "-r") == 0){ */
-	/* 		cout << "MAIN | main | reseting ServoControl" << endl; */
-	/* 		ServoControl::GetInstance(); */
-	/* 	} */
-	/* 	return 1; */
-	/* } */
+	Config config;
+	config.loadConfiguration();
 
-
-	/* if (!bcm2835_init()) { */
-	/* 	cerr << "MAIN | main | failed to open I2C device\n"; */
-	/* } else { */
-	/* 	cout << "MAIN | main | bcm2835 initialized, version: " << bcm2835_version() << "\n"; */
-	/* } */
-	//IMPORTANT: ALWAYS KILL PROGRAM WHEN MOTOR IS TURNED OFF, OTHERWISE ESC GOES CRAZY
-	ServoControl::GetInstance();
+	if (argc > 1){
+		if(strcmp(argv[1], "-r") == 0){
+			cout << "MAIN | main | calirating ESC" << endl;
+			ServoControl::GetInstance()->calibrateESC();
+		}
+		return 1;
+	}
 	Telemetry::GetInstance()->setUpSensors();
-	CommunicationInterface::GetInstance()->setupSocket();
+	ServoControl::GetInstance();
+
+	//ServoControl::GetInstance()->armESC();
+
+
+	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());
+	CommunicationInterface::GetInstance()->setupSocket(config.getMyIP(), config.getServerPort());
+	ServoControl::GetInstance()->setOperationalParameters(config.getWingSurfaceConfiguration(), config.getControlMethodAdjuster());
 
 	//ServoControl::GetInstance()->calibrateESC();
 	cout << "MAIN | main | entering main loop\n";

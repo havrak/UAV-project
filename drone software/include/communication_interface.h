@@ -40,7 +40,7 @@
 
 using namespace std;
 
-#define SERVER_PORT 8066
+/* #define SERVER_PORT 8066 */
 #define NUMBER_OF_THREADS 5
 #define MAX_CLIENTS 10
 
@@ -55,6 +55,8 @@ class CommunicationInterface {
 	fd_set read_fds;
 	fd_set write_fds;
 	fd_set except_fds;
+	string myIP;
+	int serverPort = 8066;
 
 	socklen_t clientLength;
 	list<client> clients;
@@ -128,7 +130,7 @@ class CommunicationInterface {
 	 * setups server sockets, start thread to check
 	 * new activity
 	 */
-	bool setupSocket();
+	bool setupSocket(string myIP, int serverPort);
 
 	/**
 	 * waits for new data on the socket
