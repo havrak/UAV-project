@@ -6,7 +6,6 @@
  */
 
 #include "servo_control.h"
-/* #include "bcm2835.h" */
 #include "generic_PID.h"
 #include "protocol_spec.h"
 #include <bits/types/clock_t.h>

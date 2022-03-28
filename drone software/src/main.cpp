@@ -7,7 +7,6 @@
 
 #include <wiringPi.h>
 
-/* #include "bcm2835.h" */
 #include "communication_interface.h"
 #include "config.h"
 #include "servo_control.h"

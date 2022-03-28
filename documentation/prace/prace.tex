@@ -166,9 +166,10 @@ Obě části mezi sebou komunikují prostřednictvím protokolu založené na TC
 Přenos videa je zprostředkovávám pomocí UDP.
 Samotné video je kódováno do jpg, v porovnání s dalšími styly přenosu byla latence u jpg menší.
 
+
 \section{Komunikační protokol}
 
-Pilotův počítač a Raspberry mezi sebou komunikují prostřednictvím jednoduchého TCP protokolu.
+Pilotův počítač a Raspberry mezi sebou komunikují prostřednictvím jednoduchého protokolu postaveném na rodině TCP.
 Raspberry Pi přebírá na sebe roli serveru, to mimo jiné umožňuje aby bylo zařízení ovládáno z více stanic.
 
 Protokol prozatím není zašifrovaný a nepočítá s nevalidními daty.
@@ -226,15 +227,32 @@ Tu ve standardním chování posílá Raspberry každých pár stovek milisekund
 Chce li client aktuálnější data může si je vyžádat odesláním zprávy o stejném typu, jako jsou požadovaná data.
 Speciální případ představují chybové hlášky, které vyžádat pochopitelně nejdou a pilotovi se zobrazují v dialogovém okně.
 
+\section{Konfigurace}
+
+Některé vlastnosti programu, lze specifikovat v konfiguračním souboru.
+Ten se nachází ve složce \verb|$HOME/.config/uav_control/config.ini| u počítačů s operačním systémem postaveným na UNIXu.
+Soubor se psán stylem INI, který je lehce čitelný a vhodný na malý rozsah konfiguračního souboru.
+Na zpracování je použita knihovna inih\footnote{\bibentry{inih}}.
+
+
+Konfigurace je nutná jak na straně pilota, tak na straně dronu.
+U pilota se nastavuje například typ ovladače, či port na kterém má být přijímán záznam z kamery.
+Konfigurace na straně dronu určuje například jaká je orientace polohového senzoru, či rozložení křídel.
+
+V aktuální verzí se konfigurační soubor nevygeneruje sám, program však má definované hodnoty, ke kterým se uchýlí v jeho absenci.
+
+
+
+
+
 \chapter{Hardware a Raspberry Pi}
 
 Jádro samotného letadla tvoří malý počítač Raspberry Pi Zero 2.
 Ostatní periférie jsou: polohový senzor WT901B, voltmetr a ampérmetr INA226, ovladač na serva PCA9865, ublox NEO-7M GPS modul a BEATLES 40A ESC (Electronic speed control).
 Vše s výjimkou GPS komunikuje s Raspberry Pi prostřednictví I2C protokolu.
-GPS modul pak pomocí sériové linky.
+GPS modul využívá sériovou linku.
 
 Senzor WT901B sice podporuje přímé napojení GPS senzoru, při pokusu o konfiguraci senzoru však přestala fungovat sériová komunikace obecně.
-GPS je tak napojena sólo.
 
 Systém má dva přívody proudu -- hlavní motor a serva jsou napájeny prostřednictví ESC.
 To však nebylo schopné poskytovat dostatečný proud pro Raspberry Pi a senzory na něj napojené.

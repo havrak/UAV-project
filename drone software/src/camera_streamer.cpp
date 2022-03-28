@@ -46,7 +46,7 @@ bool CameraStreamer::setupStream()
 	/* 	return false; */
 	/* } */
 	/* cout << "CAMERA_STREAMER | setupStream | camera was open\n"; */
-	/* return true; */
+	return true;
 }
 
 bool CameraStreamer::setUpCamera(ProcessingStructure ps)

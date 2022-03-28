@@ -20,7 +20,6 @@ bool Config::loadConfiguration(){
 		cerr << "Config | loadConfiguration | ini config parsing failed\n";
 		return false;
 	}
-	return true;
 
 	myIP = reader.GetString("connection", "my_IP", "192.168.6.1");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
@@ -44,6 +43,7 @@ bool Config::loadConfiguration(){
 	}else{
 		imo= STANDART;
 	}
+	return true;
 
 }
 
