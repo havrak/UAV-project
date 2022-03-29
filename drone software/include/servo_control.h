@@ -64,7 +64,7 @@ private:
 	bool pca9685Up = false;
 	unsigned int short mainMotorMS;
 
-	PCA9685Servo servo;
+	PCA9685Servo servo = NULL;
 	int currentMotorPulse;
 
 	struct StandardTailWingConfiguration{
@@ -136,6 +136,12 @@ public:
   static ServoControl *GetInstance();
 
 	/**
+   * attaches PCA9685, runs initial configuration
+	 *
+	 */
+	bool attachPCA9685(int address);
+
+	/**
 	 * calibrates ESC
 	 * sets ms to min value and after while to max
 	 * needs to be called only when using brand new ESC
@@ -171,6 +177,14 @@ public:
 	 * @return bool - true of PCA9685 is online
 	 */
 	bool getPCA9865Status();
+
+	/**
+	 * set status of PCA9685 as it is telemetry.h
+	 * who checks i2c devices
+	 *
+	 * @param bool status - new status
+	 */
+	void setPCA9865Status(bool status);
 
 	/**
 	 * start/stops PID controller

@@ -65,7 +65,7 @@ class BatteryInterface {
 	 *
 	 * @return bool - true if connection was established
 	 */
-	bool attachINA226();
+	bool attachINA226(int address);
 
 	/**
 	 * starts loop to periodically load data
@@ -98,6 +98,14 @@ class BatteryInterface {
 	 * @return bool - true if connection was established
 	 */
 	bool getINAStatus();
+
+	/**
+	 * set status of INA226 as it is telemetry.h
+	 * who checks i2c devices
+	 *
+	 * @param bool status - new status
+	 */
+	void setINAStatus(bool status);
 
 };
 

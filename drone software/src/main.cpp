@@ -32,17 +32,21 @@ int main(int argc, char** argv)
 	Config config;
 	config.loadConfiguration();
 
+
+	bool suppressArming = false;
 	if (argc > 1){
 		if(strcmp(argv[1], "-r") == 0){
 			cout << "MAIN | main | calirating ESC" << endl;
 			ServoControl::GetInstance()->calibrateESC();
+			return 1;
 		}
-		return 1;
+		if(strcmp(argv[1], "-a") == 0)
+				suppressArming = true;
 	}
-	Telemetry::GetInstance()->setUpSensors();
-	ServoControl::GetInstance();
+	Telemetry::GetInstance()->setUpSensors(config.getIMUAddress(), config.getINAAddress(), config.getPCA9865Address());
+	ServoControl::GetInstance()->attachPCA9685(config.getPCA9865Address());
 
-	//ServoControl::GetInstance()->armESC();
+	if(!suppressArming) ServoControl::GetInstance()->armESC();
 
 
 	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());

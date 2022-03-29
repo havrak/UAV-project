@@ -52,7 +52,7 @@ class ImuInterface {
 	 *
 	 * @return bool - true if IMU was attached
 	 */
-	bool attachIMU(); // bind serial connection
+	bool attachIMU(int address); // bind serial connection
 
 
 	//CJY901 getSensor();
@@ -74,6 +74,15 @@ class ImuInterface {
 	 * @return bool - always true
 	 */
 	void setIMUOrientation(IMU_Orientation orientation);
+
+	/**
+	 * set status of IMU as it is telemetry.h
+	 * who check i2c devices
+	 *
+	 * @param bool status - new status
+	 */
+	void setIMUStatus(bool status);
+
 	bool resetOrientation();
 	double getTemp();						 // get temperature
 	double getAccX();						 // get X-axis acceleration in multiples of g

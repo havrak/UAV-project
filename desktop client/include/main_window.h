@@ -25,9 +25,10 @@
 #define UI_SIZE 240
 
 /**
- * wrapper to store pointer to TexBuffer and message to be
- * set, used to schedule update
+ * wrapper to store information regarding onscreen elements that
+ * need to be updated
  *
+ * used by method updateOnScreenTelemetry called by gtk
  */
 struct onScreenTelemetryUpdate {
 	Glib::RefPtr<Gtk::TextBuffer> buffer;
@@ -107,12 +108,6 @@ class MainWindow : public Gtk::Window {
 	inline static float pitch = 10;
 	inline static float roll = 10;
 
-	/**
-	 * Initializes attitude indicator
-	 *
-	 */
-	void initAttitudeIndicator();
-
 
 	/* protected: */
 	Glib::RefPtr<Gtk::Builder> builder;
@@ -136,16 +131,12 @@ class MainWindow : public Gtk::Window {
 	/**
 	 * updates attitude indicator
 	 * used as a callback for draw method on DrawingArea
+	 *
+	 * @param GtkWidget *widget - DrawingArea to be drawn in
+	 * @param cairo_t *cr - corresponding cairo structure with given widget
+	 * @param gpointer data - pointer to data
 	 */
 	static void drawIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
-
-	/**
-	 * rotates buffer
-	 *
-	 * @param Glib::RefPtr<Gdk::Pixbuf> - buffer to be rotated
-	 * @param double angle - angle to rotate Pixbuf with
-	 */
-	/* Glib::RefPtr<Gdk::Pixbuf>  rotatePixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf, double angle); */
 
 	bool paused;
 

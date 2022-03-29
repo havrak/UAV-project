@@ -160,16 +160,9 @@ void MainWindow::displayError(pTeleErr error)
 			G_CALLBACK(gtk_widget_destroy),
 			dialog);
 
-	// gtk_widget_show_all(dialog); // NOTE: warning suppresed
+	gtk_widget_show_all(dialog); // NOTE: warning suppresed
 }
 
-void MainWindow::initAttitudeIndicator()
-{
-	/* imgBack = cairo_image_surface_create_from_png("images/ai_back.png"); */
-	/* imgCase = cairo_image_surface_create_from_png("images/ai_case.png"); */
-	/* imgFace = cairo_image_surface_create_from_png("images/ai_face.png"); */
-	/* imgRing = cairo_image_surface_create_from_png("images/ai_ring.png"); */
-}
 
 void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
 {

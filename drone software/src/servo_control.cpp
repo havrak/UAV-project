@@ -30,20 +30,6 @@ mutex ServoControl::mutexServoControl;
 ServoControl::ServoControl()
 {
 
-	servo.SetFrequency(60);
-	servo.SetLeftUs(MIN_PULSE_LENGTH);
-	servo.SetCenterUs(CEN_PULSE_LENGTH);
-	servo.SetRightUs(MAX_PULSE_LENGTH);
-	servo.SetInvert(false);
-	/* armESC(); */
-
-	servo.SetAngle(CHANNEL(2), ANGLE(135));
-	servo.SetAngle(CHANNEL(3), ANGLE(135));
-	servo.SetAngle(CHANNEL(4), ANGLE(135));
-	servo.SetAngle(CHANNEL(5), ANGLE(135));
-
-	if (debug)
-		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
 }
 
 ServoControl* ServoControl::GetInstance()
@@ -61,6 +47,27 @@ ServoControl* ServoControl::GetInstance()
 	return servoControl;
 }
 
+
+bool ServoControl::attachPCA9685(int address){
+	servo = PCA9685Servo(address);
+
+	servo.SetFrequency(60);
+	servo.SetLeftUs(MIN_PULSE_LENGTH);
+	servo.SetCenterUs(CEN_PULSE_LENGTH);
+	servo.SetRightUs(MAX_PULSE_LENGTH);
+	servo.SetInvert(false);
+	/* armESC(); */
+
+	servo.SetAngle(CHANNEL(2), ANGLE(135));
+	servo.SetAngle(CHANNEL(3), ANGLE(135));
+	servo.SetAngle(CHANNEL(4), ANGLE(135));
+	servo.SetAngle(CHANNEL(5), ANGLE(135));
+
+	if (debug)
+		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
+
+}
+
 void ServoControl::setPichAndRoll(float pitch, float roll)
 {
 	this->pitch = pitch;
@@ -69,11 +76,9 @@ void ServoControl::setPichAndRoll(float pitch, float roll)
 
 void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 {
-	cout << "Angle: " << int(angle) << "\n";
 	if (right) {
 		servo.SetAngle(channel, 90 + angle);
 	} else {
-		/* cout << "Left:  channel: " << channel << ", i: " << (180 - angle) << "\n"; */
 		servo.SetAngle(channel, 180 - angle);
 	}
 }
@@ -119,6 +124,11 @@ bool ServoControl::getPCA9865Status()
 {
 	return pca9685Up;
 }
+void ServoControl::setPCA9865Status(bool status)
+{
+	pca9685Up= status;
+}
+
 
 pair<int, unsigned char*> ServoControl::getControlSurfaceConfiguration()
 {
@@ -292,3 +302,4 @@ unsigned int short ServoControl::getMainMotorMS()
 {
 	return mainMotorMS;
 }
+

@@ -15,6 +15,10 @@
 #include <iostream>
 #include <pwd.h>
 
+/**
+ * Parses programs configuration file and provides getters
+ * to get the neccesarray information
+ */
 class Config {
 	private:
 
@@ -27,8 +31,23 @@ class Config {
 	WingSurfaceConfiguration wsc = STANDARD_TAIL_WING;
 	IMU_Orientation imo = STANDART;
 
+	int imuAddress = 0x44;
+	int inaAddress = 0x50;
+	int pca9685Address = 0x40;
+
 	public:
+
+	/**
+	 * constructor of Config class
+	 *
+	 */
 	Config();
+
+	/**
+	 * parses configuration file and set local variables
+	 *
+	 * @return bool - true if config was parsed successfully
+	 */
 	bool loadConfiguration();
 
 
@@ -36,9 +55,10 @@ class Config {
 	ControlMethodAdjuster getControlMethodAdjuster();
 	WingSurfaceConfiguration getWingSurfaceConfiguration();
 	IMU_Orientation getIMUOrientation();
-
 	int getServerPort();
-
+	int getIMUAddress();
+	int getINAAddress();
+	int getPCA9865Address();
 
 };
 

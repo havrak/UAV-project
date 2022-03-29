@@ -17,6 +17,10 @@ enum OperatingSystems{
 	WIN, MAC, LINUX, FREEBSD
 };
 
+/**
+ * Parses programs configuration file and provides getters
+ * to get the neccesarray information
+ */
 class Config {
 	private:
 
@@ -35,7 +39,18 @@ class Config {
 
 
 	public:
+
+	/**
+   * Constructor of config class, depending on the operating system
+	 * it select correct file path
+	 */
 	Config();
+
+	/**
+	 * parses configuration file and set local variables
+	 *
+	 * @return bool - true if config was parsed successfully
+	 */
 	bool loadConfiguration();
 
 	OperatingSystems getOperatingSystem();

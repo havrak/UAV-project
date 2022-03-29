@@ -28,9 +28,9 @@ BatteryInterface* BatteryInterface::GetInstance()
 	return batteryInterface;
 }
 
-bool BatteryInterface::attachINA226()
+bool BatteryInterface::attachINA226(int address)
 {
-	if (ina226.attach(INA_I2C_ADDRESS)) {
+	if (ina226.attach(address)) {
 		ina226.ina226_calibrate(0.1, 1.0);
 		ina226.ina226_configure(ina226.INA226_TIME_8MS, ina226.INA226_TIME_8MS, ina226.INA226_AVERAGES_16, ina226.INA226_MODE_SHUNT_BUS_CONTINUOUS);
 		inaUp = true;
@@ -75,35 +75,33 @@ void BatteryInterface::startLoop()
 
 float BatteryInterface::getVoltage()
 {
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return voltage;
 }
 
 float BatteryInterface::getCurrent()
 {
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return current;
 }
 
 float BatteryInterface::getPower()
 {
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return power;
 }
 
 float BatteryInterface::getShunt()
 {
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return shunt;
 }
 
 float BatteryInterface::getEnergy()
 {
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return energy;
 }
 
 bool BatteryInterface::getINAStatus(){
-	lock_guard<mutex> mutex(mutexBatteryInterface);
 	return inaUp;
+}
+
+void BatteryInterface::setINAStatus(bool status){
+	inaUp = status;
 }

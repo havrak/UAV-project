@@ -72,7 +72,7 @@
 % Rok odevzdání
 \def\RokOdevzdani{2022}
 % Měsíc odevzdání
-\def\MesicOdevzdani{Únor}
+\def\MesicOdevzdani{Březen}
 
 % Vedoucí práce: Jméno a příjmení s~tituly
 \def\Vedouci{ing. Daniel Kahoun}
@@ -91,8 +91,8 @@ Software by měl být napsán stylem, který umožňuje budoucí vývoj.
 }
 
 \def\AbstraktEN{%
-The aim of the work is to create an unmanned aerial vehicle system which will be controller by the pilot remotely from software on a computer.
-Pilot should recive all the necessary telemetry and video stream from the aircraft.
+The aim of the work is to create an unmanned aerial vehicle system which will be controled remotely by the pilot from software on a computer.
+Pilot should recive all the necessary telemetry in addition to video stream from the aircraft.
 Software should be written in a style that allows for future development.
 }
 \def\AbstraktDE{%
@@ -126,7 +126,7 @@ Software sollte in einem Stil geschrieben werden, der eine zukünftige Entwicklu
   \renewcommand{\headrulewidth}{0.4pt}
   \renewcommand{\footrulewidth}{0.4pt}
   \fancyhead[C]{}
-  \fancyhead[L]{Ročníková práce -- \NazevSkoly}
+  \fancyhead[L]{Maturitní práce -- \NazevSkoly}
   \fancyhead[R]{\NazevPraceShort}
   \fancyfoot[L]{Vypracoval: \AutorPrace$\,\,$(\NazevOboru)}
   \fancyfoot[C]{}
@@ -145,7 +145,6 @@ Software sollte in einem Stil geschrieben werden, der eine zukünftige Entwicklu
 \newpage
 
 \include{uvod}
-
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
@@ -162,19 +161,24 @@ Jádro samotného dronu představuje malý počítač Raspberry Pi Zero 2.
 Vyšší výkon verze Zero 2 není nutný pro fungování, práce může fungovat na libovolném Raspberry Pi.
 Program využívá jen zlomek zdrojů  a to jak po stránce paměti, tak výpočetního výkonu.
 
-Obě části mezi sebou komunikují prostřednictvím protokolu založené na TCP rodině.
+Obě části mezi sebou komunikují prostřednictvím protokolu založeném na rodině TCP.
 Přenos videa je zprostředkovávám pomocí UDP.
-Samotné video je kódováno do jpg, v porovnání s dalšími styly přenosu byla latence u jpg menší.
+Samotné video je kódováno do jpg, v porovnání s dalšími styly přenosu byla u jpg menší latence.
+
+Rychlost latence byla testována pomocí jednoduché aparatury, kde malý kód četl obrazovku, kde byl zobrazen záznam z kamery, a ovládal LED na ESP32.
+Systém jednoduše měřil za jak dlouho se na obrazovce objevila rozsvícená dioda (Předem vybraný pixel změnil barvu) poté co skript poslal příkaz k rozsvícení
+
 
 
 \section{Komunikační protokol}
 
 Pilotův počítač a Raspberry mezi sebou komunikují prostřednictvím jednoduchého protokolu postaveném na rodině TCP.
-Raspberry Pi přebírá na sebe roli serveru, to mimo jiné umožňuje aby bylo zařízení ovládáno z více stanic.
+Raspberry Pi přebírá roli serveru, to mimo jiné umožňuje, aby bylo letadlo ovládáno z více stanic.
 
-Protokol prozatím není zašifrovaný a nepočítá s nevalidními daty.
-Šifrován není příliš nutné, dronu a počítač operují na vlastní síti, kde Raspberry Pi funguje jako Wi-Fi Access--Point.
-Struktura protokolu ovšem nabízí možnost jednoduše naimplementovat symetrickou kryptografii.
+Protokol prozatím není zašifrovaný a nepočítá také s nevalidními daty.
+Šifrování však není příliš nutné -- dron a počítač operují na vlastní síti, kde Raspberry Pi funguje jako Wi-Fi Access--Point.
+Struktura protokolu ovšem nabízí možnost jednoduše implementovat symetrickou kryptografii.
+Ta by byla zcela postačující, její klíče by byly uloženy v konfiguračních souborech programu.
 
 \subsection{Struktura protokolu}
 
@@ -190,59 +194,56 @@ Každý packet začíná hlavičkou o velikosti 5 bytů.
 
 Po hlavičce následuje samotná zpráva zakončená posloupností pěti bytů -- 0x00, 0x00, 0xFF, 0xFF, 0xFF.
 Zakončovací řetězec slouží pro případ, kdy nějaký packet nedorazí, či příchozí zpráva byla nějak poškozena.
-Nastane li tato situace program postupně čte byty ze socketu a hledá tuto sekvenci.
+Nastane li tato situace, program postupně čte byty ze socketu a hledá tuto sekvenci.
 Maximální délka zprávy je půl kilobytu, samotná data jsou posílána v balíčcích o maximální velikosti 250 bytů.
 Omezení velikosti zprávy je zavedeno hlavně kvůli šetření paměti -- program má pro každého klienta vytvořené jedno pole, do kterého se musí vejít celá zpráva.
 
-Protokol funguje na základě posílání struktur, definovaných v  \verb|protocol_spec.h|.
+Protokol funguje na základě posílání struktur, definovaných v \verb|protocol_spec.h|.
 Pro odeslání dat je nejprve nutné nahrát data do struktury.
 Dále se z těchto dat vytvoří tzv. SendingStructure, které se odešle do thread poolu, ten zprávu eventuálně odešle.
 Při přijímání se data načítají do bufferu spojeným s klientem, ze kterého se později zkopírují objektu ProcessingStructure.
 Příslušná část programu si pak data přes memcpy opět zkopíruje do příslušné struktury.
 
 Pro příjem a zpracování zpráv slouží dva thread pooly -- SendingThreadPool a ProcessingThreadPool.
-Jednotlivé části programu tak nemusí čekat až se uvolní socket aby se mohla data odeslat, či čekat na jejich zpracování pro přijetí dalších.
+Jednotlivé části programu tak nemusí čekat, až se uvolní socket, aby se mohla data odeslat, či čekat na jejich zpracování pro přijetí dalších.
 Speciální případem je zpracování příkazů, které přímo ovládají pohyb letadla.
 Pro ovládaní existuje samostatné vlákno, které příkazy vykonává sekvenčně.
 Také je implementován mechanismus, kde příliš staré příkazy se nevykonají.
 
 Program sleduje aktivitu na socket pomocí příkazu select.
-Při běžné provozu tak většina vláken komunikací spí a zátěž není příliš velká.
+Při běžné provozu tak většina vláken komunikace spí a zátěž není příliš velká.
 
-Z hlediska programové stránky jsou veškeré součásti komunikace implemetovány jako singletony.
+Z hlediska programové stránky jsou veškeré součásti komunikace implementovány jako singletony.
 Program je tak řešen, aby umožnil jednoduše odesílat zprávy z různých částí programu.
 
 \subsection{Specifikace protokolu}
 
 Protokol obsluhuje tři základní části provozu dronu -- nastavení, ovládaní a telemetrie.
-Pro nastavení je vyhrazen rozsah od 0x00 po 0x20 a zahrnuje věci jako je odpojení klienta, nastavení kamery, či restart.
+Pro nastavení je vyhrazen rozsah od 0x00 po 0x20 a zahrnuje věci, jako je odpojení klienta, nastavení kamery, či restart.
 
 Další kategorii představuje ovládaní, pro které je vyhrazen prostor mezi 0x21 až 0x40.
 Projekt implementuje dva základní typy -- standardní ovládaní (pohyb joysticku, atd.) a speciální.
 Standardní slouží pro prosté manuální ovládání dronu.
 Speciální například resetuje polohoměr, či zapíná autopilota.
 
-Poslední kategorií je telemetrie, které má zbytek rozsahu do 0xFF.
+Poslední kategorií je telemetrie, která má zbytek rozsahu do 0xFF.
 Tu ve standardním chování posílá Raspberry každých pár stovek milisekund.
-Chce li client aktuálnější data může si je vyžádat odesláním zprávy o stejném typu, jako jsou požadovaná data.
+Pokud klient potřebuje aktuálnější data, může si je vyžádat odesláním zprávy o stejném typu, jako jsou požadovaná data.
 Speciální případ představují chybové hlášky, které vyžádat pochopitelně nejdou a pilotovi se zobrazují v dialogovém okně.
 
 \section{Konfigurace}
 
 Některé vlastnosti programu, lze specifikovat v konfiguračním souboru.
 Ten se nachází ve složce \verb|$HOME/.config/uav_control/config.ini| u počítačů s operačním systémem postaveným na UNIXu.
-Soubor se psán stylem INI, který je lehce čitelný a vhodný na malý rozsah konfiguračního souboru.
-Na zpracování je použita knihovna inih\footnote{\bibentry{inih}}.
+Soubor se psán stylem INI, který je lehce čitelný a~vhodný na malý rozsah konfigurace.
+Pro zpracování je použita knihovna inih\footnote{\bibentry{inih}}.
 
 
 Konfigurace je nutná jak na straně pilota, tak na straně dronu.
-U pilota se nastavuje například typ ovladače, či port na kterém má být přijímán záznam z kamery.
-Konfigurace na straně dronu určuje například jaká je orientace polohového senzoru, či rozložení křídel.
+U pilota se nastavuje například typ ovladače, či port, na kterém má být přijímán záznam z kamery.
+Konfigurace na straně dronu určuje například, jaká je orientace polohového senzoru, či rozložení křídel.
 
 V aktuální verzí se konfigurační soubor nevygeneruje sám, program však má definované hodnoty, ke kterým se uchýlí v jeho absenci.
-
-
-
 
 
 \chapter{Hardware a Raspberry Pi}
@@ -257,7 +258,7 @@ Senzor WT901B sice podporuje přímé napojení GPS senzoru, při pokusu o konfi
 Systém má dva přívody proudu -- hlavní motor a serva jsou napájeny prostřednictví ESC.
 To však nebylo schopné poskytovat dostatečný proud pro Raspberry Pi a senzory na něj napojené.
 Z baterie je tak vyvedená linka napojená na step down converter, který 14.8 V sníží na 5V.
-Tento výstup je pak připojen na 5V pin Raspberry Pi.
+Tento výstup je pak připojen k 5V pinu Raspberry Pi.
 
 \begin{figure}[h]
   \centering
@@ -270,14 +271,12 @@ Tento výstup je pak připojen na 5V pin Raspberry Pi.
 \begin{figure}[h]
   \centering
   \includegraphics[height=9cm]{../img/circuit.jpg}
-  \caption[Reálné zapojení]{Reálné zapojení\footnotemark}
+  \caption[Reálné zapojení]{Reálné zapojení}
 \end{figure}
-\footnotetext{TP-LINK WN772N je aktuálně volně vedle Raspberry Pi, nikoliv pod}
 
-Většina komponentů je napájena na bread board, který lze jednoduše nasadit na Raspberry Pi.
+Většina komponentů je umístěna na pájivé pole, které lze jednoduše nasadit na Raspberry Pi.
 Výjimku představuje voltmetr/ampérmetr, který je volně a v letadle se nachází v ocase.
-Ke zbytku se připojuje přes koncovku USB, ostatní koncovky jsou XT60.
-V aktuální verzi je zapojení relativně nepraktické -- z ocasu do přídě vedou tři kabely.
+Ke zbytku se připojuje přes koncovku USB, ostatní koncovky (tj. ty pro napájení) jsou XT60.
 
 \begin{figure}[h]
   \centering
@@ -302,8 +301,8 @@ V aktuální verzi je zapojení relativně nepraktické -- z ocasu do přídě v
 
 
 Kostrou dronu je model Mini Talon od čínské společnosti X-UAV.
-Rozpětí křídel je 130cm délka pak 85cm.
-Jedná se o tzv. V-Tail konfiguraci ocas tedy nemá standardní tři kontrolní plochy ale pouze dvě.
+Rozpětí křídel je 130cm délka 85cm.
+Jedná se o tzv. V-Tail konfiguraci, ocas tedy nemá standardní tři kontrolní plochy, ale pouze dvě.
 V aktuální verzi program má naimplementované ovládání pouze pro tuto konfiguraci.
 
 \newpage
@@ -321,6 +320,7 @@ V aktuální verzi program má naimplementované ovládání pouze pro tuto konf
     .3 battery\_interface.h.
     .3 camera\_streamer.h.
     .3 communication\_interface.h.
+		.3 config.h.
     .3 generic\_PID.h.
     .3 gps\_interface.h.
     .3 imu\_interface.h.
@@ -338,27 +338,28 @@ V budoucnu je tak možné přidat analýzu videa přes OpenCV přímo na Raspber
 
 \section{Interface s Hardwarem}
 
-Jak už bylo řečeno s hardwarem Raspberry komunikuje prostřednictví I2C spojení a sériové linky.
+Jak už bylo řečeno, s hardwarem Raspberry komunikuje prostřednictví I2C spojení a sériové linky.
 Pro zpracování dat z INA226 a WT901B byly napsány nové knihovny.
 Jelikož knihovny pro Raspberry Pi totiž buďto neexistovaly, nebo nebyly zdaleka kompletní.
 
-Knihovna pro WT901B vznikla forkem knihovny pro Arduino\footnote{\bibentry{WT901BL}} a byla předělána v souladu s dokumentací protokolu\footnote{\bibentry{WT901B}}
-Kvůli problémům se senzorem byla i dopsána I2C komunikace, kterou původní knihovna neimplementovala
+Knihovna pro WT901B vznikla forkem knihovny pro Arduino\footnote{\bibentry{WT901BL}} a byla předělána v~souladu s dokumentací protokolu\footnote{\bibentry{WT901B}}.
+Kvůli problémům se senzorem byla i dopsána I2C komunikace, kterou původní knihovna neimplementovala.
 
-V případě knihovny pro INA226 bylo forknuto demo\footnote{\bibentry{INA226L}} z GitHubu a dopsáno v plnohodnotnou knihovnu.
-
+V případě senzoru INA226 bylo forknuto demo\footnote{\bibentry{INA226L}} z GitHubu a dopsáno v plnohodnotnou knihovnu.
 
 Obě knihovny využívají knihovnu wiringPi.
-Ta byla koncem roku 2021 spolu s vydáním raspbian bullseye označena ze deprecated.
-Také dochází ke kolizím mezi částmi kódu, které přistupují k I2C přes knihovnu WiringPi a částmi kódu, které přistupují přímo přes bcm2835.
-Nejedná se o kritickou chybu, ale někdy je narušena integrita některých dat.
+Ta byla koncem roku 2021 spolu s~vydáním raspbian bullseye označena ze deprecated.
+Existuje, ale fork, kde se na vývoji dále pokračuje.
+Samotné wiringPi je navíc defacto pouze wrapper pro přímý přístup k~smbus.
 
 Vzhledem k přímočarosti výstupu z GPS modulu je celá implementace přímo součástí hlavního kódu.
 Program zpracovává GPGGA packet, který obsahuje veškerá důležitá data.
 Zpracování dalších packetů nebylo pro práci podstatné.
 
-V neposlední řadě k PCA9685 se také přistupuje přes knihovnu\footnote{\bibentry{PCA9865}}.
-Knihovna je v základu psána pro Raspberry Pi a implementuje všechny funkce potřebné v projektu.
+Knihovna pro ovládaní server byla lehce přepsána pro potřeby tohoto projektu.
+Původní verze knihovny\footnote{\bibentry{PCA9865}} využívala driver bcm2835 ke komunikaci s I2C linkou.
+Docházelo tak ke kolizím s časováním, které vedly k narušení integrity dat ze senzorů.
+Byla tak přepsána za účelem, aby také používala wiringPi.
 
 \section{Organizace v kódu}
 
@@ -366,42 +367,41 @@ Z programu se k perifériím přistupuje přes několik singletonů -- ImuInterf
 Důvod řešení přes singletony je opět stejný jako u komunikace.
 Data ze senzorů jsou potřeba v různých částech programu a reálně reprezentují pouze jeden senzor.
 
-Funkce tak nemusí mít celou řadu parametrů a program nepotřebuje jednu centrální třídu, která bude vše organizovat.
-Mizí tak i problémy s řadou lokálních proměnných a nutností je udržovat aktuální.
-Jelikož celý program je více vláknový implementují tak singletony ochranu před kolizí několika vláken a vzniku nevalidních dat.
+Díky tomu program nepotřebuje jednu centrální třídu, která by vše organizovala.
+Mizí tak problémy s řadou lokálních proměnných a nutností je udržovat aktuální.
+Jelikož celý program je vícevláknový, implementují tak singletony ochranu před kolizí několika vláken a vzniku nevalidních dat.
 
-Data ze senzorů, jsou také agregována v třídě telemetry.
-Ta se stará o nastavení všech senzorů a pak zajišťuje vytvoření packetů pro odeslání klientovi.
-Ze stejných důvodů jako další třídy i telemetry je implementována jakožto singleton.
+Data ze senzorů, jsou agregována v třídě telemetry.
+Ta se stará o nastavení všech senzorů a zároveň zajišťuje vytvoření packetů pro odeslání klientovi.
+Ze stejných důvodů jako další třídy, i telemetry je implementována jakožto singleton.
 
 O přístup ke kameře se stará třída CameraStreamer.
 Ta se vytváří dynamicky na základě požadavku od klienta.
-Jelikož aktuálně není implementována žádná analýza obrazu z kamery přímo na Raspberry Pi proces stremu vznikne jako fork procesu ve kterém je spuštěn stream.
-Jelikož se jendá o fork při ukončení rodičovského procesu se ukončí i stream a program samotný se o přenos nemusí nijak starat.
+Jelikož aktuálně není implementována žádná analýza obrazu z kamery přímo na Raspberry Pi, proces stremu vznikne jako fork procesu, ve kterém je spuštěn stream.
 
 \section{Ovládání letadla}
 
 O ovládání kontrolních ploch a motoru se stará třída ServoControl.
 V aktuální podobě přímo zpracovává data z ovladače, která posílá server.
-Není tak možné jednoduše změnit jaké ovládací prvky budou jak ovládat letadlo.
+Není tak možné jednoduše změnit jaké ovládací prvky ovladače, budou letadlo ovládat.
 
 Na počátku zpracování nových příkazů jsou hodnoty analogové páčky přepočítány do čtvercové plochy.
 Standardně se totiž mapují ovladače na kruh -- páčka čistě nahoru tak má výrazně vyšší hodnotu osy Y, než páčka pod úhlem 45 stupňů, to i přesto, že urazily stejnou vzdálenost.
 Bez této korekce ovládání působilo velmi neresponzivně, kdy praktické byly pouze polohy jih, sever, západ, východ.
 
 V případě konfigurace ocasu do tvaru písmena V je interpretace ovládání relativně jednoduchá.
-Ocasní plochy (Ruddervator) ovládání pitch a yaw.
-Plochy na křídlech pak pouze klonění, teoreticky mohou ovládat i roll, v tomto případě to však nebylo třeba.
+Ocasní plochy (Ruddervator) ovládají pitch (klopění) a yaw (bočení).
+Plochy na křídlech nastavují roll (klonění) letadla, teoreticky mohou ovládat i yaw, v tomto případě to však nebylo třeba.
 
 \subsection{Autopilot}
 
 Projekt implementuje i jednoduchého autopilota, který je schopen držet letovou hladinu.
 Vyrovnávání řeší dva proporčně-integračně-derivační ovladače, které se snaží minimalizovat chybu.
-Jeden minimalizuje odchylku v klopení, druhý pak odchylku v klonění.
+Jeden minimalizuje odchylku v klopení, druhý pak odchylku v~klonění.
 Roll minimalizovat není třeba -- pro roll musí být letadlo nakloněno.
 
 Teoreticky by mohlo jít tento sytém rozšířit aby se snažil minimalizovat odchylku nikoliv od původního směru, ale od pomyslného bodu určeného souřadnicemi GPS.
-Letadlo by tak nejenže letělo více rovně (aktuálně je autopilot náchylní na změnu posunutí v příčné ose), ale mohlo samo doletět na specifikovaný bod.
+Letadlo by tak nejenže letělo více rovně (aktuálně je autopilot náchylný na změnu posunutí v příčné ose), ale mohlo byu samo doletět na specifikovaný bod.
 
 
 \chapter{Client na ovládání}
@@ -409,7 +409,7 @@ Letadlo by tak nejenže letělo více rovně (aktuálně je autopilot náchylní
 Ovládací klient pro počítač je stejně jako software pro Raspberry Pi psán v jazyce C++.
 K vykreslení uživatelského prostředí je použita grafická knihovna Gtk3.
 Konkrétně pak wrapper gtkmm, který zprostředkovává funkce Gtk z jazyka C++.
-Ačkoliv byl celý systém vyvíjen na Linuxu je možný port na další operační systémy, jelikož Gtk je multiplatformní toolkit.
+Ačkoliv byl celý systém vyvíjen pro Linux je možný port na další operační systémy, jelikož Gtk je multiplatformní toolkit.
 
 \begin{figure}[h]
   \centering
@@ -418,20 +418,17 @@ Ačkoliv byl celý systém vyvíjen na Linuxu je možný port na další operač
 \end{figure}
 
 V aktuální verzi je grafická stránka aplikace relativně strohá.
-Většinu obrazovky zabírá výstup z kamery a po levé straně se nachází informace z telemetrie.
+Většinu obrazovky zabírá výstup z kamery a polevé straně se nachází informace z telemetrie.
 Ty jsou prozatím zprostředkovány promocí umělého horizontu a textového výpisu.
 
-Kvůli absenci předešlých zkušeností s Gtk toolkitem a nástrojem glade na vytváření uživatelského prostředí byla použita jako boilerplate aplikace\footnote{\bibentry{BoilerplateGUI}}, která tyto vlastnosti využívala.
+Kvůli absenci předešlých zkušeností s Gtk toolkitem a nástrojem glade na vytváření uživatelského prostředí byla použita boilerplate aplikace\footnote{\bibentry{BoilerplateGUI}}.
 Boilerplate mimo jiné u ukazoval propojení s webkamerou, část logiky okolo zobrazení obrazu tak byla využita pro stream z Raspberry Pi.
-Systém byl však udělán více robustní a byla přidána vlastnosti zvětšení velikosti obrazu v závislosti na velikosti okna.
+Systém byl však udělán více robustní a byla přidána například podpora zvětšení velikosti obrazu v závislosti na velikosti okna.
 
-Při vykreslování umělého horizontu je použit alogismus na zpracování obrázku.
-Standardně totiž PixBuf umožňuje otočení pouze o pravý úhel.
-Samotný metoda na rotaci byla převzata ze StackOverflow\footnote{\bibentry{PixBufRot}} a mírně upravena.
-Jedná se však dočasné řešení, jelikož práce s PixBuf je relativně nepraktická a eventuálně bude nahrazena knihovnou cairo.
-
-Samotné textury pro umělý horizont byly přezvány z jiného projektu\footnote{\bibentry{Texture}}.
-Jejich použití je v souladu s MIT licencí.
+Grafika umělého horizontu je generována prostřednictví knihovny Cairo.
+Ta je na manipulaci s obrázky je mnohem efektivnější, než nástroje standardně nabízené v Gtk.
+Samotné textury pro umělý horizont byly převzaty z jiného projektu\footnote{\bibentry{Texture}}.
+Jejich použití je v souladu s MIT licencí, pod kterou jsou distribuovány.
 
 \section{Organizace kódu}
 
@@ -441,6 +438,7 @@ Jejich použití je v souladu s MIT licencí.
     .2 img.
     .2 include.
     .3 communication\_interface.h.
+		.3 config.h.
     .3 control\_interpreter.h.
     .3 controller\_interface.h.
     .3 drone\_telemetry.h.
@@ -453,47 +451,43 @@ Jejich použití je v souladu s MIT licencí.
 \end{figure}
 
 Veškerá logika grafického prostředí je koncentrována v souboru \verb|main_window.h|.
-Knihovna Gtk není příliš vstřícná objektově orientovanému programování a granularizace kódu se dosahuje těžce.
-Jelikož aktuální velikost kódu není příliš velká nepředstavuje tato limitace větší problém.
+Knihovna Gtk není příliš vstřícná objektově orientovanému programování a efektivní granularizace kódu se dosahuje těžce.
+Jelikož aktuální velikost kódu není příliš velká, nepředstavuje tato limitace větší problém.
 Přesto je aktuální organizace dočasným řešením, zvláště pak v případě logiky týkající zpracování kamery.
 
-Podobně jako na Raspberry Pi i počítačový klient má soubor ve kterém je agregována veškerá telemetrie.
-Při získání nové telemetrie třída také požádá Gtk u zavolání metody, která přepíše data na obrazovce.
+Podobně jako na Raspberry Pi i počítačový klient má soubor, ve kterém je agregována veškerá telemetrie.
+Při získání nové telemetrie třída také požádá Gtk o zavolání metody, která přepíše data na obrazovce.
 
-Soubory \verb|protocol_spec| a \verb|communication_interface| se starají o implementaci komunikačního protokolu.
+Soubory \verb|protocol_spec.h| a \verb|communication_interface.h| se starají o implementaci komunikačního protokolu.
 Ze stránky kódu jsou velmi podobné implementaci, která je na Raspberry Pi.
-Byla však přidána integrace pro ControllerDroneBridge, který zprostředkovává interpretaci událostí z ovladače a posílá aktuální rozložení na ovladači Raspberry Pi.
+Součástí kódu s komunikací je i třída ControllerDroneBridge, ta zprostředkovává interpretaci událostí z ovladače a posílá jeho aktuální rozložení Raspberry Pi.
 
 \section{Zpracování data z ovladače}
 
-Zpracování data z ovladače je koncipované okolo faktu, že systém nemá standardně callbacky na události vyvolané ovladačem.
-Přístup přes callbacky je však relativně přívětivý a tak je tato funkcionalita implementována v programu.
-V souboru \verb|linux_controller_implementation| je proto definovaný cyklus, který běží v sólo vlákně.
-Ten čte z file descriptoru a v případě větší změny na ovladači si data zapíše do vlastní struktury.
-Data ve struktuře přímo neodpovídají výstupu z ovladače, ale v případě os jsou posunuté o maximální hodnotu (32767).
-Je tak
+Zpracování dat z ovladače je koncipované okolo faktu, že systém nemá standardně callbacky na události vyvolané ovladačem.
+Přístup přes callbacky je však relativně přívětivý, a tak je tato funkcionalita implementována v programu.
+V souboru \verb|linux_contr|
+\verb|oller_implementation| je proto definovaný cyklus, který běží v sólo vlákně.
+Ten čte z~file descriptoru a v případě větší změny na ovladači si data zapíše do vlastní struktury.
+Data ve struktuře přímo neodpovídají vstupu z ovladače -- v případě os jsou posunuté o maximální hodnotu (32767).
+Díky tomu je zabráněno záporným hodnotám, které by mohly dělat problémy v matematice aplikované na datech
 
 Při zapsání nového stavu ovladače se zároveň vygeneruje událost, která se pošle všem observerům.
-Logika pro návrhový vzor obeserver je deklarovaná v třídě \verb|Controlle|
+Logika pro návrhový vzor observer je deklarovaná v třídě \verb|Controlle|
 \verb|rInterface|.
-Toto rozdělení konkrétní implementace ovladače od základní dekeklarace prostředí pro přístup k ovladači umožňuje lehce implemtovat komunikaci s ovladačem pro další operační systémy.
-V aktuální době je dokončená pouze verze pro Linux.
+Toto rozdělení konkrétní implementace ovladače od základní deklarace prostředí pro přístup k ovladači umožňuje lehce implementovat komunikaci s ovladačem pro další operační systémy.
 
-Veškeré observery musí implemtovat abstraktní třídu \verb|ControlInterpreter|.
-Aktuálně se může  tento systém jevit jako zbytečně složitý.
-Byl však vytvořen s ohledem na budoucí funkcionalitu projektu.
-Ovladačem by mělo být možné ovládat celé uživatelské prostředí -- pohyb na D-Pad by tak například přepínal mezi různou telemetrií na obrazovce, zatímco analogový joystick by ovládal samotné letadlo.
+Veškeré observery musí implementovat abstraktní třídu \verb|ControlInterpreter|.
+Aktuálně se může tento systém jevit jako zbytečně složitý.
+Byl však vytvořen s ohledem k budoucí funkcionalitě projektu.
+Ovladačem by totiž mělo být možné ovládat celé uživatelské prostředí -- pohyb na D-Padu by například přepínal mezi různou telemetrií na obrazovce, zatímco analogový joystick by ovládal samotné letadlo.
 
 \chapter{Budoucnost projektu}
 
 Bohužel vývoj práce byl překvapivě komplikovaný a řada původní zamýšlených vlastností nebyla implementována.
-Největší prioritu však má přepsání některých částí práce pro kompatibilitu s raspbian bullseye.
-K tomu patří i vyřešení kolizí při přístupu k I2C zařízením.
-Jako optimální řešení se nabízí přepsání knihoven pro WT901B a INA226, aby používaly nízkoúrovňový přístup přes knihovnu bcm2835.
 
-Výrazně by měl být přepracována stránka vykreslování na obrazovku.
-Kvalita kódu této části je nedostačující a grafický výstup relativně nevzhledný.
-Grafické prostředí by také mělo mít zakomponované další grafické indicátory jako je směrový gyroskop či ukazatel rychlosti.
+Výrazně by měla být přepracována stránka vykreslování na obrazovku -- grafický výstup je nyní relativně nevzhledný.
+Grafické prostředí by také mělo mít zakomponované další indikátory, jako je směrový gyroskop či ukazatel rychlosti.
 
 \section{Další možné vlastnosti}
 
@@ -506,10 +500,10 @@ Přidání tohoto upozornění není příliš složité, jelikož z Raspberry P
 
 \subsection{Spojení s Assault Tactical Android Kit}
 
-Poněkud zajímavější by byla integrace na ATAK, respektive jeho verzi pro civilní použití -- CivTAK.
+Více zajímavější by byla integrace na ATAK, respektive jeho verzi pro civilní použití -- CivTAK.
 Jedná se o nástroj pro koordinaci složek v terénu vyvinutý armádou Spojených států amerických.
 Vzhledem k svojí povaze nabízí relativně širokou škálu možností, jak začlenit do širšího systému autonomního drona.
-Existuje také open source software FreeTAKServer, který poskytuje REST API na použití těchto funkcí.
+Existuje navíc open source software FreeTAKServer, který poskytuje REST API na použití těchto funkcí.
 I přes poměrně dobrou dokumentaci je celý systém velmi složitý a propracované propojení by bylo velmi časově náročné.
 
 \subsection{Autopilot}
@@ -520,7 +514,7 @@ Letadlo se tak postupem času výrazně odchýlí od svého původního směru.
 
 Již v jádru práce bylo navrhnuto řešení pro tento problém.
 Teoreticky by toto řešení mohlo být rozšířeno v plnohodnotného autopilota, který by byl schopen vždy dorazit na danou pozici.
-S autonomním letem souvislý i možnost letu na vzdálenost větší co umožní komunikace.
+S autonomním letem souvislý i možnost letu na vzdálenost větší, než co umožní komunikace.
 Dron by tak měl mít možnost ukládat video, či pořizovat snímky.
 
 \subsection{Stabilnější forma přenosu dat}
@@ -530,8 +524,9 @@ Dosah systému je sice dostačující -- Raspberry má 5Dbi všesměrovou antén
 Situace by se dala teoreticky dala řešit posilovačem, který by posunou sílu signálu z řádu miliwattů na watty.
 
 Bylo by také vhodné vyvinout anténu, která dokáže letadlo sledovat.
-Systém by mohl být založený na platformě jako je ESP32/ESP8226, který by byl jednoduše zinicializovat se svojí polohou a orientací na jednu ze světových stran.
-Relativně jednoduše by tak šla dopočítat poloha, kterou má anténa zaujmout v závislosti na datech z letadla.
+Systém by mohl být založený na mikročipu, jako je ESP32.
+Ten by byl zinicializován se svojí polohou a orientací.
+Relativně jednoduše by pak šla dopočítat poloha, kterou má anténa zaujmout v závislosti na datech z letadla.
 
 \chapter*{}
 \pagenumbering{roman}

@@ -26,28 +26,32 @@ ImuInterface* ImuInterface::GetInstance()
 	return imuInterface;
 }
 
-bool ImuInterface::attachIMU()
+bool ImuInterface::attachIMU(int address)
 {
-	imuUp = JY901.startI2C(0x50);
+	bool tmp = JY901.startI2C(address);
 
-	if(!imuUp ) {
+	if(!tmp ) {
 		if(debug) cout << "IMUINTERFACE | attachIMU | Failed to attach IMU " << endl;
 		return false;
 	}
 	/* JY901.setD1mode(0x05); // change mode of D1 port to gps */
 	/* JY901.saveConf(0); */
 
-	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << imuUp << endl;
-	return imuUp;
+	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << tmp << endl;
+	return tmp;
 
 }
 
 bool ImuInterface::resetOrientation(){
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	/* yawOffset = JY901.getYaw(); */
-	/* pitchOffset = JY901.getPitch(); */
-	/* rollOffset = JY901.getRoll(); */
+	yawOffset = JY901.getYaw();
+	pitchOffset = JY901.getPitch();
+	rollOffset = JY901.getRoll();
 	return true;
+}
+
+void ImuInterface::setIMUStatus(bool status){
+		imuUp = status;
 }
 
 void ImuInterface::setIMUOrientation(IMU_Orientation orientation){

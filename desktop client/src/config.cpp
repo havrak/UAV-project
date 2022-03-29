@@ -36,8 +36,8 @@ bool Config::loadConfiguration()
 
 	if (reader.ParseError() < 0) {
 		cerr  << "CONFIG | loadConfiguration | parsing failed \n";
-		pTeleErr err(1, "Config wasn't found, or contains an error");
-		mainWindow->displayError(err);
+		/* pTeleErr err(1, "Config wasn't found, or contains an error"); */
+		/* mainWindow->displayError(err); */
 		return false;
 	}else{
 
@@ -47,7 +47,8 @@ bool Config::loadConfiguration()
 	myIP = reader.Get("connection", "my_IP", "192.168.6.11");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
 
-	cout << "camera :" << getCameraPort() << "\n";
+	int test = reader.GetInteger("connection", "test", 8066);
+	cout << test << "\n";
 
 	string tmp = reader.Get("control", "controller_type", "XBOX_CONTROLLER");
 	if (tmp.compare("PS4_DUALSHOCK")) {

@@ -24,6 +24,8 @@ class Telemetry {
 	private:
 	static Telemetry* telemetry;
 	static mutex telemetryMutex;
+	int imuAddress, inaAddress, pca9685Address =0;
+
 	Telemetry();
 
 	/**
@@ -72,7 +74,18 @@ class Telemetry {
 	/**
 	 * sets up all senors used for telemetry
 	 */
-	bool setUpSensors();
+	bool setUpSensors(int imuAddress, int inaAddress, int pca9685Address);
+
+
+	/**
+	 * Verifies if all peripheries are connected
+	 * to the Raspberry Pi
+	 *
+	 * uses i2cdetect command to discover all devices
+	 *
+	 * @return bool - true if all expected devices are connected
+	 */
+	bool checkPeripheriesStatus();
 
 	/**
 	 * fills in pTeleGen struct and sends it to client
