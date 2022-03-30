@@ -29,7 +29,6 @@
 #include <fcntl.h>
 
 #define SERVER_PORT 8066
-#define SERVER_IPV4_ADDR "192.168.6.1"
 #define NUMBER_OF_THREADS 5
 
 

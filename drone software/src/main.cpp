@@ -27,13 +27,16 @@ void signalHandler( int sigNum){
 
 int main(int argc, char** argv)
 {
+	cout << "WARNING: This program relyes on command i2cdetect to detect the I2C bus. This command cannot be executed without sudo privileges. To run the program add i2cdetect to your /etc/sudoers file";
+
+
 	signal(SIGKILL, signalHandler);
 	signal(SIGPIPE, SIG_IGN);
 	Config config;
 	config.loadConfiguration();
 
 
-	bool suppressArming = false;
+	bool suppressArming = false; // don't want to wait 8 second for servos to arm
 	if (argc > 1){
 		if(strcmp(argv[1], "-r") == 0){
 			cout << "MAIN | main | calirating ESC" << endl;

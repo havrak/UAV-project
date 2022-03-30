@@ -41,6 +41,10 @@ enum WingSurfaceConfiguration{
 	STANDARD_TAIL_WING = 2,
 };
 
+
+/**
+ * enum that list different methods joystick input can be adjusted
+ */
 enum ControlMethodAdjuster{
 	TRIGONOMETRIC, SQUARING
 };

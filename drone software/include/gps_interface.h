@@ -33,6 +33,8 @@ class GPSInterface {
 	double longitude = 0;
 	double latitude = 0;
 	double altitude = 0;
+	double groundSpeed = 0;
+
 	char numberOfSatelites = 0;
 
 	protected:
@@ -100,6 +102,14 @@ class GPSInterface {
 	double getAltitude();
 
 	/**
+	 * return ground speed of drone in knots
+	 *
+	 * @return double - ground speed
+	 */
+	double getGroundSpeed();
+
+
+	/**
 	 * returns status of GPS
 	 *
 	 * @return bool - true if it sees more than two satelites
@@ -113,6 +123,8 @@ class GPSInterface {
 	 * @return int - number of satelites
 	 */
 	int getNOS();
+
+
 
 };
 

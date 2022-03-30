@@ -141,7 +141,9 @@ struct pTeleGPS {
 	double latitude;
 	double longitude;
 	double altitude;
-	double numberOfSatelites;
+	int numberOfSatelites;
+	double groundSpeed;
+
 };
 
 struct pTeleATT {

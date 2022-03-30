@@ -52,25 +52,34 @@ void GPSInterface::updateFunction()
 				data = "";
 			} else if (c == '\n') {
 				readingLine = false;
-				if(debug) cout << "GPS_INTERFACE | updateFunction | Processing: " << data << "\n";
+				if (debug)
+					cout << "GPS_INTERFACE | updateFunction | Processing: " << data << "\n";
 				vector<string> parts;
 				stringstream ss(data);
 				string item;
 				while (getline(ss, item, ','))
 					parts.push_back(item);
 
-				if (parts.size() > 8 && parts.at(0).compare("$GPGGA") == 0) {
-					if(debug) cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
-					if(debug) cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
-					numberOfSatelites = stoi(parts.at(7));
-					if(numberOfSatelites > 2 ){
-						gpsUp = true;
-						longitude = stod(parts.at(4));
-						latitude = stod(parts.at(2));
-						altitude = stod(parts.at(9));
-					}else{
-						gpsUp = false;
-						if(debug) cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
+				if (parts.size() > 1) {
+					if (parts.at(0).compare("$GPGGA") == 0) { // position inforamtion
+
+						if (debug) {
+							cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
+							cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
+						}
+						numberOfSatelites = stoi(parts.at(7));
+						if (numberOfSatelites > 2) {
+							gpsUp = true;
+							longitude = stod(parts.at(4));
+							latitude = stod(parts.at(2));
+							altitude = stod(parts.at(9));
+						} else {
+							gpsUp = false;
+							if (debug)
+								cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
+						}
+					}else if(parts.at(0).compare("$GPVTG") == 0){ // ground speed information
+							groundSpeed = stod(parts.at(6));
 					}
 				}
 			}
@@ -96,24 +105,27 @@ void GPSInterface::startLoop()
 	loopThread = thread(&GPSInterface::updateFunction, this);
 }
 
-
-double GPSInterface::getLat(){
+double GPSInterface::getLat()
+{
 	return latitude;
 }
 
-
-double GPSInterface::getLon(){
+double GPSInterface::getLon()
+{
 	return longitude;
 }
 
-double GPSInterface::getAltitude(){
+double GPSInterface::getAltitude()
+{
 	return altitude;
 }
 
-bool GPSInterface::getGPSStatus(){
+bool GPSInterface::getGPSStatus()
+{
 	return gpsUp;
 }
 
-int GPSInterface::getNOS(){
+int GPSInterface::getNOS()
+{
 	return numberOfSatelites;
 }

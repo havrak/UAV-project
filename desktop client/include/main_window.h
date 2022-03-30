@@ -23,6 +23,11 @@
 #include "control_interpreter.h"
 
 #define UI_SIZE 240
+#define NUMBER_OF_INDICATORS 3
+#define LOW_CONTROLLER_AXIS_VALUE 0
+#define MID_CONTROLLER_AXIS_VALUE 32767
+#define MAX_CONTROLLER_AXIS_VALUE 65534
+
 
 /**
  * wrapper to store information regarding onscreen elements that
@@ -39,6 +44,17 @@ struct onScreenTelemetryUpdate {
 			, indicator(indicator)
 			, text(text) {};
 };
+
+
+/**
+ * enum declaring all indicators which can be displayed
+ * in the GUI
+ */
+enum indicatorTypes{
+ ATTITUDE_INDICATOR = 0, AIRSPEED_INDICATOR = 1, HORIZONTAIL_SITUATION_INDICATOR = 2
+};
+
+
 
 /**
  * Child class extending Gtk::Window
@@ -97,17 +113,23 @@ class MainWindow : public Gtk::Window {
 
 	void displayError(pTeleErr error);
 
+	void switchIndicator(bool back);
 
 	private:
-	inline static cairo_surface_t* imgBack;
-	inline static cairo_surface_t* imgFace;
-	inline static cairo_surface_t* imgRing;
-	inline static cairo_surface_t* imgCase;
+	inline static cairo_surface_t* imgAIBack;
+	inline static cairo_surface_t* imgAIFace;
+	inline static cairo_surface_t* imgAIRing;
+	inline static cairo_surface_t* imgAICase;
+	inline static cairo_surface_t* imgASIFace;
+	inline static cairo_surface_t* imgASIHand;
+
 
 	mutex attitudeValuesMutex;
-	inline static float pitch = 10;
-	inline static float roll = 10;
+	inline static float pitch = 0;
+	inline static float roll = 0;
+	inline static float speed = 0;
 
+	int currentIndicator = ATTITUDE_INDICATOR;
 
 	/* protected: */
 	Glib::RefPtr<Gtk::Builder> builder;
@@ -137,6 +159,41 @@ class MainWindow : public Gtk::Window {
 	 * @param gpointer data - pointer to data
 	 */
 	static void drawIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
+
+
+	/**
+	 * draws graphic of attitude indicator
+	 * called by drawIndicator
+	 *
+	 * @param GtkWidget *widget - DrawingArea to be drawn in
+	 * @param cairo_t *cr - corresponding cairo structure with given widget
+	 * @param gpointer data - pointer to data
+	 */
+	static void drawAttitudeIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
+
+
+	/**
+	 * draws graphic of airspeed indicator
+	 * called by drawIndicator
+	 *
+	 * NOTE: currently graphic doesn't make a lot of sence
+	 * though speed indicated is correct
+	 *
+	 * @param GtkWidget *widget - DrawingArea to be drawn in
+	 * @param cairo_t *cr - corresponding cairo structure with given widget
+	 * @param gpointer data - pointer to data
+	 */
+	static void drawAirspeedIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
+
+	/**
+	 * draws graphic of horizontal tail situation
+	 * called by drawIndicator
+	 *
+	 * @param GtkWidget *widget - DrawingArea to be drawn in
+	 * @param cairo_t *cr - corresponding cairo structure with given widget
+	 * @param gpointer data - pointer to data
+	 */
+	static void drawHorizonTailSituationIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
 
 	bool paused;
 

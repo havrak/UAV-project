@@ -68,10 +68,6 @@ int main(int argc, char** argv)
 	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
 	cout << "MAIN | main | socket setted up \n";
 
-	/* ControlInterpreter* droneControlInterpreter = nullptr; */
-	/* if(config.getControlEnabled()) */
-	/* 	droneControlInterpreter = (ControlInterpreter* ) cdb; */
-
 
 	switch(config.getOperatingSystem()){
 		case LINUX:
