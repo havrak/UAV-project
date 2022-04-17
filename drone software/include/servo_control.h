@@ -68,7 +68,7 @@ private:
 	bool pca9685Up = false;
 	unsigned int short mainMotorMS;
 
-	PCA9685Servo servo = NULL;
+	PCA9685Servo servo = PCA9685Servo(0x40);
 	int currentMotorPulse;
 
 	struct StandardTailWingConfiguration{

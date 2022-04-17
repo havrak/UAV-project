@@ -27,7 +27,7 @@ void signalHandler( int sigNum){
 
 int main(int argc, char** argv)
 {
-	cout << "WARNING: This program relyes on command i2cdetect to detect the I2C bus. This command cannot be executed without sudo privileges. To run the program add i2cdetect to your /etc/sudoers file";
+	cout << "WARNING: This program relyes on command i2cdetect to detect the I2C bus. This command cannot be executed without sudo privileges. To run the program add i2cdetect to your /etc/sudoers file\n\n";
 
 
 	signal(SIGKILL, signalHandler);
@@ -46,18 +46,22 @@ int main(int argc, char** argv)
 		if(strcmp(argv[1], "-a") == 0)
 				suppressArming = true;
 	}
+
+
 	Telemetry::GetInstance()->setUpSensors(config.getIMUAddress(), config.getINAAddress(), config.getPCA9865Address());
+	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());
+
+	while (true) {
+		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, new mutex));
+	}
 	ServoControl::GetInstance()->attachPCA9685(config.getPCA9865Address());
 
 	if(!suppressArming) ServoControl::GetInstance()->armESC();
 
 
-	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());
 	CommunicationInterface::GetInstance()->setupSocket(config.getMyIP(), config.getServerPort());
 	ServoControl::GetInstance()->setOperationalParameters(config.getWingSurfaceConfiguration(), config.getControlMethodAdjuster());
 
-	//ServoControl::GetInstance()->calibrateESC();
-	cout << "MAIN | main | entering main loop\n";
 	CommunicationInterface::GetInstance()->checkForNewDataThread.join();
 	return 1;
 }

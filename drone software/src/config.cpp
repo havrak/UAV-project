@@ -24,28 +24,12 @@ bool Config::loadConfiguration()
 
 	myIP = reader.GetString("connection", "my_IP", "192.168.6.1");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
-	string tmp = reader.Get("control", "controller_input_adjuster", "SQUARING");
-	if (tmp.compare("TRIGONOMETRIC")) {
-		cma = TRIGONOMETRIC;
-	} else {
-		cma = SQUARING;
-	}
+	cma = reader.Get("control", "controller_input_adjuster", "SQUARING").compare("TRIGONOMETRIC") == 0 ? TRIGONOMETRIC : SQUARING;
+	wsc = reader.Get("configuration", "wing_surface_configuration", "STANDARD_TAIL_WING").compare("V_SHAPE_TAIL_WING") == 0 ? V_SHAPE_TAIL_WING : STANDARD_TAIL_WING;
+	imo = reader.Get("configuration", "imu_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 
-	tmp = reader.Get("configuration", "wing_surface_configuration", "STANDARD_TAIL_WING");
-	if (tmp.compare("X_Y_INVERTED")) {
-		wsc = V_SHAPE_TAIL_WING;
-	} else {
-		wsc = STANDARD_TAIL_WING;
-	}
-
-	tmp = reader.Get("configuration", "imu_orientation", "STANDARD");
-	if (tmp.compare("X_Y_INVERTED")) {
-		imo = X_Y_INVERTED;
-	} else {
-		imo = STANDART;
-	}
-	imuAddress = reader.GetInteger("configuration", "imu_address", 0x44);
-	inaAddress = reader.GetInteger("configuration", "ina_address", 0x50);
+	imuAddress = reader.GetInteger("configuration", "imu_address", 0x50);
+	inaAddress = reader.GetInteger("configuration", "ina_address", 0x44);
 	pca9685Address = reader.GetInteger("configuration", "pca_address", 0x40);
 	return true;
 }

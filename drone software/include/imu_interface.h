@@ -1,12 +1,12 @@
 /*
- * attitudeReader.h
+ * imu_interface.h
  * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#ifndef IMUINTERFACE_H
-#define IMUINTERFACE_H
+#ifndef IMU_INTERFACE_H
+#define IMU_INTERFACE_H
 
 #include "../libraries/Raspberry-JY901-Serial/JY901.h"
 #include <chrono>
@@ -73,7 +73,7 @@ class ImuInterface {
 	 *
 	 * @return bool - always true
 	 */
-	void setIMUOrientation(IMU_Orientation orientation);
+	bool resetOrientation();
 
 	/**
 	 * set status of IMU as it is telemetry.h
@@ -83,7 +83,7 @@ class ImuInterface {
 	 */
 	void setIMUStatus(bool status);
 
-	bool resetOrientation();
+	void setIMUOrientation(IMU_Orientation orientation);
 	double getTemp();						 // get temperature
 	double getAccX();						 // get X-axis acceleration in multiples of g
 	double getAccY();						 // get Y-axis acceleration in multiples of g
@@ -104,4 +104,4 @@ class ImuInterface {
 	bool getIMUStatus(); 				 // get status of IMU
 };
 
-#endif /* !IMUINTERFACE_H */
+#endif /* !IMU_INTERFACE_H */

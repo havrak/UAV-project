@@ -129,3 +129,8 @@ int GPSInterface::getNOS()
 {
 	return numberOfSatelites;
 }
+
+double GPSInterface::getGroundSpeed()
+{
+	return groundSpeed;
+}

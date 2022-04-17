@@ -35,15 +35,12 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->builder->get_widget("telemetryField", this->telemetryField);
 	this->builder->get_widget("restartButton", this->resartButton);
 	textBuffer = telemetryField->get_buffer();
-	/* indicatorCObj = ; */
-	/* telemetryField->get_buffer(); */
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
 
 	this->drawingImage->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
-	/* gtk_widget_set_size_request((GtkWidget*)indicatorCObj, 240, 240); */
 	indicator->set_size_request(240, 240);
 
 	// initialize variables
@@ -187,7 +184,8 @@ void MainWindow::drawAttitudeIndicator(GtkWidget* widget, cairo_t* cr, gpointer 
 	height = gtk_widget_get_allocated_height(widget);
 
 	gtk_render_background(context, cr, 0, 0, width, height);
-
+	roll = 10;
+	pitch = 8;
 	double angle = roll * M_PI / 180;
 
 	cairo_translate(cr, 120, 120);

@@ -47,15 +47,7 @@ bool Config::loadConfiguration()
 	myIP = reader.Get("connection", "my_IP", "192.168.6.11");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
 
-	int test = reader.GetInteger("connection", "test", 8066);
-	cout << test << "\n";
-
-	string tmp = reader.Get("control", "controller_type", "XBOX_CONTROLLER");
-	if (tmp.compare("PS4_DUALSHOCK")) {
-		controllerType = PS4_DUALSHOCK;
-	} else {
-		controllerType = XBOX_CONTROLLER;
-	}
+	controllerType = reader.Get("control", "controller_type", "XBOX_CONTROLLER").compare("PS4_DUALSHOCK") == 0 ? PS4_DUALSHOCK : XBOX_CONTROLLER;
 	controlEnabled = reader.GetBoolean("control", "control_enabled", true);
 	return true;
 }

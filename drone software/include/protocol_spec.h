@@ -27,11 +27,22 @@ using namespace std;
 /**
  * Enum to make working with controller more friendly
  */
-enum ControlSurface{
-	L_ANALOG = 0x11, R_ANALOG = 0x12, L_TRIGGER = 0x13, R_TRIGGER = 0x14, L_BUMPER = 0x15, R_BUMPER = 0x16,
-	X =0x01, Y =0x02, A =0x03, B =0x04,
-	XBOX =0x07,START =0x05, SELECT =0x06,
-	L_STICK_BUTTON = 0x08, R_STICK_BUTTON = 0x09,
+enum ControlSurface {
+	L_ANALOG = 0x11,
+	R_ANALOG = 0x12,
+	L_TRIGGER = 0x13,
+	R_TRIGGER = 0x14,
+	L_BUMPER = 0x15,
+	R_BUMPER = 0x16,
+	X = 0x01,
+	Y = 0x02,
+	A = 0x03,
+	B = 0x04,
+	XBOX = 0x07,
+	START = 0x05,
+	SELECT = 0x06,
+	L_STICK_BUTTON = 0x08,
+	R_STICK_BUTTON = 0x09,
 	D_PAD = 0x10,
 	NON_DEFINED
 };
@@ -149,8 +160,12 @@ struct pTeleIOStat {
 	bool pca9685;
 	bool wt901;
 	bool gps;
-	pTeleIOStat(){};
-	pTeleIOStat(bool ina226, bool pca9685, bool wt901, bool gps): ina226(ina226), pca9685(pca9685), wt901(wt901), gps(gps){};
+	pTeleIOStat() {};
+	pTeleIOStat(bool ina226, bool pca9685, bool wt901, bool gps)
+			: ina226(ina226)
+			, pca9685(pca9685)
+			, wt901(wt901)
+			, gps(gps) {};
 };
 
 struct pTeleGPS {
@@ -161,8 +176,14 @@ struct pTeleGPS {
 	int numberOfSatelites;
 	double groundSpeed;
 
-	pTeleGPS(){};
-	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double groundSpeed, int numberOfSatelites): gpsUp(gpsUp), latitude(latitude), longitude(longitude), altitude(altitude), groundSpeed(groundSpeed), numberOfSatelites(numberOfSatelites){};
+	pTeleGPS() {};
+	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double groundSpeed, int numberOfSatelites)
+			: gpsUp(gpsUp)
+			, latitude(latitude)
+			, longitude(longitude)
+			, altitude(altitude)
+			, numberOfSatelites(numberOfSatelites)
+			, groundSpeed(groundSpeed)  {};
 };
 
 struct pTeleATT {
@@ -186,8 +207,22 @@ struct pTeleATT {
 	int pressure;
 	// TEMP
 	double temp;
-	pTeleATT(){};
-	pTeleATT(double yaw, double pitch, double roll, double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp): yaw(yaw), pitch(pitch), roll(roll), accX(accX), accY(accY), accZ(accZ), gyroX(gyroX), gyroY(gyroY), gyroZ(gyroZ), magX(magX), magY(magY), magZ(magZ), pressure(pressure), temp(temp) {};
+	pTeleATT() {};
+	pTeleATT(double yaw, double pitch, double roll, double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp)
+			: yaw(yaw)
+			, pitch(pitch)
+			, roll(roll)
+			, accX(accX)
+			, accY(accY)
+			, accZ(accZ)
+			, gyroX(gyroX)
+			, gyroY(gyroY)
+			, gyroZ(gyroZ)
+			, magX(magX)
+			, magY(magY)
+			, magZ(magZ)
+			, pressure(pressure)
+			, temp(temp) {};
 };
 
 struct pTeleBATT {
@@ -196,8 +231,13 @@ struct pTeleBATT {
 	float power;
 	float shunt;
 	float energy;
-	pTeleBATT(){};
-	pTeleBATT(float voltage, float current, float power, float shunt, float energy): voltage(voltage), current(current), power(power), shunt(shunt), energy(energy){};
+	pTeleBATT() {};
+	pTeleBATT(float voltage, float current, float power, float shunt, float energy)
+			: voltage(voltage)
+			, current(current)
+			, power(power)
+			, shunt(shunt)
+			, energy(energy) {};
 };
 
 struct pTelePWM {
@@ -223,9 +263,15 @@ struct pTeleErr {
 	unsigned int code;
 	char message[60];
 	pTeleErr(unsigned int code, string msg)
-			: code(code) { strncpy(message, msg.c_str(), msg.size() > 60 ? 60 : msg.size()) ;};
-	pTeleErr(unsigned int code, char *msg)
-			: code(code) { strncpy(message, msg, strlen(msg) > 60 ? 60 : strlen(msg));};
+			: code(code)
+	{
+		strncpy(message, msg.c_str(), msg.size() > 60 ? 60 : msg.size());
+	};
+	pTeleErr(unsigned int code, char* msg)
+			: code(code)
+	{
+		strncpy(message, msg, strlen(msg) > 60 ? 60 : strlen(msg));
+	};
 };
 
 enum protocol_codes {

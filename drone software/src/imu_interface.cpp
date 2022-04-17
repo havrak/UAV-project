@@ -36,8 +36,6 @@ bool ImuInterface::attachIMU(int address)
 	}
 	/* JY901.setD1mode(0x05); // change mode of D1 port to gps */
 	/* JY901.saveConf(0); */
-
-	if(debug) cout << "IMUINTERFACE | attachIMU | Status of IMU: " << tmp << endl;
 	return tmp;
 
 }
@@ -102,11 +100,10 @@ double ImuInterface::getGyroZ() {
 // pitch and roll is switched on hardware
 double ImuInterface::getRoll() {  // X-axis
 	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
-	if(orientation== X_Y_INVERTED){
+	if(orientation == X_Y_INVERTED){
 		return JY901.getPitch() - pitchOffset;
 	}else{
 		return JY901.getRoll() - rollOffset;
-
 	}
 }  // getRoll() unit: degree(s)
 

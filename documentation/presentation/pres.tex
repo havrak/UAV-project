@@ -37,7 +37,7 @@
 \title{Bezpilotní letadlo}
 \subtitle{Dron postavený na platformě Raspberry Pi}
 \author{Havránek Kryštof 4.E}
-\date{7. března 2022}
+\date{Březnen 2022}
 \institute{Gymnázium, Praha 6, Arabská 14}
 \setbeamertemplate{sidebar right}{}
 \setbeamertemplate{footline}{%
@@ -60,7 +60,7 @@
 	\begin{itemize}
 		\item Bezpilotní letadlo a jeho dobrovolný systém -- dálkové řízené, přenos videa a telemetrie
 		\item Řízení přes Xbox ovladač
-		\item Proč jsem si téma vybral? % zajímá mně hardware a po konfliktu na náhorním karabachu mě zaujalo téma dronů. S modelářstvím jsem navíc neměl žádné předchozí zkušenosti a práce tak byla dobrým začátečním bodem
+		\item Proč jsem si téma vybral?
 		\item Kód dostupný na GitHubu pod licencí MIT (včetně knihoven)
 		\item Linux + Raspbian, port ovládacího softwaru je možný
 	\end{itemize}
@@ -69,8 +69,8 @@
 \begin{frame}[fragile]
 	\frametitle{Protokol}
 	\begin{itemize}
-		\item Komunikace prostřednictvím TCP protokolu
-		\item Video předáváno přes UDP
+		\item Komunikace prostřednictvím protokolu postaveném na rodině TCP
+		\item Video předáváno přes UDP (gstreamer)
 		\item Protokol navržený pro potřeby práce -- tři základní funkce -- telemetrie, ovládání a nastavení
 		\item Předávání struktur
 		\item Raspberry Pi -- server, Pilot -- klient
@@ -86,7 +86,7 @@
 			\begin{itemize}
 				\item Rozpětí křídel: 130cm
 				\item Délka: 85cm
-				\item vzletová váha: 1.5 kg
+				\item Vzletová váha: 1.5 kg
 			\end{itemize}
 		\item Délka letu nad 1 hodinu
 		\item Jádro -- Raspberry Pi Zero 2
@@ -166,7 +166,7 @@
 		\item Se senzory se komunikuje prostřednictvím knihoven
 			\begin{itemize}
 				\item 3 forknuté a přepsané knihovny
-				\item V programu se přistupuje přes singletony, které činní operace thread safe
+				\item V programu se přistupuje přes singletony
 			\end{itemize}
 		\item Stream z kamery je aktuálně spuštěn programem v podprocesu
 		\item Za standardního provozu se letadlo řídí pokyny pilota
@@ -186,6 +186,7 @@
 			\begin{itemize}
 				\item Použit návrhový vzor observeru -- interface s ovladačem generuje události
 				\item Nemusí tak existovat centrální organizační bod
+				\item Odeslání příkazů letadlu, ovládání uživatelského prostředí
 			\end{itemize}
 	\end{itemize}
 \end{frame}
@@ -206,7 +207,6 @@
 		\item Cíl práce byl splněn
 		\item Práce však nebyla realizována v původně zamýšleném rozsahu
 		\item Řada problémů, kritický nedostatek znalostí
-		\item Kvádrokoptéra x dron x letadlo
 	\end{itemize}
 \end{frame}
 

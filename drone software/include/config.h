@@ -14,7 +14,7 @@
 #include "servo_control.h"
 #include <iostream>
 #include <pwd.h>
-
+#include <unistd.h>
 /**
  * Parses programs configuration file and provides getters
  * to get the neccesarray information

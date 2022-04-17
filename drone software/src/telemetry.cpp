@@ -55,6 +55,8 @@ bool Telemetry::setUpSensors(int imuAddress, int inaAddress, int pca9685Address)
 
 bool Telemetry::checkPeripheriesStatus()
 {
+	return 1;
+
 	char buffer[128];
 	std::string result = "";
 	FILE* pipe = popen("echo $(sudo i2cdetect -y 1 2>/dev/null | tail -7 | cut -d':' -f2 | sed 's/[^0-9]*\\(.\\)/\\1/g')", "r");
@@ -101,7 +103,7 @@ pTeleATT Telemetry::createTeleAttStruct()
 pTeleGPS Telemetry::createTeleGPSStruct()
 {
 	GPSInterface* instance = GPSInterface::GetInstance();
-	pTeleGPS toReturn(instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getNOS(), instance->getGPSStatus());
+	pTeleGPS toReturn(instance->getGPSStatus(), instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getGroundSpeed(), instance->getNOS());
 	return toReturn;
 }
 
@@ -138,8 +140,7 @@ bool Telemetry::processGeneralTelemetryRequest(const client cli)
 	data.batt = createTeleBattStuct();
 	data.io = createTeleIOStatStruct();
 	data.pwm = createTelePWMStruct();
-	/* cout << "yaw: " << data.att.yaw << "\npitch: " << data.att.pitch << "\nroll: " << data.att.roll << "\nacc: " << data.att.accX << "\ntemp:" << data.att.temp << "\nvoltate: " << data.batt.voltage << "\ncurrent: " << data.batt.current << "\n\n"; */
-	/* cout << "\nacc: "<< data.att.accX << "\ntemp:"<< data.att.temp << "\nvoltate: " << data.batt.voltage << "\ncurrent: " << data.batt.current << "\n\n"; */
+	/* cout << "yaw:   " << data.att.yaw << "\npitch: " << data.att.pitch << "\nroll:  " << data.att.roll << "\nacc:   " << data.att.accX << "\ntemp:  " << data.att.temp << "\nvolt:  " << data.batt.voltage << "\ncurr:  " << data.batt.current << "\n\n"; */
 
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_GEN, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));

@@ -106,15 +106,6 @@ class CommunicationInterface {
 	 */
 	bool fixReceiveData(client cli);
 
-	/**
-	 * method used to check if file descriptor
-	 * is valid
-	 *
-	 * @return bool - true if fd is valid
-	 */
-	bool isFdValid(int fd);
-
-	// Destructive
 
 	public:
 

@@ -140,11 +140,6 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
-bool CommunicationInterface::isFdValid(int fd)
-{
-	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
-}
-
 void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
 {
 	close(cli.fd);
