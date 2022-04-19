@@ -49,7 +49,6 @@ class ControllerDroneBridge : ControlInterpreter {
 	thread sendControlComandThread;
 
 	bool active = true;
-
 	mutex controllerStateMutex;
 	pConStr controllerState;
 
@@ -93,6 +92,7 @@ class ControllerDroneBridge : ControlInterpreter {
 	 */
 	void setActive(bool active);
 
+
 	/**
    * Access method to the singleton
 	 * if ControllerDroneBridge is not initialized
@@ -132,7 +132,7 @@ class CommunicationInterface {
 	bool process = true;
 	bool connectionEstablished = false;;
 	thread establishConnectionToDroneThread;
-	thread checkForNewDataThread;
+	thread checkForNewDataThread ;
 
 	/**
 	 * Creates file descriptor set used by select()
@@ -223,7 +223,7 @@ class CommunicationInterface {
 	 * method called to cleanUp CommunicationInterface interface
 	 * closes socket
 	 */
-	void cleanUp();
+	void cleanup();
 
 	/**
 	 * sends ping to sever

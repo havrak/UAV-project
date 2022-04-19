@@ -23,6 +23,10 @@ class ControlInterpreter{
 	public:
 		virtual int update(ControlSurface cs, int x, int y){return 0;}
 		virtual int update(ControlSurface cs, int val){return 0;}
+		void terminate(){process = false;};
+
+	protected:
+		bool process = true;
 		//virtual int controlState();
 };
 

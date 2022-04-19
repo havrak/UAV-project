@@ -39,7 +39,10 @@ class Camera {
 
 	private:
 	cv::VideoCapture cam;
-	int cameraPort = 5000;
+	int cameraPort;
+	bool captureVideo = true;
+	bool cameraInitialized;
+
 	string myIP;
 	/* bool setupCamera(); */
 	void cameraLoop();
@@ -49,10 +52,8 @@ class Camera {
 
 extern std::mutex imageMutex;
 extern Glib::Dispatcher dispatcher;
-extern volatile bool captureVideoFromCamera;
 extern cv::Mat frameBGR, frame, frameCorrected;
 extern MainWindow* mainWindow;
-extern bool cameraInitialized;
 extern cv::Size imageSize;
 
 

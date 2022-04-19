@@ -85,6 +85,12 @@ class ControllerInterface{
 		void removeObserver(ControlInterpreter *v);
 
 		/**
+		 * tries to kill threads of all observers
+		 * tries to kill thread that creates events
+		 */
+		void terminateObservatoryAndObservers();
+
+		/**
 		 * generates event for every button
 		 */
 		virtual void generateEventForEveryButton(){};

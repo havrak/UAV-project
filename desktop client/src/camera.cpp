@@ -9,40 +9,25 @@
 
 Camera::Camera(int cameraPort, string myIP)
 {
+
 	this->cameraPort = cameraPort;
 	this->myIP = myIP;
 	cameraThread = thread(&Camera::cameraLoop, this);
 }
 
-/* bool Camera::setupCamera() */
-/* { */
-/* 	cameraThread = thread(&Camera::cameraLoop, this); */
-
-/* 	while (!cameraInitialized && captureVideoFromCamera) { */
-/* 		sendConfigurationOfCamera(); */
-/* 		cout << "MAINWINDOW | setupCamera | setting up camera\n"; */
-/* 	} */
-/* 	return cameraInitialized; */
-/* } */
-
 void Camera::cameraLoop()
 {
-	while (!cameraInitialized && captureVideoFromCamera) {
+	while (!cameraInitialized && captureVideo) {
 		cameraInitialized = initializeCamera();
-		if (cameraInitialized) {
-			captureVideoFromCamera = true;
-
-		} else {
+		if (!cameraInitialized)
 			cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
-			/* mainWindow->resumePauseButton->set_label("start cam"); */
-		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
 	}
 
-	while (captureVideoFromCamera) {
+	while (captureVideo) {
 		bool continueToGrabe = true;
 		bool paused = mainWindow->isPaused();
+
 		if (!paused) {
 			continueToGrabe = cam.read(frameBGR);
 			if (continueToGrabe) {
@@ -55,7 +40,7 @@ void Camera::cameraLoop()
 			}
 		}
 		if (!continueToGrabe) {
-			captureVideoFromCamera = false;
+			captureVideo = false;
 			cerr << "MAINWINDOW | main | Failed to retrieve frame from the device" << endl;
 		} else if (paused) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -65,8 +50,13 @@ void Camera::cameraLoop()
 
 bool Camera::initializeCamera()
 {
-	bool result = cam.open("udpsrc port=" + to_string(cameraPort) + "! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
-	cout << "Camera was initialized\n";
+	bool result = false;
+
+	try {
+		result = cam.open("udpsrc port=" + to_string(cameraPort) + "! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
+	} catch (const std::exception& e) {
+		return false;
+	}
 
 	if (result) {
 		for (int i = 0; i < 3; i++) {
@@ -85,9 +75,16 @@ bool Camera::initializeCamera()
 
 void Camera::closeCamera()
 {
+	if (!cameraInitialized) {
+		cameraThread.detach();
+		cameraThread.~thread();
+
+	} else {
+		captureVideo = false;
+		cameraThread.join();
+	}
 	if (cam.isOpened()) {
 		cam.release();
 		cout << "MAIN | main | Camera released success!" << endl;
 	}
 }
-

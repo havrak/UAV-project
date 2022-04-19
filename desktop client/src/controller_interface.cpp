@@ -43,6 +43,17 @@ void ControllerInterface::notifyObserverEvent(ControlSurface cs, int x, int y)
 }
 
 
+void ControllerInterface::terminateObservatoryAndObservers(){
+	process = false;
+
+	list<ControlInterpreter*>::iterator iterator = observers.begin();
+	while (iterator != observers.end()) {
+		(*iterator)->terminate();
+		++iterator;
+	}
+
+}
+
 ControlSurface getControlSurfaceFor(bool button, int id)
 {
 	if (button) {

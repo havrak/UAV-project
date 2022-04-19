@@ -25,21 +25,29 @@
 using namespace std;
 
 Glib::Dispatcher dispatcher;
-volatile bool captureVideoFromCamera = true;
 mutex imageMutex;
+
+
 cv::Mat frameBGR, frame, frameCorrected; // Matrix to store image from camera
 cv::Size imageSize;
-thread cameraThread;
-MainWindow* mainWindow = nullptr;
 bool cameraInitialized = false;
+
+
+MainWindow* mainWindow = nullptr;
 Camera* cam = nullptr;
-LinuxControllerImplementation* lci = nullptr;
+ControllerInterface * ci = nullptr;
+
+void cleanup(){
+	cam->closeCamera();
+	ci->process= false;
+	ci->terminateObservatoryAndObservers();
+
+	CommunicationInterface::GetInstance()->cleanup();
+}
 
 void signalHandler( int sigNum){
-	CommunicationInterface::GetInstance()->cleanUp();
-	lci->process = false;
 	mainWindow->closeWindow();
-	captureVideoFromCamera = false;
+	cleanup();
 	exit(127);
 }
 
@@ -71,21 +79,19 @@ int main(int argc, char** argv)
 
 	switch(config.getOperatingSystem()){
 		case LINUX:
-			{
-			lci = new LinuxControllerImplementation(config.getControllerType());
-			if(config.getControlEnabled()){
-				lci->addObserver((ControlInterpreter*) new ControllerDroneBridge);
-				cout << "MAIN | main | observer for drone bridge added\n";
-			}
-				lci->addObserver((ControlInterpreter*) new ControllerUIBridge);
-			}
+			ci = new LinuxControllerImplementation(config.getControllerType());
 		default:
 			break;
 	}
+
+	if(config.getControlEnabled())
+		ci->addObserver((ControlInterpreter*) new ControllerDroneBridge);
+
+	ci->addObserver((ControlInterpreter*) new ControllerUIBridge);
+
 	cout << "MAIN | main | controller setted up \n";
 
-
-	Camera camera(config.getCameraPort(), config.getMyIP());
+	cam = new Camera(config.getCameraPort(), config.getMyIP());
 
 	if (mainWindow) {
 
@@ -95,18 +101,10 @@ int main(int argc, char** argv)
 			imageMutex.unlock();
 		});
 
-		/* while(true){ */ // debugging
-		/* 	asm("nop"); */
-		/* this_thread::sleep_for(chrono::milliseconds(100)); */
-		/* } */
-
 		Gtk::Main::run(*mainWindow);
 
 		// NOTE: cleanup after window is closed
-		captureVideoFromCamera = false; // stop capturing video
-		CommunicationInterface::GetInstance()->cleanUp();
-		cameraThread.join(); // wait for camera thread to end
-
+		cleanup();
 	} else {
 		cerr << "MAIN | main | Failed to initialize the GUI" << endl;
 	}

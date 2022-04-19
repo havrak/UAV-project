@@ -39,9 +39,13 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
 
+	this->telemetryField->set_size_request(240, -1);
+	indicator->set_size_request(240, 240);
+
 	this->drawingImage->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
-	indicator->set_size_request(240, 240);
+
+
 
 	// initialize variables
 	imgAIBack = cairo_image_surface_create_from_png("images/ai_back.png");
@@ -319,3 +323,4 @@ int ControllerUIBridge::update(ControlSurface cs, int x, int y)
 	}
 	return 0;
 }
+

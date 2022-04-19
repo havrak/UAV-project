@@ -229,10 +229,8 @@ class ControllerUIBridge : ControlInterpreter {
 
 extern std::mutex imageMutex;
 extern Glib::Dispatcher dispatcher;
-extern volatile bool captureVideoFromCamera;
 extern cv::Mat frameBGR, frame, frameCorrected;
 extern MainWindow* mainWindow;
-extern bool cameraInitialized;
 extern cv::Size imageSize;
 
 #endif // MAINWINDOW_H_

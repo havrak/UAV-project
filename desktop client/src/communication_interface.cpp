@@ -23,8 +23,6 @@
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
 mutex CommunicationInterface::serverMutex;
-/* ControllerDroneBridge* ControllerDroneBridge::controllerDroneBridge = nullptr; */
-/* mutex ControllerDroneBridge::mutexControllerDroneBridge; */
 
 SendingThreadPool* SendingThreadPool::threadPool = nullptr;
 ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
@@ -33,24 +31,6 @@ ProcessingThreadPool* ProcessingThreadPool::threadPool = nullptr;
 // Declaring singleton logic
 -----------------------------------*/
 
-ControllerDroneBridge::ControllerDroneBridge()
-{
-	memset(&controllerState, 0, sizeof(controllerState));
-	sendControlComandThread = std::thread(&ControllerDroneBridge::sendControlComand, this);
-}
-
-/* ControllerDroneBridge* ControllerDroneBridge::GetInstance() */
-/* { */
-/* 	if (controllerDroneBridge == nullptr) { */
-/* 		mutexControllerDroneBridge.lock(); */
-/* 		if (controllerDroneBridge == nullptr) { */
-/* 			controllerDroneBridge = new ControllerDroneBridge(); */
-/* 		} */
-/* 		mutexControllerDroneBridge.unlock(); */
-/* 	} */
-
-/* 	return controllerDroneBridge; */
-/* } */
 
 SendingThreadPool::SendingThreadPool()
 {
@@ -110,18 +90,22 @@ void CommunicationInterface::clearServerStruct()
 
 bool CommunicationInterface::isFdValid(int fd)
 {
-		return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+	return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
 
-
-void CommunicationInterface::cleanUp()
+void CommunicationInterface::cleanup()
 {
 	cout << "COMMUNICATION_INTERFACE | cleanUp | killing communicationInterface\n";
-	close(sockfd);
 	process = false;
-	checkForNewDataThread.join();
+	if (establishConnectionToDroneThread.joinable()){
+		establishConnectionToDroneThread.detach();
+		establishConnectionToDroneThread.~thread();
+	}
+	if (checkForNewDataThread.joinable())
+		checkForNewDataThread.join();
 	SendingThreadPool::GetInstance()->endThreadPool();
 	ProcessingThreadPool::GetInstance()->endThreadPool();
+	close(sockfd);
 }
 
 bool CommunicationInterface::fixReceiveData()
@@ -150,8 +134,9 @@ bool CommunicationInterface::receiveDataFromServer()
 	if (server.curIndexInBuffer == 0) { // we are starting new message
 		unsigned char infoBuffer[5];
 		ssize_t tmp = recv(sockfd, (char*)&infoBuffer, 5, MSG_DONTWAIT);
-		if (tmp < 5){
-			if(tmp == 0) connectionEstablished = false; // NOTE: check this
+		if (tmp < 5) {
+			if (tmp == 0)
+				connectionEstablished = false; // NOTE: check this
 			return false;
 		}
 
@@ -162,11 +147,12 @@ bool CommunicationInterface::receiveDataFromServer()
 		} else {
 			server.curMessageType = infoBuffer[0];
 			server.curMessagePriority = infoBuffer[1];
-			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3] +5;
+			server.curMessageSize = (infoBuffer[2] << 8) + infoBuffer[3] + 5;
 
-			if(debug) cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
-			if(debug) cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
-
+			if (debug)
+				cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+			if (debug)
+				cout << "\n   message type: " << int(server.curMessageType) << "\n   message priority: " << int(server.curMessagePriority) << "\n   message size: " << server.curMessageSize << "\n";
 		}
 		/* bytesReceived = 0; */
 	} else {
@@ -184,8 +170,8 @@ bool CommunicationInterface::receiveDataFromServer()
 
 		if (server.curIndexInBuffer == server.curMessageSize) {
 
-			if (server.curMessageBuffer[server.curIndexInBuffer - 5] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer-1] == terminator[4]) {
-				server.curMessageSize -=5;
+			if (server.curMessageBuffer[server.curIndexInBuffer - 5] == terminator[0] && server.curMessageBuffer[server.curIndexInBuffer - 4] == terminator[1] && server.curMessageBuffer[server.curIndexInBuffer - 3] == terminator[2] && server.curMessageBuffer[server.curIndexInBuffer - 2] == terminator[3] && server.curMessageBuffer[server.curIndexInBuffer - 1] == terminator[4]) {
+				server.curMessageSize -= 5;
 				ProcessingStructure ps(server.curMessageType, server.curMessagePriority, server.curMessageSize);
 
 				memcpy(ps.getMessageBuffer(), &server.curMessageBuffer, server.curMessageSize);
@@ -205,10 +191,10 @@ bool CommunicationInterface::receiveDataFromServer()
 
 void CommunicationInterface::checkActivityOnSocket()
 {
-	int state= -1;
+	int state = -1;
 	while (process) {
 		buildFdSets();
-		state = select(sockfd+1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
+		state = select(sockfd + 1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to server?
 
 		switch (state) {
 		case -1:
@@ -257,8 +243,10 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	}
 
 	unsigned char message[ss.messageSize + 10];
-	if(debug) cout << "CONTROLLER_INTERFACE | sendData | message: ";
-	if(debug) cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
+	if (debug)
+		cout << "CONTROLLER_INTERFACE | sendData | message: ";
+	if (debug)
+		cout << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n   data of message: ";
 	// setup metadata
 	message[0] = ss.messageType;
 	message[1] = ss.messagePriority;
@@ -272,7 +260,6 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	// setup terminator
 	memcpy(message + 5 + ss.messageSize, &terminator, 5);
 
-
 	lock_guard<mutex> mutex(serverMutex);
 	ssize_t bytesSend = 0;
 	bool sending = true;
@@ -280,13 +267,14 @@ bool CommunicationInterface::sendData(SendingStructure ss)
 	while (sending) {
 		ssize_t sCount = send(sockfd, message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), 0);
 
-		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)){
+		if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
 			cerr << "COMMUNICATION_INTERFACE | sendData | failed to send message\n";
 			return false;
 		}
 		bytesSend += sCount;
 		if (bytesSend == sizeof(message)) {
-			if(debug) cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
+			if (debug)
+				cout << "COMMUNICATION_INTERFACE | sendData | message was send\n";
 			return true;
 		}
 	}
@@ -298,7 +286,7 @@ bool CommunicationInterface::establishConnectionToDrone()
 	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
 
-	while (true) {
+	while (process) {
 		// NOTE; user will be able to change parameters, thus sockaddr_in in needs to be recreated on each iteration
 		/* serverMutex.lock(); */
 		serverAddress.sin_port = htons(serverPort);
@@ -338,7 +326,8 @@ bool CommunicationInterface::setupSocket(string serverIP, string myIP, int serve
 	return true;
 }
 
-void CommunicationInterface::setCameraPort(int cameraPort){
+void CommunicationInterface::setCameraPort(int cameraPort)
+{
 	this->cameraPort = cameraPort;
 }
 
@@ -354,19 +343,19 @@ void CommunicationInterface::requestCameraStream()
 	pSetCamera cameraSetup;
 	int indexes[3];
 	int j = 0;
-	for (int i = 0; i < myIP.length(); i++) if(myIP[i] == '.') indexes[j++] = i;
+	for (int i = 0; i < myIP.length(); i++)
+		if (myIP[i] == '.')
+			indexes[j++] = i;
 
 	cameraSetup.ip[0] = stoi(myIP.substr(0, indexes[0]));
-	cameraSetup.ip[1] = stoi(myIP.substr(indexes[0]+1, indexes[1]));
-	cameraSetup.ip[2] = stoi(myIP.substr(indexes[1]+1, indexes[2]));
-	cameraSetup.ip[3] = stoi(myIP.substr(indexes[2]+1, myIP.length()));
+	cameraSetup.ip[1] = stoi(myIP.substr(indexes[0] + 1, indexes[1]));
+	cameraSetup.ip[2] = stoi(myIP.substr(indexes[1] + 1, indexes[2]));
+	cameraSetup.ip[3] = stoi(myIP.substr(indexes[2] + 1, myIP.length()));
 	cameraSetup.port = cameraPort;
 	SendingStructure ss(P_SET_CAMERA, 0x02, sizeof(cameraSetup));
 	memcpy(ss.messageBuffer, &cameraSetup, sizeof(cameraSetup));
 	CommunicationInterface::GetInstance()->sendData(ss);
 }
-
-
 
 /*-----------------------------------
 // ProcessingThreadPool section
@@ -376,8 +365,10 @@ void ProcessingThreadPool::endThreadPool()
 {
 	process = false;
 	workQueueUpdate.notify_all();
-	for (thread& t : threads)
+
+	for (thread& t : threads) {
 		t.join();
+	}
 }
 
 void ProcessingThreadPool::worker()
@@ -443,7 +434,10 @@ void ProcessingThreadPool::addJob(ProcessingStructure ps)
 void SendingThreadPool::endThreadPool()
 {
 	process = false;
+	controlQueueUpdate.notify_all();
 	workQueueUpdate.notify_all();
+	controlThread.join();
+
 	for (thread& t : threads)
 		t.join();
 }
@@ -510,11 +504,20 @@ void SendingThreadPool::scheduleToSend(SendingStructure ss)
 // ControllerDroneBridge
 -----------------------------------*/
 
-void ControllerDroneBridge::setActive(bool active){
+ControllerDroneBridge::ControllerDroneBridge()
+{
+	memset(&controllerState, 0, sizeof(controllerState));
+	sendControlComandThread = std::thread(&ControllerDroneBridge::sendControlComand, this);
+}
+
+
+void ControllerDroneBridge::setActive(bool active)
+{
 	this->active = active;
 }
 
-bool ControllerDroneBridge::getActive(){
+bool ControllerDroneBridge::getActive()
+{
 	return active;
 }
 
@@ -558,7 +561,7 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerState.rBumber = val;
 		controllerStateMutex.unlock();
 	} else if (active) {
-		if(val == 1){
+		if (val == 1) {
 			/* if(cs == D) */
 			pConSpc pcs;
 			pcs.cs = cs;
@@ -574,13 +577,15 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 void ControllerDroneBridge::sendControlComand()
 {
 
-	while (true) {
-		SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
-		controllerStateMutex.lock();
-		memcpy(ss.getMessageBuffer(), &controllerState, sizeof(controllerState));
-		controllerStateMutex.unlock();
-		SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
-		this_thread::sleep_for(chrono::milliseconds(20));
-
+	while (process) {
+		while (active && process) {
+			SendingStructure ss(P_CON_STR, 0x02, sizeof(controllerState));
+			controllerStateMutex.lock();
+			memcpy(ss.getMessageBuffer(), &controllerState, sizeof(controllerState));
+			controllerStateMutex.unlock();
+			SendingThreadPool::GetInstance()->scheduleToSendControl(ss);
+			this_thread::sleep_for(chrono::milliseconds(20));
+		}
+		this_thread::sleep_for(chrono::milliseconds(1000));
 	}
 }
