@@ -204,6 +204,7 @@ class ControllerUIBridge : ControlInterpreter {
 	private:
 
 	public:
+	std::chrono::steady_clock::time_point lastChange;
 
 	ControllerUIBridge();
 

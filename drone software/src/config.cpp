@@ -15,6 +15,7 @@ Config::Config()
 
 bool Config::loadConfiguration()
 {
+	cout << "configDirectory " << configDirectory<< "\n";
 	INIReader reader(configDirectory);
 
 	if (reader.ParseError() < 0) {

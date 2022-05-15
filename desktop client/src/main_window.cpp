@@ -188,8 +188,6 @@ void MainWindow::drawAttitudeIndicator(GtkWidget* widget, cairo_t* cr, gpointer 
 	height = gtk_widget_get_allocated_height(widget);
 
 	gtk_render_background(context, cr, 0, 0, width, height);
-	roll = 10;
-	pitch = 8;
 	double angle = roll * M_PI / 180;
 
 	cairo_translate(cr, 120, 120);
@@ -280,11 +278,12 @@ void MainWindow::switchIndicator(bool back)
 			currentIndicator--;
 		}
 	} else {
-		if(currentIndicator == NUMBER_OF_INDICATORS - 1) {
+		if(currentIndicator == NUMBER_OF_INDICATORS-1) {
 			currentIndicator = 0;
 		} else {
 			currentIndicator++;
 		}
+		cout << currentIndicator << "\n";
 	}
 	indicator->queue_draw();
 }
@@ -311,8 +310,12 @@ int ControllerUIBridge::update(ControlSurface cs, int val)
 
 int ControllerUIBridge::update(ControlSurface cs, int x, int y)
 {
+
 	switch (cs) {
 	case D_PAD: {
+		if ((std::chrono::steady_clock::now()-lastChange).count() < 200000000)
+			return 0;
+		lastChange = std::chrono::steady_clock::now();
 		if (x == LOW_CONTROLLER_AXIS_VALUE)
 			mainWindow->switchIndicator(true);
 		if (x == MAX_CONTROLLER_AXIS_VALUE)

@@ -51,14 +51,11 @@ int main(int argc, char** argv)
 	Telemetry::GetInstance()->setUpSensors(config.getIMUAddress(), config.getINAAddress(), config.getPCA9865Address());
 	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());
 
-	while (true) {
-		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, new mutex));
-	}
 	ServoControl::GetInstance()->attachPCA9685(config.getPCA9865Address());
 
 	if(!suppressArming) ServoControl::GetInstance()->armESC();
 
-
+	cout << "MAIN | main | starting communication interface" << endl;
 	CommunicationInterface::GetInstance()->setupSocket(config.getMyIP(), config.getServerPort());
 	ServoControl::GetInstance()->setOperationalParameters(config.getWingSurfaceConfiguration(), config.getControlMethodAdjuster());
 

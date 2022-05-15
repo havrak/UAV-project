@@ -36,12 +36,10 @@ ServoControl* ServoControl::GetInstance()
 {
 
 	if (servoControl == nullptr) {
-		cout << "SERVOCONTROL | GetInstance | ServoControl creation\n";
 		mutexServoControl.lock();
 		if (servoControl == nullptr)
 			servoControl = new ServoControl();
 		mutexServoControl.unlock();
-		cout << "SERVOCONTROL | GetInstance | ServoControl created\n";
 	}
 
 	return servoControl;
@@ -63,8 +61,8 @@ bool ServoControl::attachPCA9685(int address){
 	servo.SetAngle(CHANNEL(4), ANGLE(135));
 	servo.SetAngle(CHANNEL(5), ANGLE(135));
 
-	if (debug)
-		cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
+	/* if (debug) */
+	cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
 
 }
 
@@ -285,6 +283,14 @@ bool ServoControl::processControl(ProcessingStructure ps)
 	} break;
 	}
 
+	if (control.lAnalog.first == 0)
+		roll = 0;
+	else
+		roll = ((float)control.lAnalog.first / MAX_CONTROLLER_AXIS_VALUE) * 90;
+	if (control.lAnalog.second == 0)
+		pitch = 0;
+	else
+		pitch = ((float)control.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
 
 	switch (planeConfiguration) {
 	case V_SHAPE_TAIL_WING:

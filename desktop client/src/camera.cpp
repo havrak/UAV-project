@@ -20,10 +20,10 @@ void Camera::cameraLoop()
 	while (!cameraInitialized && captureVideo) {
 		cameraInitialized = initializeCamera();
 		if (!cameraInitialized)
-			cerr << "MAINWINDOW | pausedResumeCamera | failed to initialize camera " << endl;
+			cerr << "MAINWINDOW | cameraLoop | failed to initialize camera " << endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-
+	cout << "MAINWINDOW | cameraLoop | camera initialized" << endl;
 	while (captureVideo) {
 		bool continueToGrabe = true;
 		bool paused = mainWindow->isPaused();
@@ -53,11 +53,10 @@ bool Camera::initializeCamera()
 	bool result = false;
 
 	try {
-		result = cam.open("udpsrc port=" + to_string(cameraPort) + "! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
+		result = cam.open("udpsrc port=" + to_string(cameraPort) + " ! application/x-rtp,media=video,payload=96,clock-rate=90000,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", cv::CAP_GSTREAMER);
 	} catch (const std::exception& e) {
 		return false;
 	}
-
 	if (result) {
 		for (int i = 0; i < 3; i++) {
 			cam.grab();
