@@ -88,3 +88,8 @@ int DroneTelemetry::processError(ProcessingStructure ps){
 	mainWindow->displayError(pTeleErr(tmp.code, tmp.message));
 	return 1;
 }
+
+pair<double, double> DroneTelemetry::getGPSPosition(){
+	return pair<double, double>(gps.latitude, gps.longitude);
+}
+

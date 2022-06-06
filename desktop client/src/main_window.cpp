@@ -269,6 +269,8 @@ void MainWindow::drawHorizonTailSituationIndicator(GtkWidget* widget, cairo_t* c
 {
 }
 
+
+
 void MainWindow::switchIndicator(bool back)
 {
 	if (back) {

@@ -9,6 +9,7 @@ project(${PROJECT_NAME})
 find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(cpr REQUIRED)
 find_package(X11 REQUIRED)
 
 pkg_check_modules(GTKMM gtkmm-3.0)
@@ -27,6 +28,7 @@ target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 
 include_directories(include)
+include_directories(${cpr_INCLUDE_DIR})
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -37,6 +39,7 @@ target_link_libraries(${PROJECT_NAME}
 	${CMAKE_THREAD_LIBS_INIT}
 	X11
 	inih
+	cpr
 	)
 
 

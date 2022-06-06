@@ -10,6 +10,7 @@
 #include "main_window.h"
 #include "controller_interface.h"
 #include "linux_controller_implementation.h"
+#include "airmap_provider.h"
 #include "camera.h"
 #include "protocol_spec.h"
 #include "config.h"
@@ -76,6 +77,7 @@ int main(int argc, char** argv)
 	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
 	cout << "MAIN | main | socket setted up \n";
 
+	AirmapProvider::GetInstance();
 
 	switch(config.getOperatingSystem()){
 		case LINUX:

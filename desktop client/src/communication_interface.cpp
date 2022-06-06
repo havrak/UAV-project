@@ -540,6 +540,8 @@ int ControllerDroneBridge::update(ControlSurface cs, int x, int y)
 		controllerState.rTrigger = x;
 		break;
 	case D_PAD:
+
+		// NOTE: for now D-PAD is exclusively used with controll software
 		/* controllerState.dpad.first = x; */
 		/* controllerState.dpad.second = y; */
 		break;

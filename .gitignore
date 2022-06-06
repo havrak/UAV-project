@@ -8,4 +8,4 @@ libraries/
 desktop client/#main_window.glade#
 desktop client/main_window.glade~
 desktop client/uav_desktop_control
-
+desktop client/include/api_keys.h

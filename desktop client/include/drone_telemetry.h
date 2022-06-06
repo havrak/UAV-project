@@ -133,6 +133,14 @@ class DroneTelemetry{
 		 */
 		int processError(ProcessingStructure ps);
 
+
+		/**
+		 * returns position of the plane by latitude and longitude
+		 *
+		 * @return pair<double, double> - first is latitude, second is longitude
+		 */
+		pair<double, double> getGPSPosition();
+
 };
 
 #endif /* !DRONE_TELEMETRY_H */
