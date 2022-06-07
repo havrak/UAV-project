@@ -32,6 +32,7 @@ class Config {
 	OperatingSystems os;
 	string myIP = "192.168.6.11";
 	string serverIP= "192.168.6.1";
+	string airmapAPIKey = "";
 	int cameraPort = 5000;
 	int serverPort = 8066;
 	ControllerTypes controllerType = XBOX_CONTROLLER;
@@ -58,6 +59,7 @@ class Config {
 	string getServerIP();
 	int getCameraPort();
 	int getServerPort();
+	string getAirmapAPIKey();
 
 	ControllerTypes getControllerType();
 	bool getControlEnabled();

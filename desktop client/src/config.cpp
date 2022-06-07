@@ -32,6 +32,7 @@ Config::Config()
 bool Config::loadConfiguration()
 {
 	INIReader reader(configDirectory);
+
 	cout << "CONFIG | loadConfiguration | loading from: " << configDirectory << "\n";
 
 	if (reader.ParseError() < 0) {
@@ -46,6 +47,7 @@ bool Config::loadConfiguration()
 	serverIP = reader.Get("connection", "pi_IP", "192.168.6.1");
 	myIP = reader.Get("connection", "my_IP", "192.168.6.11");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
+	airmapAPIKey = reader.Get("connection", "airmap", "");
 
 	controllerType = reader.Get("control", "controller_type", "XBOX_CONTROLLER").compare("PS4_DUALSHOCK") == 0 ? PS4_DUALSHOCK : XBOX_CONTROLLER;
 	controlEnabled = reader.GetBoolean("control", "control_enabled", true);
@@ -79,4 +81,8 @@ ControllerTypes Config::getControllerType()
 bool Config::getControlEnabled()
 {
 	return controlEnabled;
+}
+
+string Config::getAirmapAPIKey(){
+	return airmapAPIKey;
 }

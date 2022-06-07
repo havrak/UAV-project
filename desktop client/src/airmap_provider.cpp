@@ -10,9 +10,8 @@
 AirmapProvider* AirmapProvider::airmapProvider = nullptr;
 mutex AirmapProvider::airmapProviderMutex;
 
-AirmapProvider::AirmapProvider(){
-	updateInfoThread = thread(&AirmapProvider::updateInfo, airmapProvider);
-
+AirmapProvider::AirmapProvider()
+{
 }
 
 AirmapProvider* AirmapProvider::GetInstance()
@@ -27,43 +26,57 @@ AirmapProvider* AirmapProvider::GetInstance()
 	return airmapProvider;
 };
 
-void AirmapProvider::updateInfo(){
-	while(update){
+void AirmapProvider::updateInfo()
+{
+	while (update) {
+		cout << "AirmapProvider::updateInfo()" << endl;
 		getFlightZoneInfo();
 		this_thread::sleep_for(chrono::milliseconds(1500));
 	}
 };
 
-void AirmapProvider::getFlightZoneInfo(){
-// NOTE: blocking should be called somewhere away, if possible get periodically all info
-  pair<double,double> position = DroneTelemetry::GetInstance()->getGPSPosition();
+void AirmapProvider::setupFetching(string key)
+{
+	apiKey = key;
+	updateInfoThread = thread(&AirmapProvider::updateInfo, this);
 
-	const double multiplier1 = 0.5*searchRadius;
-	const double multiplier2 = 0.8660254037844386* searchRadius;
+}
+
+void AirmapProvider::getFlightZoneInfo()
+{
+	// NOTE: blocking should be called somewhere away, if possible get periodically all info
+	pair<double, double> position = DroneTelemetry::GetInstance()->getGPSPosition();
+
+	const double multiplier1 = 0.5 * searchRadius;
+	const double multiplier2 = 0.8660254037844386 * searchRadius;
 	stringstream ss;
-	ss << APIurl
-	<< "search?geometry="
-	<< "%7B"
-	<< "%22type%22:%22Polygon%22,"
-	<< "%22coordinates%22:%5B%5B"
-	<< "%5B" << position.first-searchRadius << "," << position.second   						<< "%5D,"
-	<< "%5B" << position.first-multiplier2 	<< "," << position.second+multiplier1 	<< "%5D,"
-	<< "%5B" << position.first-multiplier1 	<< "," << position.second+multiplier2 	<< "%5D,"
-	<< "%5B" << position.first  						<< "," << position.second+searchRadius  << "%5D,"
-	<< "%5B" << position.first+multiplier1 	<< "," << position.second+multiplier2   << "%5D,"
-	<< "%5B" << position.first+multiplier2 	<< "," << position.second+multiplier1  	<< "%5D,"
-	<< "%5B" << position.first+searchRadius << "," << position.second   						<< "%5D,"
-	<< "%5B" << position.first+multiplier2 	<< "," << position.second-multiplier1  	<< "%5D,"
-	<< "%5B" << position.first+multiplier1 	<< "," << position.second-multiplier2   << "%5D,"
-	<< "%5B" << position.first   						<< "," << position.second-searchRadius  << "%5D,"
-	<< "%5B" << position.first-multiplier1 	<< "," << position.second-multiplier2   << "%5D,"
-	<< "%5B" << position.first-multiplier2 	<< "," << position.second-multiplier1  	<< "%5D,"
-	<< "%5D%5D"
-	<< "%7D"
-	<< "&types=airport,controlled_airspace,tfr,wildfire"
-	<< "&full=true"
-	<< "&geometry_format=wkt";
+	cout << "lat" << position.first << "\n" << "lon" << position.second << "\n";
+	ss << setprecision(12)
+		 << APIurl
+		 << "search?geometry="
+		 << "%7B"
+		 << "%22type%22:%22Polygon%22,"
+		 << "%22coordinates%22:%5B%5B"
+		 << "%5B" << position.second - searchRadius << "," << position.first << "%5D,"
+		 << "%5B" << position.second - multiplier2 << "," << position.first + multiplier1 << "%5D,"
+		 << "%5B" << position.second - multiplier1 << "," << position.first + multiplier2 << "%5D,"
+		 << "%5B" << position.second << "," << position.first + searchRadius << "%5D,"
+		 << "%5B" << position.second + multiplier1 << "," << position.first + multiplier2 << "%5D,"
+		 << "%5B" << position.second + multiplier2 << "," << position.first + multiplier1 << "%5D,"
+		 << "%5B" << position.second + searchRadius << "," << position.first << "%5D,"
+		 << "%5B" << position.second + multiplier2 << "," << position.first - multiplier1 << "%5D,"
+		 << "%5B" << position.second + multiplier1 << "," << position.first - multiplier2 << "%5D,"
+		 << "%5B" << position.second << "," << position.first - searchRadius << "%5D,"
+		 << "%5B" << position.second - multiplier1 << "," << position.first - multiplier2 << "%5D,"
+		 << "%5B" << position.second - multiplier2 << "," << position.first - multiplier1 << "%5D,"
+		 << "%5B" << position.second - searchRadius << "," << position.first << "%5D"
+		 << "%5D%5D"
+		 << "%7D"
+		 << "&types=airport,controlled_airspace,tfr,wildfire"
+		 << "&full=true"
+		 << "&geometry_format=wkt";
 
-	auto r = cpr::Get(cpr::Url{ss.str()}, cpr::Header{ { "X-API-Key",  airmapAPIKey} });
-  std::cout << "Returned Text:" << r.text << std::endl;
+	cout << "URL: "<< ss.str() << "\n\nKEY: " << apiKey << endl;
+	auto r = cpr::Get(cpr::Url { ss.str() }, cpr::Header { { "X-API-Key", apiKey } });
+	std::cout << "Returned Text:" << r.text << std::endl;
 }

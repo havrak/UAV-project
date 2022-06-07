@@ -74,10 +74,12 @@ int main(int argc, char** argv)
 	config.loadConfiguration();
 
 	CommunicationInterface::GetInstance()->setupSocket(config.getServerIP(), config.getMyIP(), config.getServerPort());
-	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort()); // TODO: rework camera logic
+	CommunicationInterface::GetInstance()->setCameraPort(config.getCameraPort());
 	cout << "MAIN | main | socket setted up \n";
 
-	AirmapProvider::GetInstance();
+	if(!config.getAirmapAPIKey().empty()){ // don't start it's internal loop to fetch data if api key was not provided
+		AirmapProvider::GetInstance()->setupFetching(config.getAirmapAPIKey());
+	}
 
 	switch(config.getOperatingSystem()){
 		case LINUX:

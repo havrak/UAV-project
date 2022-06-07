@@ -15,7 +15,11 @@
 DroneTelemetry* DroneTelemetry::telemetry = nullptr;
 mutex DroneTelemetry::telemetryMutex;
 
-DroneTelemetry::DroneTelemetry(){}
+DroneTelemetry::DroneTelemetry(){
+	gps.latitude = 50.1068603;
+	gps.longitude = 14.2550747;
+	gps.altitude = 0;
+}
 
 DroneTelemetry* DroneTelemetry::GetInstance()
 {

@@ -18,12 +18,19 @@ link_directories(${GTKMM_LIBRARY_DIRS})
 
 include_directories(${GTKMM_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 ")
 
 add_library(inih STATIC
 	"${PROJECT_SOURCE_DIR}/libraries/inih/cpp/INIReader.cpp"
 	"${PROJECT_SOURCE_DIR}/libraries/inih/ini.c"
 	)
+
+set_target_properties(
+	inih PROPERTIES
+	COMPILE_FLAGS
+	"-DINI_MAX_LINE=400"
+)
+
 target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 

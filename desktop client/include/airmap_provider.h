@@ -8,12 +8,12 @@
 #ifndef AIRMAP_PROVIDER_H
 #define AIRMAP_PROVIDER_H
 
-#include "drone_telemetry.h"
 #include <cpr.h>
 #include <iostream>
-#include "api_keys.h"
+#include "drone_telemetry.h"
 #include <thread>
-
+#include <sstream>
+#include <iomanip>
 /**
  * intefaces with Airmap.com via its REST API
  * gets information about flight zone, etc.
@@ -27,6 +27,7 @@ class AirmapProvider{
 		thread updateInfoThread;
 		bool update = true;
 		char* APIurl =  "https://api.airmap.com/airspace/v2/";
+		string apiKey = "";
 		double searchRadius = 0.00017; // cca 200meters
 
 		AirmapProvider();
@@ -38,6 +39,11 @@ class AirmapProvider{
 		 * if instace isn't created it will create it
 		 */
 		static AirmapProvider* GetInstance();
+
+		/**
+		 * sets API key
+		 */
+		void setupFetching(string key);
 
 
 		/**
