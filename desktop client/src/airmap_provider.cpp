@@ -39,6 +39,9 @@ void AirmapProvider::setupFetching(string key)
 {
 	apiKey = key;
 	updateInfoThread = thread(&AirmapProvider::updateInfo, this);
+}
+
+void AirmapProvider::getWeatherInfo(){
 
 }
 
@@ -50,7 +53,10 @@ void AirmapProvider::getFlightZoneInfo()
 	const double multiplier1 = 0.5 * searchRadius;
 	const double multiplier2 = 0.8660254037844386 * searchRadius;
 	stringstream ss;
-	cout << "lat" << position.first << "\n" << "lon" << position.second << "\n";
+	position.first = 50.7353858;
+	position.second = 15.7339622;
+	cout << "lat" << position.first << "\n"
+			 << "lon" << position.second << "\n";
 	ss << setprecision(12)
 		 << APIurl
 		 << "search?geometry="
@@ -72,11 +78,47 @@ void AirmapProvider::getFlightZoneInfo()
 		 << "%5B" << position.second - searchRadius << "," << position.first << "%5D"
 		 << "%5D%5D"
 		 << "%7D"
-		 << "&types=airport,controlled_airspace,tfr,wildfire"
+		 << "&types=airport,park,power_plant,emergency,controlled_airspace,tfr"
 		 << "&full=true"
 		 << "&geometry_format=wkt";
 
-	cout << "URL: "<< ss.str() << "\n\nKEY: " << apiKey << endl;
+	/* cout << "URL: "<< ss.str() << "\n\nKEY: " << apiKey << endl; */
 	auto r = cpr::Get(cpr::Url { ss.str() }, cpr::Header { { "X-API-Key", apiKey } });
-	std::cout << "Returned Text:" << r.text << std::endl;
+
+	cout << "Response: " << r.text << endl;
+
+	json parsedData = json::parse(r.text);
+	airspaceObjects.clear();
+	if(parsedData.empty() || parsedData["status"].get<string>().compare("fail") == 0)
+		airspaceObjects.push_back(make_unique<airspaceStruct>(UNKNOWN, "No information about current flight zone"));
+
+
+	for (auto& i : parsedData["data"].items()) {
+		if(stringToAirspaceType.count(i.value()["type"].get<string>())) continue;
+		airspaceObjects.push_back(make_unique<airspaceStruct>(stringToAirspaceType.at(i.value()["type"].get<string>()), i.value()["name"].get<string>()));
+
+		switch (airspaceObjects.back().get()->type) {
+		case AIRPORT: // airport
+			{}
+			break;
+		case PARK: // park
+			{}
+			break;
+		case POWER_PLANT: // power_plant
+			{}
+			break;
+		case EMERGENCY: // emergency
+			{}
+			break;
+		case CONTROLLED_AIRSPACE: // controlled_airspace
+			{}
+			break;
+		case TFR: // tfr
+			{}
+			break;
+		default:
+			break;
+		}
+
+	}
 }

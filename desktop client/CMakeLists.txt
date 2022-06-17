@@ -11,6 +11,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(cpr REQUIRED)
 find_package(X11 REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 pkg_check_modules(GTKMM gtkmm-3.0)
 
@@ -47,6 +48,7 @@ target_link_libraries(${PROJECT_NAME}
 	X11
 	inih
 	cpr
+	nlohmann_json
 	)
 
 

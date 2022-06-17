@@ -46,6 +46,14 @@ struct onScreenTelemetryUpdate {
 };
 
 
+struct onScreenWeatherInfoUpdate{
+	Glib::RefPtr<Gtk::TextBuffer> buffer;
+	string text;
+	onScreenWeatherInfoUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, string text)
+			: buffer(buffer)
+			, text(text) {};
+};
+
 /**
  * enum declaring all indicators which can be displayed
  * in the GUI
@@ -101,6 +109,7 @@ class MainWindow : public Gtk::Window {
 
 	Gtk::ToggleButton* resumePauseButton;
 	Gtk::TextView* telemetryField;
+	Gtk::TextView* weatherInfoField;
 
 	/**
 	 * schedules update of data in telemetryBuffer and
@@ -110,6 +119,14 @@ class MainWindow : public Gtk::Window {
 	 * @param mutex* dataMutex - mutex to lock struct with
 	 */
 	void updateData(pTeleGen data, mutex* dataMutex);
+
+
+	/**
+	 * schedules update of data in weatherInfoField
+	 *
+	 * @param string text - text to update buffer with
+	 */
+	void updateData(string AirpaceInfo);
 
 	void displayError(pTeleErr error);
 
@@ -139,8 +156,9 @@ class MainWindow : public Gtk::Window {
 	Gtk::DrawingArea* indicator;
 	GtkDrawingArea* indicatorCObj;
 	Gtk::Image* drawingImage;
-	Glib::RefPtr<Gtk::TextBuffer> textBuffer;
-	GtkTextBuffer* telemetryBuffer;
+
+	Glib::RefPtr<Gtk::TextBuffer> telemetryFieldBuffer;
+	Glib::RefPtr<Gtk::TextBuffer> weatherInfoBuffer;
 
 	/**
 	 * updates buffer with telemetry
@@ -148,7 +166,15 @@ class MainWindow : public Gtk::Window {
 	 *
 	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
 	 */
-	static bool updateOnScreenTelemetry(onScreenTelemetryUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
+	static bool updateTelemeryInfoOnscreen(onScreenTelemetryUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
+
+	/**
+	 * updates buffer with telemetry
+	 * call of function is scheduled by Gtk
+	 *
+	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
+	 */
+	static bool updateWeatherInfoOnscreen(onScreenWeatherInfoUpdate weatherInfoUpdate); // we will be passing pointer of this function, thus it needs to be statis
 
 	/**
 	 * updates attitude indicator

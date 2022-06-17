@@ -5,26 +5,8 @@ This is project for my (hopefully) final year of highschool.
 Main purpose is to create UAV platform based on Raspberry Pi.
 However as I have never done anything like this I'm not sure how far will I get.
 
-# Current state
-* communication between raspberry pi and computer works
-* all sensors are active
-* soldering has been done
-* video stream works
-* drone is able to fly
-* autopilot can stay on current course
+Alongside code for the drone and software to control it this repo includes various stl files to be 3d printed.
 
-# Proposed stages of further UAV development
-
-1. prettier client on control PC (map etc., integration on something like CivTAK)
-2. movable camera
-3. fully autonomous flying (with exception of landing and taking off)
-4. tracking antenna (might just used what was made for ardupilot)
-5. more robust control solution -- RC backup, analog video etc.
-
-# Other tasks
-* implement changes to make plane compatible with rapsbian bullseye
-	* wiringPi is deprecated
-	* access to camera has been reworked
 
 # Components
 
@@ -42,6 +24,7 @@ However as I have never done anything like this I'm not sure how far will I get.
 | INA226                                        | Volt/Ampere meter to measure draw from the battery |
 | WitMotion WT901B                              | Acc, Gyro, Angle, Mag and Barometer                |
 | Pi Camera (chinese knock-off)                 | camera for rpi0 to get video from the drone        |
+| Prototype Board for Raspberry Pi Zero         | mounts all components                             |
 
 * Rpi0 2 is not strictly necessary for plane to work, my original zero just broke, so I had to buy a new one
 * whole drone runs off from 4S 14.8V battery with XT60 plug, thus packet of XT60 F/M plugs is also necessary
@@ -55,6 +38,7 @@ However as I have never done anything like this I'm not sure how far will I get.
 * [inih (INI Not Invented Here)](https://github.com/benhoyt/inih)
 * OpenCV
 * Gtk3
+* crp
 * WiringPi (used by some libraries above) -- need to move to gpio library
 
 # Photos
@@ -65,9 +49,11 @@ However as I have never done anything like this I'm not sure how far will I get.
 
 ![body detail](./photos/body.jpg)
 
-![internals](./photos/circuit.jpg)
+### Controlling unit
 
-![detail](./photos/detail.jpg)
+![component 1](./photos/detail.jpg)
+
+![component 2](./photos/detail_2.jpg)
 
 ### Circuit schema
 

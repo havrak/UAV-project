@@ -33,8 +33,10 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
 	this->builder->get_widget("indicator", this->indicator);
 	this->builder->get_widget("telemetryField", this->telemetryField);
+	this->builder->get_widget("weatherInfo", this->weatherInfoField);
 	this->builder->get_widget("restartButton", this->resartButton);
-	textBuffer = telemetryField->get_buffer();
+	telemetryFieldBuffer = telemetryField->get_buffer();
+	weatherInfoBuffer = weatherInfoField->get_buffer();
 	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
@@ -102,44 +104,49 @@ void MainWindow::updateImage(cv::Mat& frame)
 	}
 }
 
-bool MainWindow::updateOnScreenTelemetry(onScreenTelemetryUpdate telmetryBufferUpdate)
+bool MainWindow::updateTelemeryInfoOnscreen(onScreenTelemetryUpdate telmetryBufferUpdate)
 {
-	/* GtkTextIter end; */
 	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
 	telmetryBufferUpdate.indicator->queue_draw();
-	/* 	cout << "updating AI\n"; */
-	/* 	mainWindow->updateAttitudeIndicator(); */
-	/* gtk_text_buffer_get_end_iter(, &end); */
-	/* cout << "text: " << update.text << " length: " << update.text.size(); */
-	/* gtk_text_buffer_insert(telemetryBuffer, &end, update.text.c_str(), update.text.size()); */
-
 	return true;
+}
+
+bool MainWindow::updateWeatherInfoOnscreen(onScreenWeatherInfoUpdate onScreenWeatherInfoUpdate)
+{
+	onScreenWeatherInfoUpdate.buffer->set_text(onScreenWeatherInfoUpdate.text);
+	return true;
+}
+
+
+void MainWindow::updateData(string AirpaceInfo){
+	g_idle_add(G_SOURCE_FUNC(updateWeatherInfoOnscreen), new onScreenWeatherInfoUpdate(weatherInfoBuffer, AirpaceInfo));
 }
 
 void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
 {
-	string message;
+	stringstream ss;
 	{
 		lock_guard<mutex> m(*dataMutex);
-		message += "-----------------------\n";
-		message += "yaw x:   " + to_string(data.att.yaw) + "\n";
-		message += "pitch y: " + to_string(data.att.pitch) + "\n";
-		message += "roll y:  " + to_string(data.att.roll) + "\n";
-		message += "-----------------------\n";
-		message += "voltage: " + to_string(data.batt.getVoltage) + "\n";
-		message += "current: " + to_string(data.batt.getCurrent) + "\n";
-		message += "temp:    " + to_string(data.att.temp) + "\n";
-		message += "-----------------------\n";
-		message += "GPS NOS: " + to_string(data.gps.numberOfSatelites) + "\n";
-		message += "lat:     " + to_string(data.gps.latitude) + "\n";
-		message += "lot:     " + to_string(data.gps.longitude) + "\n";
-		message += "g speed: " + to_string(data.gps.groundSpeed) + "\n";
+		ss
+		<< "-----------------------\n"
+		<< "\nyaw x:   " + to_string(data.att.yaw)
+		<< "\npitch y: " + to_string(data.att.pitch)
+		<< "\nroll y:  " + to_string(data.att.roll)
+		<< "\n-----------------------\n"
+		<< "\nvoltage: " + to_string(data.batt.getVoltage)
+		<< "\ncurrent: " + to_string(data.batt.getCurrent)
+		<< "\ntemp:    " + to_string(data.att.temp)
+		<< "\n-----------------------\n"
+		<< "\nGPS NOS: " + to_string(data.gps.numberOfSatelites)
+		<< "\nlat:     " + to_string(data.gps.latitude)
+		<< "\nlot:     " + to_string(data.gps.longitude)
+		<< "\ng speed: " + to_string(data.gps.groundSpeed);
 
 		this->pitch = data.att.pitch;
 		this->roll = data.att.roll;
 		this->speed = data.gps.groundSpeed;
 	}
-	g_idle_add(G_SOURCE_FUNC(updateOnScreenTelemetry), new onScreenTelemetryUpdate(textBuffer, Glib::RefPtr<Gtk::DrawingArea>(indicator), message));
+	g_idle_add(G_SOURCE_FUNC(updateTelemeryInfoOnscreen), new onScreenTelemetryUpdate(telemetryFieldBuffer, Glib::RefPtr<Gtk::DrawingArea>(indicator), ss.str()));
 }
 
 void MainWindow::displayError(pTeleErr error)
