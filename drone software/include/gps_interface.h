@@ -34,6 +34,7 @@ class GPSInterface {
 	double latitude = 0;
 	double altitude = 0;
 	double groundSpeed = 0;
+	double heading;
 
 	char numberOfSatelites = 0;
 
@@ -124,7 +125,12 @@ class GPSInterface {
 	 */
 	int getNOS();
 
-
+	/**
+	 * returns heading of the plane
+	 *
+	 * @return double - heading in degrees;
+	 */
+	double getHeading();
 
 };
 

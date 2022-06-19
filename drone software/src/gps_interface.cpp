@@ -70,6 +70,7 @@ void GPSInterface::updateFunction()
 						numberOfSatelites = stoi(parts.at(7));
 						if (numberOfSatelites > 2) {
 							gpsUp = true;
+
 							longitude = parts.at(4).empty() ? 0 : stod(parts.at(4));
 							latitude = parts.at(2).empty() ? 0 : stod(parts.at(2));
 							altitude = parts.at(9).empty() ? 0 : stod(parts.at(9));
@@ -79,8 +80,9 @@ void GPSInterface::updateFunction()
 								cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
 						}
 					}else if(parts.at(0).compare("$GPVTG") == 0){ // ground speed information
-						cout << parts.at(5) << "\n";
 						groundSpeed = parts.at(6).empty() ? -1 : stod(parts.at(6));
+					}else if(parts.at(0).compare("GPHDT")){
+						heading = parts.at(1).empty() ? 0 : stod(parts.at(1));
 					}
 				}
 			}
@@ -134,4 +136,8 @@ int GPSInterface::getNOS()
 double GPSInterface::getGroundSpeed()
 {
 	return groundSpeed;
+}
+
+double GPSInterface::getHeading(){
+	return heading;
 }

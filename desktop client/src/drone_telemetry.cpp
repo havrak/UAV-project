@@ -42,7 +42,7 @@ int DroneTelemetry::processGeneralTelemetry(ProcessingStructure ps)
 	attitudeLastTimeReceived = clock();
 	pwmLastTimeReceived = clock();
 	telemetryMutex.unlock();
-	mainWindow->updateData(data, &telemetryMutex);
+	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
 
@@ -54,7 +54,7 @@ int DroneTelemetry::processAttGPS(ProcessingStructure ps)
 	memcpy(&data.att, ps.getMessageBuffer(),  sizeof(data.att)); //  gps is right after att
 	gpsLastTimeReceived = clock();
 	telemetryMutex.unlock();
-	mainWindow->updateData(data, &telemetryMutex);
+	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
 int DroneTelemetry::processBattery(ProcessingStructure ps)
@@ -63,7 +63,7 @@ int DroneTelemetry::processBattery(ProcessingStructure ps)
 	memcpy(&data.batt, ps.getMessageBuffer(),  sizeof(data.batt));
 	batteryLastTimeReceived = clock();
 	telemetryMutex.unlock();
-	mainWindow->updateData(data, &telemetryMutex);
+	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
 int DroneTelemetry::processPWM(ProcessingStructure ps)
@@ -72,7 +72,7 @@ int DroneTelemetry::processPWM(ProcessingStructure ps)
 	memcpy(&data.pwm, ps.getMessageBuffer(),  sizeof(data.pwm));
 	pwmLastTimeReceived = clock();
 	telemetryMutex.unlock();
-	mainWindow->updateData(data, &telemetryMutex);
+	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
 int DroneTelemetry::processIO(ProcessingStructure ps)
@@ -81,7 +81,7 @@ int DroneTelemetry::processIO(ProcessingStructure ps)
 	memcpy(&data.io, ps.getMessageBuffer(), sizeof(data.io));
 	ioLastTimeReceived = clock();
 	telemetryMutex.unlock();
-	mainWindow->updateData(data, &telemetryMutex);
+	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
 

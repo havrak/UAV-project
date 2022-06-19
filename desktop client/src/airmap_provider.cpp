@@ -6,6 +6,7 @@
  */
 
 #include "airmap_provider.h"
+#include "main_window.h"
 
 AirmapProvider* AirmapProvider::airmapProvider = nullptr;
 mutex AirmapProvider::airmapProviderMutex;
@@ -34,7 +35,7 @@ void AirmapProvider::updateInfo()
 	while (update) {
 		fetchWeatherInfo();
 		fetchAirspaceInfo();
-		this_thread::sleep_for(chrono::milliseconds(1500));
+		this_thread::sleep_for(chrono::milliseconds(10000));
 	}
 };
 
@@ -61,7 +62,6 @@ void AirmapProvider::fetchWeatherInfo()
 		 << "&end=" << to_iso_extended_string(t) << "Z";
 
 	auto r = cpr::Get(cpr::Url { ss.str() }, cpr::Header { { "X-API-Key", apiKey } });
-
 	{
 		const std::lock_guard<std::mutex> lock(weatherMutex);
 		try {
@@ -71,11 +71,12 @@ void AirmapProvider::fetchWeatherInfo()
 				weather.status = false;
 			}
 			weather.status = true;
-			weather.condition = parsedData["data"]["weather"]["condition"].get<string>();
-			weather.temperature = parsedData["data"]["weather"]["temperature"].get<double>();
-			weather.windDirection = parsedData["data"]["weather"]["wind"]["heading"].get<int>();
-			weather.windSpeed = parsedData["data"]["weather"]["wind"]["speed"].get<double>();
+			weather.condition = parsedData["data"]["weather"][0]["condition"].get<string>();
+			weather.temperature = parsedData["data"]["weather"][0]["temperature"].get<double>();
+			weather.windDirection = parsedData["data"]["weather"][0]["wind"]["heading"].get<int>();
+			weather.windSpeed = parsedData["data"]["weather"][0]["wind"]["speed"].get<double>();
 			weather.timestamp = to_iso_extended_string(t);
+			mainWindow->updateWeather(weather.copy());
 		} catch (exception& e) {
 			weather.status = false;
 			weather.timestamp = to_iso_extended_string(t);
@@ -93,8 +94,6 @@ void AirmapProvider::fetchAirspaceInfo()
 	stringstream ss;
 	position.first = 50.7353858;
 	position.second = 15.7339622;
-	cout << "lat" << position.first << "\n"
-			 << "lon" << position.second << "\n";
 	ss << setprecision(12)
 		 << APIurl
 		 << "airspace/v2/"

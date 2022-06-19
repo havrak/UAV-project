@@ -13,6 +13,7 @@
 #include "gtkmm/textbuffer.h"
 #include "gtkmm/textview.h"
 #include "protocol_spec.h"
+#include "osm-gps-map.h"
 #include <cairomm/refptr.h>
 #include <cairomm/surface.h>
 #include <gdk/gdk.h>
@@ -21,6 +22,7 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include "control_interpreter.h"
+#include "airmap_provider.h"
 
 #define UI_SIZE 240
 #define NUMBER_OF_INDICATORS 3
@@ -35,24 +37,14 @@
  *
  * used by method updateOnScreenTelemetry called by gtk
  */
-struct onScreenTelemetryUpdate {
-	Glib::RefPtr<Gtk::TextBuffer> buffer;
-	Glib::RefPtr<Gtk::DrawingArea> indicator;
-	string text;
-	onScreenTelemetryUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, Glib::RefPtr<Gtk::DrawingArea> indicator, string text)
-			: buffer(buffer)
-			, indicator(indicator)
-			, text(text) {};
-};
-
-
-struct onScreenWeatherInfoUpdate{
+struct textBufferUpdateStruct {
 	Glib::RefPtr<Gtk::TextBuffer> buffer;
 	string text;
-	onScreenWeatherInfoUpdate(Glib::RefPtr<Gtk::TextBuffer> buffer, string text)
+	textBufferUpdateStruct(Glib::RefPtr<Gtk::TextBuffer> buffer, string text)
 			: buffer(buffer)
 			, text(text) {};
 };
+
 
 /**
  * enum declaring all indicators which can be displayed
@@ -118,7 +110,7 @@ class MainWindow : public Gtk::Window {
 	 * @param pTeleGen data - struct with data to update buffer with
 	 * @param mutex* dataMutex - mutex to lock struct with
 	 */
-	void updateData(pTeleGen data, mutex* dataMutex);
+	void updateTelemetry(pTeleGen data, mutex* dataMutex);
 
 
 	/**
@@ -126,19 +118,34 @@ class MainWindow : public Gtk::Window {
 	 *
 	 * @param string text - text to update buffer with
 	 */
-	void updateData(string AirpaceInfo);
+	void updateWeather(weatherStruct data);
 
 	void displayError(pTeleErr error);
 
 	void switchIndicator(bool back);
 
+	void toggleMap();
+
+	void toggleTracking();
+
 	private:
+	OsmGpsMapSource_t opt_map_provider = OSM_GPS_MAP_SOURCE_OPENSTREETMAP;
+	GdkPixbuf *g_star_image = NULL;
+	OsmGpsMapImage *g_last_image = NULL;
+	OsmGpsMap *map;
+	OsmGpsMapLayer *osd;
+	OsmGpsMapTrack *rightclicktrack;
+	bool trackFlightPath = true;
+	bool showingMap = true;
+
 	inline static cairo_surface_t* imgAIBack;
 	inline static cairo_surface_t* imgAIFace;
 	inline static cairo_surface_t* imgAIRing;
 	inline static cairo_surface_t* imgAICase;
 	inline static cairo_surface_t* imgASIFace;
 	inline static cairo_surface_t* imgASIHand;
+	inline static cairo_surface_t* imgWHBack;
+	inline static cairo_surface_t* imgWHHand;
 
 
 	mutex attitudeValuesMutex;
@@ -146,35 +153,33 @@ class MainWindow : public Gtk::Window {
 	inline static float roll = 0;
 	inline static float speed = 0;
 
+	inline static weatherStruct weather;
+
 	int currentIndicator = ATTITUDE_INDICATOR;
 
-	/* protected: */
 	Glib::RefPtr<Gtk::Builder> builder;
-	Gtk::Button* closeButton;
-	Gtk::Button* resartButton;
-	/* Gtk::Image* indicator; */
+	Gtk::MenuItem *restartButton;
+	Gtk::MenuItem *closeButton;
+
+
+	Gtk::Box *map_box;
 	Gtk::DrawingArea* indicator;
-	GtkDrawingArea* indicatorCObj;
-	Gtk::Image* drawingImage;
+
+	Gtk::DrawingArea* weatherIndicator;
+
+	Gtk::Image* cameraViewport;
 
 	Glib::RefPtr<Gtk::TextBuffer> telemetryFieldBuffer;
 	Glib::RefPtr<Gtk::TextBuffer> weatherInfoBuffer;
 
 	/**
-	 * updates buffer with telemetry
-	 * call of function is scheduled by Gtk
+	 * updates buffer given by given text
+	 * both argumetns are supplied by textBufferUpdateStruct
 	 *
 	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
 	 */
-	static bool updateTelemeryInfoOnscreen(onScreenTelemetryUpdate telmetryBufferUpdate); // we will be passing pointer of this function, thus it needs to be statis
+	static bool textBufferUpdate(textBufferUpdateStruct data); // we will be passing pointer of this function, thus it needs to be statis
 
-	/**
-	 * updates buffer with telemetry
-	 * call of function is scheduled by Gtk
-	 *
-	 * @param textBufferUpdate telmetryBufferUpdate - struct with buffer reference and buffer pointer
-	 */
-	static bool updateWeatherInfoOnscreen(onScreenWeatherInfoUpdate weatherInfoUpdate); // we will be passing pointer of this function, thus it needs to be statis
 
 	/**
 	 * updates attitude indicator
@@ -186,6 +191,15 @@ class MainWindow : public Gtk::Window {
 	 */
 	static void drawIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
 
+	/**
+	 * updates attitude indicator
+	 * used as a callback for draw method on DrawingArea
+	 *
+	 * @param GtkWidget *widget - DrawingArea to be drawn in
+	 * @param cairo_t *cr - corresponding cairo structure with given widget
+	 * @param gpointer data - pointer to data
+	 */
+	static void drawWeatherIndicator(GtkWidget *widget, cairo_t *cr, gpointer data);
 
 	/**
 	 * draws graphic of attitude indicator

@@ -2,7 +2,6 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkTextBuffer" id="telemetryBuffer"/>
   <object class="GtkWindow" id="MainWindow">
     <property name="can-focus">False</property>
     <child>
@@ -17,6 +16,78 @@
             <property name="spacing">1</property>
             <property name="baseline-position">top</property>
             <child>
+              <object class="GtkMenuBar">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <child>
+                  <object class="GtkMenuItem" id="System">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">_System</property>
+                    <property name="use-underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu" id="menu1">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <child>
+                          <object class="GtkMenuItem" id="restartButton">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">_Restart</property>
+                            <property name="use-underline">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="closeButton">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">_Quit</property>
+                            <property name="use-underline">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkMenuItem" id="View">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">_View</property>
+                    <property name="use-underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu" id="menu2">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <child>
+                          <object class="GtkCheckMenuItem" id="mapToggle">
+                            <property name="name">map</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">_Map</property>
+                            <property name="use-underline">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckMenuItem" id="cameraToggle">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">_Camera</property>
+                            <property name="use-underline">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkToggleButton" id="resumePauseButton">
                 <property name="label" translatable="yes">Pause</property>
                 <property name="visible">True</property>
@@ -26,33 +97,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="closeButton">
-                <property name="label" translatable="yes">Close</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
                 <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="restartButton">
-                <property name="label" translatable="yes">Restart</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
               </packing>
             </child>
           </object>
@@ -67,17 +112,31 @@
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <child>
+              <object class="GtkImage" id="drawingImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+                <property name="icon_size">0</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkBox" id="rightSidebar">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="halign">end</property>
+                <property name="halign">start</property>
+                <property name="margin-left">10</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkDrawingArea" id="indicator">
                     <property name="visible">True</property>
                     <property name="app-paintable">True</property>
                     <property name="can-focus">False</property>
-                    <property name="margin-bottom">60</property>
+                    <property name="margin-bottom">80</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -86,15 +145,53 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkDrawingArea" id="weatherIndicator">
+                        <property name="visible">True</property>
+                        <property name="app-paintable">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-bottom">40</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkTextView" id="weatherInfo">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="margin-bottom">26</property>
+                        <property name="editable">False</property>
+                        <property name="wrap-mode">word</property>
+                        <property name="cursor-visible">False</property>
+                        <property name="accepts-tab">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkTextView" id="telemetryField">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
-                    <property name="margin-bottom">155</property>
+                    <property name="margin-bottom">150</property>
                     <property name="editable">False</property>
                     <property name="wrap-mode">word</property>
-                    <property name="left-margin">70</property>
                     <property name="cursor-visible">False</property>
-                    <property name="buffer">telemetryBuffer</property>
                     <property name="accepts-tab">False</property>
                     <property name="monospace">True</property>
                   </object>
@@ -102,22 +199,6 @@
                     <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="pack-type">end</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkTextView" id="weatherInfo">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="margin-bottom">47</property>
-                    <property name="editable">False</property>
-                    <property name="wrap-mode">word</property>
-                    <property name="cursor-visible">False</property>
-                    <property name="accepts-tab">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -130,16 +211,18 @@
               </packing>
             </child>
             <child>
-              <object class="GtkImage" id="drawingImage">
+              <object class="GtkBox" id="map_box">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="stock">gtk-missing-image</property>
-                <property name="icon_size">0</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>

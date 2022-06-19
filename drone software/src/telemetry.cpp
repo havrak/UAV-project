@@ -103,7 +103,7 @@ pTeleATT Telemetry::createTeleAttStruct()
 pTeleGPS Telemetry::createTeleGPSStruct()
 {
 	GPSInterface* instance = GPSInterface::GetInstance();
-	pTeleGPS toReturn(instance->getGPSStatus(), instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getGroundSpeed(), instance->getNOS());
+	pTeleGPS toReturn(instance->getGPSStatus(), instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getGroundSpeed(), instance->getHeading(), instance->getNOS());
 	return toReturn;
 }
 

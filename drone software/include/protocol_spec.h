@@ -175,15 +175,17 @@ struct pTeleGPS {
 	double altitude;
 	int numberOfSatelites;
 	double groundSpeed;
+	double heading;
 
 	pTeleGPS() {};
-	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double groundSpeed, int numberOfSatelites)
+	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double groundSpeed, double heading, int numberOfSatelites)
 			: gpsUp(gpsUp)
 			, latitude(latitude)
 			, longitude(longitude)
 			, altitude(altitude)
 			, numberOfSatelites(numberOfSatelites)
-			, groundSpeed(groundSpeed)  {};
+			, groundSpeed(groundSpeed)
+			, heading(heading) {};
 };
 
 struct pTeleATT {

@@ -135,9 +135,9 @@ class DroneTelemetry{
 
 
 		/**
-		 * returns position of the plane by latitude and longitude
+		 * returns position of the plane
 		 *
-		 * @return pair<double, double> - first is latitude, second is longitude
+		 * @return pair<double, double> - pair of latitude and longitude
 		 */
 		pair<double, double> getGPSPosition();
 

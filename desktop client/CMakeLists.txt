@@ -10,6 +10,7 @@ find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(cpr REQUIRED)
+find_package(osmgpsmap REQUIRED)
 find_package(X11 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package( Boost)
@@ -39,6 +40,7 @@ target_include_directories(
 
 include_directories(include)
 include_directories(${cpr_INCLUDE_DIR})
+include_directories(${osmgpsmap_INCLUDE_DIR})
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -48,6 +50,7 @@ target_link_libraries(${PROJECT_NAME}
 	${GTKMM_LIBRARIES}
 	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
+	${osmgpsmap_LIBRARY}
 	X11
 	inih
 	cpr

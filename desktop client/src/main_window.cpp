@@ -26,28 +26,71 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 		: Gtk::Window(cobject)
 		, builder(refGlade)
 {
+	const char* repo_uri;
+	char *cachedir, *cachebasedir;
+
+	repo_uri = osm_gps_map_source_get_repo_uri(opt_map_provider);
+
+	/* if (repo_uri == NULL) { */
+	/* } */
+	cachebasedir = osm_gps_map_get_default_cache_directory();
+	cachedir = g_strdup(OSM_GPS_MAP_CACHE_AUTO);
+
+	map = (OsmGpsMap*)g_object_new(OSM_TYPE_GPS_MAP,
+			"map-source", opt_map_provider,
+			"tile-cache", cachedir,
+			"tile-cache-base", cachebasedir,
+			"proxy-uri", g_getenv("http_proxy"),
+			"user-agent", "mapviewer.c", // Always set user-agent, for better tile-usage compliance
+			NULL);
+
+	osd = (OsmGpsMapLayer*)g_object_new(OSM_TYPE_GPS_MAP_OSD,
+			"show-scale", TRUE,
+			"show-coordinates", TRUE,
+			"show-crosshair", TRUE,
+			"show-dpad", TRUE,
+			"show-zoom", TRUE,
+			"show-gps-in-dpad", TRUE,
+			"show-gps-in-zoom", FALSE,
+			"dpad-radius", 30,
+			NULL);
+
+	osm_gps_map_layer_add(OSM_GPS_MAP(map), osd);
+	g_object_unref(G_OBJECT(osd));
+	g_free(cachedir);
+	g_free(cachebasedir);
+	osm_gps_map_set_keyboard_shortcut(map, OSM_GPS_MAP_KEY_FULLSCREEN, GDK_KEY_F11);
+	osm_gps_map_set_keyboard_shortcut(map, OSM_GPS_MAP_KEY_UP, GDK_KEY_Up);
+	osm_gps_map_set_keyboard_shortcut(map, OSM_GPS_MAP_KEY_DOWN, GDK_KEY_Down);
+	osm_gps_map_set_keyboard_shortcut(map, OSM_GPS_MAP_KEY_LEFT, GDK_KEY_Left);
+	osm_gps_map_set_keyboard_shortcut(map, OSM_GPS_MAP_KEY_RIGHT, GDK_KEY_Right);
 
 	this->paused = false;
-	this->builder->get_widget("drawingImage", this->drawingImage);
+	this->builder->get_widget("drawingImage", this->cameraViewport);
 	this->builder->get_widget("closeButton", this->closeButton);
 	this->builder->get_widget("resumePauseButton", this->resumePauseButton);
 	this->builder->get_widget("indicator", this->indicator);
+	this->builder->get_widget("weatherIndicator", this->weatherIndicator);
 	this->builder->get_widget("telemetryField", this->telemetryField);
 	this->builder->get_widget("weatherInfo", this->weatherInfoField);
-	this->builder->get_widget("restartButton", this->resartButton);
+	this->builder->get_widget("restartButton", this->restartButton);
+	this->builder->get_widget("map_box", this->map_box);
+
 	telemetryFieldBuffer = telemetryField->get_buffer();
 	weatherInfoBuffer = weatherInfoField->get_buffer();
-	this->closeButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
+
+	this->restartButton->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
+	this->closeButton->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::closeWindow));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::pauseResumeCamera));
 	this->resumePauseButton->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::restartServer));
-
 	this->telemetryField->set_size_request(240, -1);
+	weatherIndicator->set_size_request(100, 100);
+	weatherInfoField->set_size_request(140, -1);
 	indicator->set_size_request(240, 240);
 
-	this->drawingImage->set("images/image_not_found.png");
+	this->cameraViewport->set("images/image_not_found.png");
 	this->telemetryField->get_buffer()->set_text("No telemetry was received");
-
-
+	this->weatherInfoField->get_buffer()->set_text("No weather info was received");
 
 	// initialize variables
 	imgAIBack = cairo_image_surface_create_from_png("images/ai_back.png");
@@ -56,15 +99,21 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 	imgAIRing = cairo_image_surface_create_from_png("images/ai_ring.png");
 	imgASIFace = cairo_image_surface_create_from_png("images/asi_face.png");
 	imgASIHand = cairo_image_surface_create_from_png("images/asi_hand.png");
+	imgWHBack = cairo_image_surface_create_from_png("images/wh_back.png");
+	imgWHHand = cairo_image_surface_create_from_png("images/wh_hand.png");
 
-	/* indicator-> */
 	g_signal_connect((GtkWidget*)indicator->gobj(), "draw", G_CALLBACK(MainWindow::drawIndicator), NULL);
-	/* g_signal_connect(G_OBJECT(artHorizon), "draw", G_CALLBACK(drawIndicator), NULL); */
-	/* gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(artHorizon), */
-	/* 		sigc::mem_fun(*this, &MainWindow::closeWindow), */
-	/* 		NULL, NULL); */
+	g_signal_connect((GtkWidget*)weatherIndicator->gobj(), "draw", G_CALLBACK(MainWindow::drawWeatherIndicator), NULL);
+
 	indicator->queue_draw();
+	weatherIndicator->queue_draw();
 	/* updateAttitudeIndicator(); */
+	gtk_box_pack_start(GTK_BOX(gtk_builder_get_object(builder->gobj(), "map_box")), GTK_WIDGET(map), TRUE, TRUE, 0);
+
+	/* gtk_box_pack_start(map_box->gobj(), GTK_WIDGET(map), TRUE, TRUE, 0); */
+	OsmGpsMapTrack* gpstrack = osm_gps_map_gps_get_track(map);
+	gtk_widget_set_size_request(GTK_WIDGET(map), 300, -1);
+	gtk_widget_show_all(GTK_WIDGET(map));
 }
 
 MainWindow::~MainWindow()
@@ -94,59 +143,66 @@ void MainWindow::closeWindow()
 void MainWindow::updateImage(cv::Mat& frame)
 {
 	if (!frame.empty()) {
-		float scaleX = (float)this->drawingImage->get_height() / frame.rows;
-		float scaleY = (float)this->drawingImage->get_width() / frame.cols;
+		float scaleX = (float)this->cameraViewport->get_height() / frame.rows;
+		float scaleY = (float)this->cameraViewport->get_width() / frame.cols;
 
 		float scaleFactor = (scaleX > scaleY ? scaleY : scaleX);
 		Glib::RefPtr<Gdk::Pixbuf> bb = Gdk::Pixbuf::create_from_data(frame.data, Gdk::COLORSPACE_RGB, false, 8, frame.cols, frame.rows, frame.step);
-		this->drawingImage->set(bb->scale_simple(bb->get_width() * scaleFactor, bb->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR));
-		this->drawingImage->queue_draw();
+		this->cameraViewport->set(bb->scale_simple(bb->get_width() * scaleFactor, bb->get_height() * scaleFactor, (Gdk::InterpType)GDK_INTERP_BILINEAR));
+		this->cameraViewport->queue_draw();
 	}
 }
 
-bool MainWindow::updateTelemeryInfoOnscreen(onScreenTelemetryUpdate telmetryBufferUpdate)
+bool MainWindow::textBufferUpdate(textBufferUpdateStruct data)
 {
-	telmetryBufferUpdate.buffer->set_text(telmetryBufferUpdate.text);
-	telmetryBufferUpdate.indicator->queue_draw();
+	data.buffer->set_text(data.text);
 	return true;
 }
 
-bool MainWindow::updateWeatherInfoOnscreen(onScreenWeatherInfoUpdate onScreenWeatherInfoUpdate)
+void MainWindow::updateWeather(weatherStruct data)
 {
-	onScreenWeatherInfoUpdate.buffer->set_text(onScreenWeatherInfoUpdate.text);
-	return true;
+	weather = data;
+	weatherIndicator->queue_draw();
+	stringstream ss;
+	ss << setprecision(3)
+		 << "Temperature: " << weather.temperature << "°C\n"
+		 << "Wind speed: " << weather.windSpeed << "%\n"
+		 << "Wind direction: " << weather.windDirection << "°\n"
+		 << "Condition: " << weather.condition;
+
+	g_idle_add(G_SOURCE_FUNC(textBufferUpdate), new textBufferUpdateStruct(weatherInfoBuffer, ss.str()));
 }
 
-
-void MainWindow::updateData(string AirpaceInfo){
-	g_idle_add(G_SOURCE_FUNC(updateWeatherInfoOnscreen), new onScreenWeatherInfoUpdate(weatherInfoBuffer, AirpaceInfo));
-}
-
-void MainWindow::updateData(pTeleGen data, mutex* dataMutex)
+void MainWindow::updateTelemetry(pTeleGen data, mutex* dataMutex)
 {
 	stringstream ss;
 	{
 		lock_guard<mutex> m(*dataMutex);
-		ss
-		<< "-----------------------\n"
-		<< "\nyaw x:   " + to_string(data.att.yaw)
-		<< "\npitch y: " + to_string(data.att.pitch)
-		<< "\nroll y:  " + to_string(data.att.roll)
-		<< "\n-----------------------\n"
-		<< "\nvoltage: " + to_string(data.batt.getVoltage)
-		<< "\ncurrent: " + to_string(data.batt.getCurrent)
-		<< "\ntemp:    " + to_string(data.att.temp)
-		<< "\n-----------------------\n"
-		<< "\nGPS NOS: " + to_string(data.gps.numberOfSatelites)
-		<< "\nlat:     " + to_string(data.gps.latitude)
-		<< "\nlot:     " + to_string(data.gps.longitude)
-		<< "\ng speed: " + to_string(data.gps.groundSpeed);
+		ss << setprecision(5)
+			 << "-----------------------\n"
+			 << "\nYaw x:   " << data.att.yaw
+			 << "\nPitch y: " << data.att.pitch
+			 << "\nRoll y:  " << data.att.roll
+			 << "\n-----------------------\n"
+			 << "\nVoltage: " << data.batt.getVoltage
+			 << "\nCurrent: " << data.batt.getCurrent
+			 << "\nTemp:    " << data.att.temp
+			 << "\n-----------------------\n"
+			 << "\nGPS NOS: " << data.gps.numberOfSatelites
+			 << "\nLat:     " << data.gps.latitude
+			 << "\nLot:     " << data.gps.longitude
+			 << "\nG speed: " << data.gps.groundSpeed;
 
 		this->pitch = data.att.pitch;
 		this->roll = data.att.roll;
 		this->speed = data.gps.groundSpeed;
+		if (!trackFlightPath)
+			osm_gps_map_gps_clear(map);
+		osm_gps_map_gps_add(map, data.gps.latitude, data.gps.longitude, data.gps.heading);
 	}
-	g_idle_add(G_SOURCE_FUNC(updateTelemeryInfoOnscreen), new onScreenTelemetryUpdate(telemetryFieldBuffer, Glib::RefPtr<Gtk::DrawingArea>(indicator), ss.str()));
+
+	indicator->queue_draw();
+	g_idle_add(G_SOURCE_FUNC(textBufferUpdate), new textBufferUpdateStruct(telemetryFieldBuffer, ss.str()));
 }
 
 void MainWindow::displayError(pTeleErr error)
@@ -167,6 +223,32 @@ void MainWindow::displayError(pTeleErr error)
 			dialog);
 
 	gtk_widget_show_all(dialog); // NOTE: warning suppresed
+}
+
+void MainWindow::drawWeatherIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
+{
+	guint width, height;
+	GtkStyleContext* context;
+
+	context = gtk_widget_get_style_context(widget);
+
+	width = gtk_widget_get_allocated_width(widget);
+	height = gtk_widget_get_allocated_height(widget);
+
+	gtk_render_background(context, cr, 0, 0, width, height);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_set_source_surface(cr, imgWHBack, 0, 0);
+	cairo_paint(cr);
+	cairo_translate(cr, 50, 50);
+	cairo_rotate(cr, ((float)weather.windDirection) / 180 * M_PI);
+	cairo_translate(cr, -50, -50);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_set_source_surface(cr, imgWHHand, 0, 0);
+	cairo_paint(cr);
+
+	cairo_fill(cr);
 }
 
 void MainWindow::drawIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
@@ -251,17 +333,17 @@ void MainWindow::drawAirspeedIndicator(GtkWidget* widget, cairo_t* cr, gpointer 
 	//  * optimal speed (?)
 	//  * never exceed speed
 	double angle = 36;
-	if ( speed < 20 )
-			angle += 3.6 * speed;
-	else if ( speed < 40 )
-			angle += 74 + 4 * ( speed - 20.0 );
-	else if ( speed < 60 )
-			angle += 154.0 + 3.8 * ( speed - 40.0 );
+	if (speed < 20)
+		angle += 3.6 * speed;
+	else if (speed < 40)
+		angle += 74 + 4 * (speed - 20.0);
+	else if (speed < 60)
+		angle += 154.0 + 3.8 * (speed - 40.0);
 	else
-			angle += 230.0 + 4 * ( speed - 60.0 );
+		angle += 230.0 + 4 * (speed - 60.0);
 
 	cairo_translate(cr, 120, 120);
-	cairo_rotate(cr, angle/180*M_PI);
+	cairo_rotate(cr, angle / 180 * M_PI);
 	cairo_translate(cr, -120, -120);
 
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
@@ -269,25 +351,37 @@ void MainWindow::drawAirspeedIndicator(GtkWidget* widget, cairo_t* cr, gpointer 
 	cairo_paint(cr);
 
 	cairo_fill(cr);
-
-
 }
 void MainWindow::drawHorizonTailSituationIndicator(GtkWidget* widget, cairo_t* cr, gpointer data)
 {
 }
 
+void MainWindow::toggleMap()
+{
+	if (showingMap) {
+		showingMap = false;
+		gtk_widget_hide(GTK_WIDGET(map));
+	} else {
+		showingMap = true;
+		gtk_widget_show_all(GTK_WIDGET(map));
+	}
+}
 
+void MainWindow::toggleTracking()
+{
+	trackFlightPath = !trackFlightPath;
+}
 
 void MainWindow::switchIndicator(bool back)
 {
 	if (back) {
-		if(currentIndicator== 0) {
+		if (currentIndicator == 0) {
 			currentIndicator = NUMBER_OF_INDICATORS - 1;
 		} else {
 			currentIndicator--;
 		}
 	} else {
-		if(currentIndicator == NUMBER_OF_INDICATORS-1) {
+		if (currentIndicator == NUMBER_OF_INDICATORS - 1) {
 			currentIndicator = 0;
 		} else {
 			currentIndicator++;
@@ -322,17 +416,20 @@ int ControllerUIBridge::update(ControlSurface cs, int x, int y)
 
 	switch (cs) {
 	case D_PAD: {
-		if ((std::chrono::steady_clock::now()-lastChange).count() < 200000000)
+		if ((std::chrono::steady_clock::now() - lastChange).count() < 200000000)
 			return 0;
 		lastChange = std::chrono::steady_clock::now();
 		if (x == LOW_CONTROLLER_AXIS_VALUE)
 			mainWindow->switchIndicator(true);
 		if (x == MAX_CONTROLLER_AXIS_VALUE)
 			mainWindow->switchIndicator(false);
+		if (y == LOW_CONTROLLER_AXIS_VALUE)
+			mainWindow->toggleMap();
+		if (y == MAX_CONTROLLER_AXIS_VALUE)
+			mainWindow->toggleTracking();
 	} break;
 	default:
 		break;
 	}
 	return 0;
 }
-
