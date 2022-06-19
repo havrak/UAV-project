@@ -12,6 +12,9 @@ mutex AirmapProvider::airmapProviderMutex;
 
 AirmapProvider::AirmapProvider()
 {
+	airspaceObjects.push_back(make_unique<airspaceStruct>(UNKNOWN, "No information about current flight zone"));
+	weather.status = false;
+
 }
 
 AirmapProvider* AirmapProvider::GetInstance()
@@ -29,8 +32,8 @@ AirmapProvider* AirmapProvider::GetInstance()
 void AirmapProvider::updateInfo()
 {
 	while (update) {
-		cout << "AirmapProvider::updateInfo()" << endl;
-		getFlightZoneInfo();
+		fetchWeatherInfo();
+		fetchAirspaceInfo();
 		this_thread::sleep_for(chrono::milliseconds(1500));
 	}
 };
@@ -41,13 +44,48 @@ void AirmapProvider::setupFetching(string key)
 	updateInfoThread = thread(&AirmapProvider::updateInfo, this);
 }
 
-void AirmapProvider::getWeatherInfo(){
+void AirmapProvider::fetchWeatherInfo()
+{
+	pair<double, double> position = DroneTelemetry::GetInstance()->getGPSPosition();
+	stringstream ss;
+	using namespace boost::posix_time;
+	ptime t = microsec_clock::universal_time();
 
+	ss << setprecision(12)
+		 << APIurl
+		 << "advisory/v2/"
+		 << "weather/"
+		 << "?longitude=" << position.second
+		 << "&latitude=" << position.first
+		 << "&start=" << to_iso_extended_string(t) << "Z"
+		 << "&end=" << to_iso_extended_string(t) << "Z";
+
+	auto r = cpr::Get(cpr::Url { ss.str() }, cpr::Header { { "X-API-Key", apiKey } });
+
+	{
+		const std::lock_guard<std::mutex> lock(weatherMutex);
+		try {
+			json parsedData = json::parse(r.text);
+
+			if (parsedData.empty() || parsedData["status"].get<string>().compare("fail") == 0) {
+				weather.status = false;
+			}
+			weather.status = true;
+			weather.condition = parsedData["data"]["weather"]["condition"].get<string>();
+			weather.temperature = parsedData["data"]["weather"]["temperature"].get<double>();
+			weather.windDirection = parsedData["data"]["weather"]["wind"]["heading"].get<int>();
+			weather.windSpeed = parsedData["data"]["weather"]["wind"]["speed"].get<double>();
+			weather.timestamp = to_iso_extended_string(t);
+		} catch (exception& e) {
+			weather.status = false;
+			weather.timestamp = to_iso_extended_string(t);
+		}
+	}
+	return;
 }
 
-void AirmapProvider::getFlightZoneInfo()
+void AirmapProvider::fetchAirspaceInfo()
 {
-	// NOTE: blocking should be called somewhere away, if possible get periodically all info
 	pair<double, double> position = DroneTelemetry::GetInstance()->getGPSPosition();
 
 	const double multiplier1 = 0.5 * searchRadius;
@@ -59,6 +97,7 @@ void AirmapProvider::getFlightZoneInfo()
 			 << "lon" << position.second << "\n";
 	ss << setprecision(12)
 		 << APIurl
+		 << "airspace/v2/"
 		 << "search?geometry="
 		 << "%7B"
 		 << "%22type%22:%22Polygon%22,"
@@ -85,40 +124,65 @@ void AirmapProvider::getFlightZoneInfo()
 	/* cout << "URL: "<< ss.str() << "\n\nKEY: " << apiKey << endl; */
 	auto r = cpr::Get(cpr::Url { ss.str() }, cpr::Header { { "X-API-Key", apiKey } });
 
-	cout << "Response: " << r.text << endl;
+	{
+		const std::lock_guard<std::mutex> lock(airspaceObjectsMutex);
+		try {
+			json parsedData = json::parse(r.text);
 
-	json parsedData = json::parse(r.text);
-	airspaceObjects.clear();
-	if(parsedData.empty() || parsedData["status"].get<string>().compare("fail") == 0)
-		airspaceObjects.push_back(make_unique<airspaceStruct>(UNKNOWN, "No information about current flight zone"));
+			if (parsedData.empty() || parsedData["status"].get<string>().compare("fail") == 0) {
+				airspaceObjects.push_back(make_unique<airspaceStruct>(UNKNOWN, "No information about current flight zone"));
+				return;
+			}
 
+			for (auto& i : parsedData["data"].items()) {
+				cout << i.value() << endl;
+				if (stringToAirspaceType.count(i.value()["type"].get<string>()))
+					continue;
+				airspaceObjects.push_back(make_unique<airspaceStruct>(stringToAirspaceType.at(i.value()["type"].get<string>()), i.value()["name"].get<string>()));
 
-	for (auto& i : parsedData["data"].items()) {
-		if(stringToAirspaceType.count(i.value()["type"].get<string>())) continue;
-		airspaceObjects.push_back(make_unique<airspaceStruct>(stringToAirspaceType.at(i.value()["type"].get<string>()), i.value()["name"].get<string>()));
-
-		switch (airspaceObjects.back().get()->type) {
-		case AIRPORT: // airport
-			{}
-			break;
-		case PARK: // park
-			{}
-			break;
-		case POWER_PLANT: // power_plant
-			{}
-			break;
-		case EMERGENCY: // emergency
-			{}
-			break;
-		case CONTROLLED_AIRSPACE: // controlled_airspace
-			{}
-			break;
-		case TFR: // tfr
-			{}
-			break;
-		default:
-			break;
+				switch (airspaceObjects.back().get()->type) {
+				case AIRPORT:
+					airspaceObjects.back().get()->additionalInfo = i.value()["name"].get<string>() + "(" + i.value()["icao"].get<string>() + ")";
+					break;
+				case PARK:
+					airspaceObjects.back().get()->additionalInfo = i.value()["name"].get<string>();
+					break;
+				case POWER_PLANT:
+					airspaceObjects.back().get()->additionalInfo = i.value()["name"].get<string>() + "(" + i.value()["properties"]["tech"].get<string>() + ")";
+					break;
+				case EMERGENCY:
+					break;
+				case CONTROLLED_AIRSPACE:
+					airspaceObjects.back().get()->additionalInfo = i.value()["name"].get<string>();
+					break;
+				case TFR:
+					airspaceObjects.back().get()->additionalInfo = i.value()["properties"]["notam_reason"].get<string>();
+					break;
+				default:
+					break;
+				}
+			}
+		} catch (exception& e) {
+			airspaceObjects.push_back(make_unique<airspaceStruct>(UNKNOWN, "No information about current flight zone"));
 		}
-
 	}
+
+	return;
+}
+
+weatherStruct AirmapProvider::getWeather()
+{
+	const std::lock_guard<std::mutex> lock(weatherMutex);
+	return weather.copy();
+}
+
+vector<unique_ptr<airspaceStruct>> AirmapProvider::getAirspaceInfo()
+{
+	const std::lock_guard<std::mutex> lock(airspaceObjectsMutex);
+	vector<unique_ptr<airspaceStruct>> toReturn;
+
+	toReturn.reserve(airspaceObjects.size());
+	memcpy(&toReturn, &airspaceObjects, sizeof(airspaceObjects));
+
+	return toReturn;
 }

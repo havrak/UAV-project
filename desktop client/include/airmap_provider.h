@@ -15,6 +15,7 @@
 #include <sstream>
 #include <iomanip>
 #include <nlohmann/json.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using json = nlohmann::json;
 using namespace std;
@@ -42,8 +43,19 @@ struct airspaceStruct{
 };
 
 struct weatherStruct{
+	bool status; // false -> no weather data
 	double windSpeed; // m/s
 	int windDirection; // in degrees
+	string condition;
+	double temperature; // in Celsius
+	string timestamp;
+
+	weatherStruct() : status(false), windSpeed(0), windDirection(0), condition(""), temperature(0), timestamp(""){}
+	weatherStruct(bool status, double windSpeed, int windDirection, string condition, double temperature, string timestamp) : status(status), windSpeed(windSpeed), windDirection(windDirection), condition(condition), temperature(temperature),timestamp(timestamp){}
+	weatherStruct copy(){
+		return weatherStruct(status, windSpeed, windDirection, condition, temperature, timestamp);
+	}
+
 };
 
 /**
@@ -58,14 +70,35 @@ class AirmapProvider{
 		static mutex airmapProviderMutex;
 		thread updateInfoThread;
 		bool update = true;
-		char* APIurl =  "https://api.airmap.com/airspace/v2/";
+		char* APIurl =  "https://api.airmap.com/";
 		string apiKey = "";
 		double searchRadius = 0.00017; // cca 200meters
+
+
+		mutex airspaceObjectsMutex;
 		vector<unique_ptr<airspaceStruct>> airspaceObjects;
+
+		mutex weatherMutex;
+		weatherStruct weather;
 
 
 		AirmapProvider();
 		void updateInfo();
+
+		/**
+		 * updates information about current weather
+		 */
+		void fetchWeatherInfo();
+
+		/**
+		 * upddates information about airspace (formed by drawing dodecagon) around the drone
+		 * size of search airspace is dictated by searchRadius
+		 *
+		 * As informational value of airmap.com data for drone pilot in Europe is questionable,
+		 * logic is rather rudimentary
+		 */
+		void fetchAirspaceInfo();
+
 
 	public:
 		/**
@@ -79,20 +112,19 @@ class AirmapProvider{
 		 */
 		void setupFetching(string key);
 
+		/**
+		 * returns current weather information
+		 *
+		 * @return weatherStruct - structure with info about weather
+		 */
+    weatherStruct getWeather();
 
 		/**
-		 * updates information about current weather
+		 * returns list of all object in current airspace
+		 *
+		 * @return vector<unique_ptr<airspaceStruct>> - list of airspaceStructs
 		 */
-		void getWeatherInfo();
-
-		/**
-		 * upddates information about airspace (formed by drawing dodecagon) around the drone
-		 * size of search airspace is dictated by searchRadius
-		 */
-		void getFlightZoneInfo();
-
-
-
+		vector<unique_ptr<airspaceStruct>>	 getAirspaceInfo();
 };
 
 #endif /* !AIRSPACE_INFO_PROVIDER_H */
