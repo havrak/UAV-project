@@ -8,14 +8,9 @@
 #ifndef TELEMETRY_H
 #define TELEMETRY_H
 
-#include "battery_interface.h"
-#include "gps_interface.h"
-#include "imu_interface.h"
 #include "protocol_spec.h"
 
 using namespace std;
-
-// will handle prepping of all telemetry -- especially prepearing packets to send
 
 /**
  * class that aggregates all of drones telemetry
@@ -24,7 +19,6 @@ class Telemetry {
 	private:
 	static Telemetry* telemetry;
 	static mutex telemetryMutex;
-	int imuAddress, inaAddress, pca9685Address =0;
 
 	Telemetry();
 
@@ -92,35 +86,35 @@ class Telemetry {
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processGeneralTelemetryRequest(const client cli);
+	bool processGeneralTelemetryRequest(const Client cli);
 
 	/**
 	 * fills in pTeleATTGPS struct and sends it to client
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processAttGPSRequest(const client cli);
+	bool processAttGPSRequest(const Client cli);
 
 	/**
 	 * fills in pTeleBATT struct and sends it to client
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processBatteryRequest(const client cli);
+	bool processBatteryRequest(const Client cli);
 
 	/**
 	 * fills in pTelePWM struct and sends it to client
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processPWMRequest(const client cli);
+	bool processPWMRequest(const Client cli);
 
 	/**
 	 * fills in pTeleIO struct and sends it to client
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processIORequest(const client cli);
+	bool processIORequest(const Client cli);
 };
 
 #endif /* !TELEMETRY_H */

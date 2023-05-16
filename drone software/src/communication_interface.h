@@ -47,8 +47,6 @@ using namespace std;
 class CommunicationInterface {
 	private:
 	struct sockaddr_in serv_addr;
-	//, cli_addr;
-	// int n;
 	int sockfd, newsockfd;
 
 	// sets do to
@@ -59,7 +57,7 @@ class CommunicationInterface {
 	int serverPort = 8066;
 
 	socklen_t clientLength;
-	list<client> clients;
+	list<Client> clients;
 	thread managementThread;
 	bool process = true;
 	const bool debug = false;
@@ -81,7 +79,7 @@ class CommunicationInterface {
 	 *
 	 * @param client cli - client to be read from
 	 */
-	bool receiveDataFromClient(client cli);
+	bool receiveDataFromClient(Client cli);
 
 	/**
 	 * tries to accept new client
@@ -95,7 +93,7 @@ class CommunicationInterface {
 	 *
 	 * @param client cli - client which structure should be cleaned
 	 */
-	void clearClientStruct(client cli);
+	void clearClientStruct(Client cli);
 
 	/**
 	 * Move reading header to point to start of new message
@@ -104,7 +102,7 @@ class CommunicationInterface {
 	 * @param client cli - client for which reading has to be fixed
 	 * @return bool - true if terminator was found
 	 */
-	bool fixReceiveData(client cli);
+	bool fixReceiveData(Client cli);
 
 
 	public:
@@ -141,7 +139,7 @@ class CommunicationInterface {
 	 *
 	 * @param client cli - client to be removed
 	 */
-	void removeClient(client cli);
+	void removeClient(Client cli);
 
 	/**
 	 * sends data to client
@@ -166,7 +164,7 @@ class CommunicationInterface {
 	 * @param int errCode - error code
 	 * @param char* errMessage - char array with error message, will be cropped to 60 characters
 	 */
-	void sendErrorMessage(client cli, int errCode, char* errMessage);
+	void sendErrorMessage(Client cli, int errCode, char* errMessage);
 
 	/**
 	 * sends error message to all clients
@@ -186,8 +184,6 @@ class CommunicationInterface {
 	 */
 	void shutdown();
 
-	// TODO: move these methods into solo group, outside class COMMUNICATION_INTERFACE
-
 	/**
 	 * method used by thread to periodically update data in ServoControl control
 	 * and send telemetry to all clients
@@ -199,11 +195,9 @@ class CommunicationInterface {
 	 *
 	 * @pram client cli - client to be pinged
 	 */
-	void pingClient(client cli);
+	void pingClient(Client cli);
 
 	/**
-	 * NOTE: this method shouldn't be here and will be moved
-	 *
 	 * Method used to processes special control
 	 *
 	 * @param ProcessingStructure ps - processesing structure with special control stored

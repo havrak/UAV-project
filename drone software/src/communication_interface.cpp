@@ -6,7 +6,6 @@
  */
 
 #include "communication_interface.h"
-#include "imu_interface.h"
 #include "protocol_spec.h"
 #include "servo_control.h"
 #include "telemetry.h"
@@ -80,14 +79,15 @@ CommunicationInterface* CommunicationInterface::GetInstance()
 
 void CommunicationInterface::cleanUp()
 {
-	for (client c : clients) {
+	for (Client c : clients) {
 		close(c.fd);
 		c.fd = -1;
 	}
 	close(sockfd);
 }
 
-void CommunicationInterface::restart(){
+void CommunicationInterface::restart()
+{
 	process = false;
 	checkForNewDataThread.join();
 	managementThread.join();
@@ -97,7 +97,6 @@ void CommunicationInterface::restart(){
 	ProcessingThreadPool::GetInstance()->restart();
 	SendingThreadPool::GetInstance()->restart();
 }
-
 
 void CommunicationInterface::shutdown()
 {
@@ -121,7 +120,7 @@ bool CommunicationInterface::buildFdSets()
 	FD_SET(STDIN_FILENO, &except_fds);
 	FD_SET(sockfd, &except_fds);
 
-	for (client c : clients)
+	for (Client c : clients)
 		if (c.fd != -1) {
 			FD_SET(c.fd, &read_fds);
 			FD_SET(c.fd, &except_fds);
@@ -131,7 +130,7 @@ bool CommunicationInterface::buildFdSets()
 	return true;
 }
 
-void CommunicationInterface::clearClientStruct(client cli)
+void CommunicationInterface::clearClientStruct(Client cli)
 {
 	cli.curIndexInBuffer = 0; // position where we have left off
 	cli.curMessageType = 0;
@@ -140,19 +139,12 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
-void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
+void CommunicationInterface::removeClient(Client cli)
 {
 	close(cli.fd);
-	for (client c : clients) {
-		if (c.fd == cli.fd) {
-			clearClientStruct(c);
-			cli.fd = -1;
-		}
-	}
 }
 
-// NOTE: will only move socket to last sequence of terminator and valid header data
-bool CommunicationInterface::fixReceiveData(client cli)
+bool CommunicationInterface::fixReceiveData(Client cli)
 {
 	unsigned char buffer[5];
 	bool receivingData = true;
@@ -170,7 +162,7 @@ bool CommunicationInterface::fixReceiveData(client cli)
 	return false;
 }
 
-bool CommunicationInterface::receiveDataFromClient(client cli)
+bool CommunicationInterface::receiveDataFromClient(Client cli)
 {
 	ssize_t bytesReceived = 0;
 
@@ -272,8 +264,8 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), MSG_NOSIGNAL);
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
-				if(errno== EPIPE)
-					removeClient(client(ss.cfd, ss.cMutex));
+				if (errno == EPIPE)
+					removeClient(Client(ss.cfd, ss.cMutex));
 
 				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
 				return false;
@@ -292,7 +284,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 bool CommunicationInterface::sendDataToAll(SendingStructure ss)
 {
 	bool toReturn = true;
-	for (client c : clients) {
+	for (Client c : clients) {
 		if (c.fd != -1) {
 			ss.cfd = c.fd;
 			ss.cMutex = c.cMutex;
@@ -309,7 +301,7 @@ void CommunicationInterface::checkActivityOnSocket()
 	while (process) {
 
 		fd = sockfd;
-		for (client c : clients)
+		for (Client c : clients)
 			if (c.fd > fd)
 				fd = c.fd;
 		buildFdSets();
@@ -319,6 +311,12 @@ void CommunicationInterface::checkActivityOnSocket()
 		switch (state) {
 		case -1:
 			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
+			for (Client c : clients) {
+				if (FD_ISSET(c.fd, &except_fds)) {
+					cout << "removing Client " << c.fd << endl;
+					removeClient(c);
+				}
+			}
 			break;
 			exit(127);
 		case 0:
@@ -328,16 +326,16 @@ void CommunicationInterface::checkActivityOnSocket()
 			if (FD_ISSET(sockfd, &read_fds)) // we will drop first packet by this method
 				newClientConnect();
 
-			for (client c : clients) {
+			for (Client c : clients) {
 				if (FD_ISSET(c.fd, &read_fds)) {
 					receiveDataFromClient(c);
 				}
 				if (FD_ISSET(c.fd, &except_fds)) {
-					cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client  " << c.fd << " failed with exception\n";
+					cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | Client  " << c.fd << " failed with exception\n";
 					removeClient(c);
 				}
 				/* if(FD_ISSET(c.fd, &write_fds)){ */
-				/* 	cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client " << c.fd << " is ready to be written to\n"; */
+				/* 	cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | Client " << c.fd << " is ready to be written to\n"; */
 				/* } */
 			}
 		}
@@ -358,20 +356,17 @@ int CommunicationInterface::newClientConnect()
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
 
 	cout << "COMMUNICATION_INTERFACE | newClientConnect | ip: " << clientIPV4Address << ":" << clientAddress.sin_port << " fd:" << clientfd << "\n";
-	clients.push_back(client(clientfd, clientAddress, new mutex));
+	clients.push_back(Client(clientfd, clientAddress, new mutex));
 	return clientfd;
 }
 
 void CommunicationInterface::manage()
 {
 	while (process) {
-		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
+		Telemetry::GetInstance()->processGeneralTelemetryRequest(Client(-1, 0));
 		// NOTE: this should not be here
 		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
 		// this fix is only temporary, gpio library shouldn't share this problem
-		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
-		/* this_thread::sleep_for(chrono::milliseconds(100)); */
-		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
 		this_thread::sleep_for(chrono::milliseconds(500));
 	}
 }
@@ -411,21 +406,18 @@ bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 
 void CommunicationInterface::sendErrorMessageToAll(int errCode, char* errMessage)
 {
-	sendErrorMessage(client(-1, 0), errCode, errMessage);
+	sendErrorMessage(Client(-1, 0), errCode, errMessage);
 }
 
-void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* errMessage)
+void CommunicationInterface::sendErrorMessage(Client cli, int errCode, char* errMessage)
 {
-	/* if(logOn){ */
-	/* 	// TODO: log errors into file */
-	/* } */
 	pTeleErr err(errCode, errMessage);
 	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_ERR, 0x04, sizeof(err));
 	memcpy(ss.getMessageBuffer(), &err, sizeof(err));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
-void CommunicationInterface::pingClient(client cli)
+void CommunicationInterface::pingClient(Client cli)
 {
 	SendingStructure ss(cli.fd, cli.cMutex, P_PING, 0x01, 1);
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
@@ -435,13 +427,17 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 {
 	pConSpc pc;
 	memcpy(&pc, ps.getMessageBuffer(), ps.messageSize);
+	cout << "Valule: " << pc.cs << "\n";
 	switch (pc.cs) {
 	case X:
-		ImuInterface::GetInstance()->resetOrientation();
+		//ImuInterface::GetInstance()->resetOrientation();
+		break;
 	case Y:
-		ImuInterface::GetInstance()->resetOrientation();
-		ServoControl::GetInstance()->togglePIDController();
+		//ImuInterface::GetInstance()->resetOrientation();
+		//ServoControl::GetInstance()->togglePIDController();
+		break;
 	case A:
+		break;
 	case B:
 		break;
 	default:
@@ -452,15 +448,16 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 /*-----------------------------------
 // ProcessingThreadPool section
 ----------------------------------**/
-void ProcessingThreadPool::restart(){
+void ProcessingThreadPool::restart()
+{
 	endThreadPool();
 	process = true;
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
 	controlThread = thread(&ProcessingThreadPool::controlWorker, this);
- 	queue<ProcessingStructure>().swap(workQueue);
- 	deque<ProcessingStructure>().swap(controlQueue);
- 	deque<clock_t>().swap(controlQueueTimestamps);
+	queue<ProcessingStructure>().swap(workQueue);
+	deque<ProcessingStructure>().swap(controlQueue);
+	deque<clock_t>().swap(controlQueueTimestamps);
 }
 
 void ProcessingThreadPool::endThreadPool()
@@ -485,7 +482,7 @@ void ProcessingThreadPool::worker()
 			ps = &workQueue.front();
 			workQueue.pop();
 		}
-		client tmp(ps->cfd, ps->cMutex);
+		Client tmp(ps->cfd, ps->cMutex);
 		switch (ps->messageType) {
 		case P_PING: // ping
 			CommunicationInterface::GetInstance()->pingClient(tmp);
@@ -525,7 +522,7 @@ void ProcessingThreadPool::worker()
 			break;
 		case P_TELE_ERR: // general error message
 			// NOTE: do we care if clients sends an error,
-			cerr << "ProcessingThreadPool | worker | client send an error \n";
+			cerr << "ProcessingThreadPool | worker | Client send an error \n";
 			break;
 		}
 		// here we process the request;
@@ -572,12 +569,13 @@ void ProcessingThreadPool::addJob(ProcessingStructure ps)
 // SendingThreadPool section
 ----------------------------------**/
 
-void SendingThreadPool::restart(){
+void SendingThreadPool::restart()
+{
 	endThreadPool();
 	process = true;
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&SendingThreadPool::worker, this));
- 	queue<SendingStructure>().swap(workQueue);
+	queue<SendingStructure>().swap(workQueue);
 }
 
 void SendingThreadPool::endThreadPool()
@@ -614,4 +612,3 @@ void SendingThreadPool::scheduleToSend(SendingStructure ss)
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
-

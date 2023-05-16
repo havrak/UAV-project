@@ -115,6 +115,7 @@
               <object class="GtkImage" id="drawingImage">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
+                <property name="margin-right">10</property>
                 <property name="stock">gtk-missing-image</property>
                 <property name="icon_size">0</property>
               </object>

@@ -57,7 +57,8 @@ const unsigned char terminator[5] = { 0x00, 0x00, 0xFF, 0xFF, 0xFF };
  * also used in SendingStructure, this is where constructor
  * with only fd and mutex comes into play
  */
-struct client {
+class Client {
+	public:
 	int fd = -1;
 	sockaddr_in adress;
 	mutex* cMutex;
@@ -70,10 +71,10 @@ struct client {
 	unsigned int short curMessageSize = 0;
 	// NOTE: cannot store data here as we should be process multiple request from client at the same time
 	unsigned char curMessageBuffer[MAX_MESSAGE_SIZE + 5]; // will be used to load message during reading, if whole message hasn't arrive reader will continu where it left
-	client(int fd, mutex* cMutex)
+	Client(int fd, mutex* cMutex)
 			: fd(fd)
 			, cMutex(cMutex) {};
-	client(int fd, sockaddr_in address, mutex* cMutex)
+	Client(int fd, sockaddr_in address, mutex* cMutex)
 			: fd(fd)
 			, adress(address)
 			, cMutex(cMutex) {};
@@ -93,6 +94,9 @@ class ProcessingStructure {
 	const unsigned char messagePriority = 0;
 	unsigned int short messageSize;
 	unsigned char* messageBuffer;
+	~ProcessingStructure(){
+		delete[] messageBuffer;
+	};
 	ProcessingStructure(int cfd, mutex* cMutex, unsigned char messageType, unsigned char messagePriority, unsigned int short messageBufferSize)
 			: cfd(cfd)
 			, cMutex(cMutex)
@@ -126,6 +130,9 @@ class SendingStructure {
 			, messagePriority(messagePriority)
 			, messageSize(messageBufferSize)
 			, messageBuffer(new unsigned char[messageBufferSize]) {};
+	~SendingStructure(){
+		delete[] messageBuffer;
+	};
 
 	unsigned char* getMessageBuffer()
 	{

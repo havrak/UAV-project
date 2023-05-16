@@ -6,7 +6,6 @@
  */
 
 #include "servo_control.h"
-#include "generic_PID.h"
 #include "protocol_spec.h"
 #include <bits/types/clock_t.h>
 #include <cmath>
@@ -63,7 +62,7 @@ bool ServoControl::attachPCA9685(int address){
 
 	/* if (debug) */
 	cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
-
+	return true;
 }
 
 void ServoControl::setPichAndRoll(float pitch, float roll)
@@ -186,50 +185,6 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 	return true;
 }
 
-bool ServoControl::pidController()
-{
-	// ImuInterface::GetInstance()->resetOrientation(); // we want to maintain current orientation
-
-	GenericPID pitchPID(7, 0.5, 2, 1);
-	GenericPID rollPID(7, 1, 3, 1);
-	while (pidOn) {
-
-		if (abs(pitch) < 1.5 && abs(roll) < 1) {
-			this_thread::sleep_for(chrono::milliseconds(100));
-			continue;
-		}
-		float pitchOutput = pitchPID.calculateOutput(pitch / 2);
-		float rollOutput = rollPID.calculateOutput(roll / 2);
-
-		switch (planeConfiguration) {
-		case V_SHAPE_TAIL_WING:
-			// roll
-			setAngleOfServo(vTail.leftFlapIndex, false, 45 - rollOutput);
-			setAngleOfServo(vTail.rightFlapIndex, true, 45 + rollOutput);
-			// pitch
-			setAngleOfServo(vTail.leftRuddervatorIndex, false, 45 - pitchOutput);
-			setAngleOfServo(vTail.rightRuddervatorIndex, true, 45 + pitchOutput);
-
-			break;
-		case STANDARD_TAIL_WING:
-
-			break;
-		}
-		this_thread::sleep_for(chrono::milliseconds(100));
-	}
-	return true;
-}
-
-bool ServoControl::togglePIDController()
-{
-	if ((pidOn = !pidOn) == true) {
-		pidControllerThread = thread(&ServoControl::pidController, this);
-	} else {
-		pidControllerThread.join();
-	}
-	return true;
-}
-
 float scalerX, scalerY;
 float tmpX, tmpY;
 int yaw, pitch;
@@ -237,8 +192,8 @@ int yaw, pitch;
 bool ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
-	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
-	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
+	vTail.leftRuddervator = (90- roll*0.8 + pitch*1.2) * MIXING_GAIN;
+	vTail.rightRuddervator = (roll*0.8 + pitch*1.2) * MIXING_GAIN;
 	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
 	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
 	setAngleOfServo(vTail.leftFlapIndex, false, roll);
@@ -255,11 +210,6 @@ bool ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), sizeof(control));
-	if (pidOn) {
-		adjustMainMotorSpeed(control);
-		return 0;
-	}
-
 
 	switch (controllAdjuster) {
 

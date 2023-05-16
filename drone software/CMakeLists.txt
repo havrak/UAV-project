@@ -39,10 +39,13 @@ add_library(inih STATIC
 target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 
-include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories(${WIRINGPI_INCLUDE_DIRS})
 
-file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
+file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/sensor_logic/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/takser_logic/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/takser_logic/sensor_implementations*.cpp")
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(

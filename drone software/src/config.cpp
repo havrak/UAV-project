@@ -30,8 +30,8 @@ bool Config::loadConfiguration()
 	imo = reader.Get("configuration", "imu_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 
 	imuAddress = reader.GetInteger("configuration", "imu_address", 0x50);
-	inaAddress = reader.GetInteger("configuration", "ina_address", 0x44);
-	pca9685Address = reader.GetInteger("configuration", "pca_address", 0x40);
+	inaAddress = reader.GetInteger("configuration", "ina_address", 0x40);
+	pca9685Address = reader.GetInteger("configuration", "pca_address", 0x41);
 	return true;
 }
 

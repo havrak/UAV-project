@@ -23,7 +23,6 @@
 #define MAX_CONTROLLER_AXIS_VALUE 65534
 #define LEVERAGE 20;
 
-/* #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h" */
 #include "../libraries/lib-pca9685/pca9685servo.h"
 
 #include <chrono>
@@ -120,12 +119,6 @@ private:
 	void setAngleOfServo(int channel, bool right, unsigned char angle);
 
 
-	// PID controller
-	bool pidOn = false;
-	/**
-	 * method run if pid controller is active
-	 */
-	bool pidController();
 
 
 protected:
@@ -190,13 +183,6 @@ public:
 	 */
 	void setPCA9865Status(bool status);
 
-	/**
-	 * start/stops PID controller
-	 * if PID is running acces standard
-	 * controll will not be processed
-	 */
-	bool togglePIDController();
-
 	unsigned int short getMainMotorMS();
 
 	/**
@@ -232,14 +218,6 @@ public:
 	 * @return int - 0 if processesing went well
 	 */
 	bool processMovementForStandart(pConStr  ps);
-
-	/**
-	 * sets pitch and roll value used by PID
-	 *
-	 * @param float pitch - new pitch value
-	 * @param float roll - new roll value
-	 */
-	void setPichAndRoll(float pitch, float roll);
 };
 
 

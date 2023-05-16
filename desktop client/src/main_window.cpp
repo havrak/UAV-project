@@ -112,7 +112,7 @@ MainWindow::MainWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>
 
 	/* gtk_box_pack_start(map_box->gobj(), GTK_WIDGET(map), TRUE, TRUE, 0); */
 	OsmGpsMapTrack* gpstrack = osm_gps_map_gps_get_track(map);
-	gtk_widget_set_size_request(GTK_WIDGET(map), 300, -1);
+	gtk_widget_set_size_request(GTK_WIDGET(map), 400, -1);
 	gtk_widget_show_all(GTK_WIDGET(map));
 }
 
@@ -166,7 +166,7 @@ void MainWindow::updateWeather(weatherStruct data)
 	stringstream ss;
 	ss << setprecision(3)
 		 << "Temperature: " << weather.temperature << "°C\n"
-		 << "Wind speed: " << weather.windSpeed << "%\n"
+		 << "Wind speed: " << weather.windSpeed << "m/s\n"
 		 << "Wind direction: " << weather.windDirection << "°\n"
 		 << "Condition: " << weather.condition;
 
@@ -198,7 +198,8 @@ void MainWindow::updateTelemetry(pTeleGen data, mutex* dataMutex)
 		this->speed = data.gps.groundSpeed;
 		if (!trackFlightPath)
 			osm_gps_map_gps_clear(map);
-		osm_gps_map_gps_add(map, data.gps.latitude, data.gps.longitude, data.gps.heading);
+		if (data.gps.latitude != 0 || data.gps.longitude != 0 || data.gps.heading != 0)
+			osm_gps_map_gps_add(map, data.gps.latitude, data.gps.longitude, data.gps.heading);
 	}
 
 	indicator->queue_draw();

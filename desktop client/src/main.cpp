@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
 	switch(config.getOperatingSystem()){
 		case LINUX:
-			ci = new LinuxControllerImplementation(config.getControllerType());
+			ci = (ControllerInterface*) new LinuxControllerImplementation(config.getControllerType());
 		default:
 			break;
 	}
