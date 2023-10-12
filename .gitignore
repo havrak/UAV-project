@@ -10,4 +10,5 @@ desktop client/#main_window.glade#
 desktop client/main_window.glade~
 desktop client/uav_desktop_control
 desktop client/libinih.a
+uav_project-backups
 git excluded

@@ -1,0 +1,70 @@
+(kicad_sch (version 20230121) (generator eeschema)
+
+  (uuid a8bf0924-b264-4c19-8c7e-9c0e131cacba)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (text "UAV Project\n" (at 189.23 190.5 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 2dcf0728-ab5b-41e9-9ec2-2ab8f1bd6894)
+  )
+
+  (sheet (at 16.51 111.76) (size 70.485 33.02) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 46d9e855-1ab1-4192-9cab-93e4258e1e2b)
+    (property "Sheetname" "Servo driver" (at 16.51 111.0484 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "servo_driver.kicad_sch" (at 16.51 145.3646 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "uav_project"
+        (path "/a8bf0924-b264-4c19-8c7e-9c0e131cacba" (page "3"))
+      )
+    )
+  )
+
+  (sheet (at 16.51 154.305) (size 70.485 38.735) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid a37df3ef-ef97-4895-80dd-f1dd3107828f)
+    (property "Sheetname" "Power managment" (at 16.51 153.5934 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "power_managment.kicad_sch" (at 16.51 193.6246 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "uav_project"
+        (path "/a8bf0924-b264-4c19-8c7e-9c0e131cacba" (page "2"))
+      )
+    )
+  )
+
+  (sheet (at 16.51 77.47) (size 70.485 26.035) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid cca59cde-6ab1-4762-8541-6f874c4d6e1b)
+    (property "Sheetname" "GPS module" (at 16.51 76.7584 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "gps_module.kicad_sch" (at 16.51 104.0896 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "uav_project"
+        (path "/a8bf0924-b264-4c19-8c7e-9c0e131cacba" (page "4"))
+      )
+    )
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
