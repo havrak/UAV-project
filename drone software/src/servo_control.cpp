@@ -62,7 +62,7 @@ bool ServoControl::attachPCA9685(int address){
 
 	/* if (debug) */
 	cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
-	return true;
+
 }
 
 void ServoControl::setPichAndRoll(float pitch, float roll)
@@ -192,8 +192,8 @@ int yaw, pitch;
 bool ServoControl::processMovementForVTail(pConStr ps)
 {
 	adjustMainMotorSpeed(ps);
-	vTail.leftRuddervator = (90- roll*0.8 + pitch*1.2) * MIXING_GAIN;
-	vTail.rightRuddervator = (roll*0.8 + pitch*1.2) * MIXING_GAIN;
+	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
+	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
 	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
 	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
 	setAngleOfServo(vTail.leftFlapIndex, false, roll);
@@ -210,6 +210,11 @@ bool ServoControl::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), sizeof(control));
+	if (pidOn) {
+		adjustMainMotorSpeed(control);
+		return 0;
+	}
+
 
 	switch (controllAdjuster) {
 

@@ -1,12 +1,12 @@
 /*
- * gps_decorator.h
+ * gps_interface.h
  * Copyright (C) 2022 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#ifndef GPS_DECORATOR_H
-#define GPS_DECORATOR_H
+#ifndef GPS_INTERFACE_H
+#define GPS_INTERFACE_H
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -17,14 +17,19 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
-#include "../sensor.h"
 
 using namespace std;
 
-class GPSDecorator : Sensor {
+class GPSInterface {
 	private:
 	int pollingDelay = 25; // TODO: should be more accurate
 	int fd;
+	const bool debug = false;
+  static GPSInterface* gpsInterface;
+  static mutex mutexGPSInterface;
+
+	// values
+	bool gpsUp = false;
 	double longitude = 0;
 	double latitude = 0;
 	double altitude = 0;
@@ -33,6 +38,10 @@ class GPSDecorator : Sensor {
 
 	char numberOfSatelites = 0;
 
+	protected:
+	thread loopThread;
+	GPSInterface();
+
 	/**
 	 * method used byt thread to regularly
 	 * read data from serial
@@ -40,43 +49,30 @@ class GPSDecorator : Sensor {
 	void updateFunction();
 
 	public:
+	/**
+	 * main method used to access GPSInterface
+	 * if instace wasn't created it will initialize
+	 * GPSInterface
+	 */
+	static GPSInterface* GetInstance();
 
-		GPSDecorator(uint8_t multiplexerPosition, uint8_t i2cAddress, uint8_t peripheryAddresses);
-		GPSDecorator(uint8_t multiplexerPosition, uint8_t i2cAddress, uint8_t peripheryAddresses, uint8_t peripherySubaddress);
+	/**
+	 * start loop to read data from serial
+	 */
+	void startLoop();
 
-		/**
-		 * reads data from sensor
-		 *
-		 * when anomaly is detected will trigger emergency sending mode
-		 */
-		bool read() override;
+	/**
+	 * returns value of how often data should be read
+	 *
+	 * @return int - polling delay
+	 */
+	int getPollingDelay();
 
-		/**
-		 * initializes MPU, if initialization fails
-		 * false will be returned end MPUerror set to true
-		 *
-		 * @return bool - true if initialization was successful
-		 */
-		bool initialize() override;
-
-		uint8_t type() const override {
-			return 0;
-		}
-
-		/**
-		 * scans for 1-Wire devices connected to the module
-		 * schedules reading of values from thermometers connected
-		 *
-		 */
-		uint8_t call(uint16_t id) override;
-
-		/**
-		 * adds sensor tasks to Tasker
-		 * tasks are: TSID_SENSOR_DS248X
-		 *
-		 * @return bool - true if tasks were added
-		 */
-		bool addTasks() override;
+	/**
+	 * sets new time how often data should be read
+	 *
+	 */
+	void setPollingDelay(int newPollingDelay);
 
 	/**
 	 * opens serial connections to the sensor
@@ -113,6 +109,7 @@ class GPSDecorator : Sensor {
 	 */
 	double getGroundSpeed();
 
+
 	/**
 	 * returns status of GPS
 	 *
@@ -138,4 +135,4 @@ class GPSDecorator : Sensor {
 };
 
 
-#endif /* !GPS_DECORATOR_H */
+#endif /* !GPS_INTERFACE_H */

@@ -8,9 +8,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "INIReader.h"
+#include "../libraries/inih/cpp/INIReader.h"
 #include "protocol_spec.h"
-#include "sensor_logic/sensor_implementations/wt901_decorator.h"
+#include "imu_interface.h"
 #include "servo_control.h"
 #include <iostream>
 #include <pwd.h>
