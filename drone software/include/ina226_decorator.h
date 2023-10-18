@@ -39,12 +39,9 @@ class BatteryInterface {
 	const bool debug = true;
 
 	INA226 ina226;
-  static BatteryInterface* batteryInterface;
-  static mutex mutexBatteryInterface;
 
 	protected:
 	thread loopThread;
-	BatteryInterface();
 
 	/**
 	 * TODO: should send notification if voltage is low
@@ -53,12 +50,7 @@ class BatteryInterface {
 	void updateFunction();
 
 	public:
-	/**
-	 * main method used to access BatteryInterface
-	 * if instace wasn't created it will initialize
-	 * BatteryInterface
-	 */
-	static BatteryInterface* GetInstance();
+	BatteryInterface();
 
 	/**
 	 * initializes INA226 library
