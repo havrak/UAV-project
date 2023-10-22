@@ -10,8 +10,8 @@
 
 #include "../libraries/inih/cpp/INIReader.h"
 #include "protocol_spec.h"
-#include "imu_interface.h"
-#include "servo_control.h"
+#include "wt901b_decorator.h"
+#include "pca9685_decorator.h"
 #include <iostream>
 #include <pwd.h>
 #include <unistd.h>
@@ -27,8 +27,8 @@ class Config {
 
 	string myIP = "192.168.6.1";
 	int serverPort = 8066;
+
 	ControlMethodAdjuster cma = SQUARING;
-	WingSurfaceConfiguration wsc = STANDARD_TAIL_WING;
 	IMU_Orientation imo = STANDART;
 
 	int imuAddress = 0x44;
@@ -53,11 +53,12 @@ class Config {
 
 	string getMyIP();
 	ControlMethodAdjuster getControlMethodAdjuster();
-	WingSurfaceConfiguration getWingSurfaceConfiguration();
 	IMU_Orientation getIMUOrientation();
+
 	int getServerPort();
 	int getIMUAddress();
-	int getINAAddress();
+	int getINABatAddress();
+	int getINA5VAddress();
 	int getPCA9865Address();
 
 };

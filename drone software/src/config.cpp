@@ -26,7 +26,6 @@ bool Config::loadConfiguration()
 	myIP = reader.GetString("connection", "my_IP", "192.168.6.1");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
 	cma = reader.Get("control", "controller_input_adjuster", "SQUARING").compare("TRIGONOMETRIC") == 0 ? TRIGONOMETRIC : SQUARING;
-	wsc = reader.Get("configuration", "wing_surface_configuration", "STANDARD_TAIL_WING").compare("V_SHAPE_TAIL_WING") == 0 ? V_SHAPE_TAIL_WING : STANDARD_TAIL_WING;
 	imo = reader.Get("configuration", "imu_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 
 	imuAddress = reader.GetInteger("configuration", "imu_address", 0x50);
@@ -35,42 +34,3 @@ bool Config::loadConfiguration()
 	return true;
 }
 
-string Config::getMyIP()
-{
-	return myIP;
-}
-
-int Config::getServerPort()
-{
-	return serverPort;
-}
-
-ControlMethodAdjuster Config::getControlMethodAdjuster()
-{
-	return cma;
-}
-
-WingSurfaceConfiguration Config::getWingSurfaceConfiguration()
-{
-	return wsc;
-}
-
-IMU_Orientation Config::getIMUOrientation()
-{
-	return imo;
-}
-
-int Config::getIMUAddress()
-{
-	return imuAddress;
-}
-
-int Config::getINAAddress()
-{
-	return inaAddress;
-}
-
-int Config::getPCA9865Address()
-{
-	return pca9685Address;
-}

@@ -8,8 +8,7 @@
 #ifndef PERIPHERY_H
 #define PERIPHERY_H
 
-#include <sdkconfig.h>
-
+#include <cstdint>
 class Periphery {
 	protected:
 	bool active = true;

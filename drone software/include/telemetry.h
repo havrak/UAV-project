@@ -1,5 +1,5 @@
 /*
- * telemetry.h
+ * peripherials_manager.h
  * Copyright (C) 2022 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
@@ -8,25 +8,29 @@
 #ifndef TELEMETRY_H
 #define TELEMETRY_H
 
-#include "battery_interface.h"
-#include "gps_interface.h"
-#include "imu_interface.h"
+#include "ina226_decorator.h"
+#include "ublox_gps_decorator.h"
+#include "wt901b_decorator.h"
 #include "protocol_spec.h"
 
 using namespace std;
 
-// will handle prepping of all telemetry -- especially prepearing packets to send
-
 /**
  * class that aggregates all of drones telemetry
  */
-class Telemetry {
+class PeripherialsManager {
 	private:
-	static Telemetry* telemetry;
-	static mutex telemetryMutex;
-	int imuAddress, inaAddress, pca9685Address =0;
+	static PeripherialsManager* telemetry;
 
-	Telemetry();
+	INA226Decorator* battery;
+	INA226Decorator* powerLine;
+	WT901Decorator* wt901b;
+	UBloxGPSDecorator* ubloxGPS;
+
+
+
+
+	PeripherialsManager();
 
 	/**
 	 * fills in pTeleATT structure
@@ -65,16 +69,16 @@ class Telemetry {
 
 	public:
 	/**
-	 * main method used to access Telemetry
+	 * main method used to access PeripherialsManager
 	 * if instace wasn't created it will
-	 * initialize Telemetry
+	 * initialize PeripherialsManager
 	 */
-	static Telemetry* GetInstance();
+	static PeripherialsManager* GetInstance();
 
 	/**
 	 * sets up all senors used for telemetry
 	 */
-	bool setUpSensors(int imuAddress, int inaAddress, int pca9685Address);
+	bool initializePeripherials(int imuAddress, int inaAddress, int pca9685Address);
 
 
 	/**
@@ -92,7 +96,7 @@ class Telemetry {
 	 *
 	 * @param const client cli - client to which answer should be sends
 	 */
-	bool processGeneralTelemetryRequest(const client cli);
+	bool processGeneralPeripherialsManagerRequest(const client cli);
 
 	/**
 	 * fills in pTeleATTGPS struct and sends it to client

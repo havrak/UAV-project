@@ -1,34 +1,34 @@
 /*
- * batteryInterface.h
+ * ina226_decorator.h
  * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#include "battery_interface.h"
+#include "ina226_decorator.h"
 #include <mutex>
 
-BatteryInterface* BatteryInterface::batteryInterface = nullptr;
-mutex BatteryInterface::mutexBatteryInterface;
+INA226Decorator* INA226Decorator::batteryInterface = nullptr;
+mutex INA226Decorator::mutexINA226Decorator;
 
-BatteryInterface::BatteryInterface()
+INA226Decorator::INA226Decorator()
 {
 }
 
-BatteryInterface* BatteryInterface::GetInstance()
+INA226Decorator* INA226Decorator::GetInstance()
 {
 	if (batteryInterface == nullptr) {
-		cout << "BATTERYINTERFACE | GetInstance | BatteryInterface creation" << endl;
-		mutexBatteryInterface.lock();
+		cout << "BATTERYINTERFACE | GetInstance | INA226Decorator creation" << endl;
+		mutexINA226Decorator.lock();
 		if (batteryInterface == nullptr)
-			batteryInterface = new BatteryInterface();
-		mutexBatteryInterface.unlock();
-		cout << "BATTERYINTERFACE | GetInstance | BatteryInterface created" << endl;
+			batteryInterface = new INA226Decorator();
+		mutexINA226Decorator.unlock();
+		cout << "BATTERYINTERFACE | GetInstance | INA226Decorator created" << endl;
 	}
 	return batteryInterface;
 }
 
-bool BatteryInterface::attachINA226(int address)
+bool INA226Decorator::attachINA226(int address)
 {
 	if (ina226.attach(address)) {
 		ina226.ina226_calibrate(0.1, 1.0);
@@ -42,12 +42,12 @@ bool BatteryInterface::attachINA226(int address)
 	}
 }
 
-void BatteryInterface::updateFunction()
+void INA226Decorator::updateFunction()
 {
 	while (true) {
-		mutexBatteryInterface.lock();
+		mutexINA226Decorator.lock();
 		ina226.ina226_read(&voltage, &current, &power, &shunt);
-		mutexBatteryInterface.unlock();
+		mutexINA226Decorator.unlock();
 		energy = voltage * current * 24 * 365.25 / 1000000;
 		// time(&rawtime);
 		// struct tm* info = localtime(&rawtime);
@@ -58,50 +58,50 @@ void BatteryInterface::updateFunction()
 	}
 }
 
-int BatteryInterface::getPollingDelay()
+int INA226Decorator::getPollingDelay()
 {
 	return pollingDelay;
 }
 
-void BatteryInterface::setPollingDelay(int newPollingDelay)
+void INA226Decorator::setPollingDelay(int newPollingDelay)
 {
 	pollingDelay = newPollingDelay;
 }
 
-void BatteryInterface::startLoop()
+void INA226Decorator::startLoop()
 {
-	loopThread = thread(&BatteryInterface::updateFunction, this);
+	loopThread = thread(&INA226Decorator::updateFunction, this);
 }
 
-float BatteryInterface::getVoltage()
+float INA226Decorator::getVoltage()
 {
 	return voltage;
 }
 
-float BatteryInterface::getCurrent()
+float INA226Decorator::getCurrent()
 {
 	return current;
 }
 
-float BatteryInterface::getPower()
+float INA226Decorator::getPower()
 {
 	return power;
 }
 
-float BatteryInterface::getShunt()
+float INA226Decorator::getShunt()
 {
 	return shunt;
 }
 
-float BatteryInterface::getEnergy()
+float INA226Decorator::getEnergy()
 {
 	return energy;
 }
 
-bool BatteryInterface::getINAStatus(){
+bool INA226Decorator::getINAStatus(){
 	return inaUp;
 }
 
-void BatteryInterface::setINAStatus(bool status){
+void INA226Decorator::setINAStatus(bool status){
 	inaUp = status;
 }

@@ -1,36 +1,24 @@
 /*
- * gps_interface.cpp
+ * ublox_gps_decorator.cpp
  * Copyright (C) 2022 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#include "gps_interface.h"
+#include "ublox_gps_decorator.h"
 
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-GPSInterface* GPSInterface::gpsInterface = nullptr;
-mutex GPSInterface::mutexGPSInterface;
+mutex UBloxGPSDecorator::mutexUBloxGPSDecorator;
 
-GPSInterface::GPSInterface()
+UBloxGPSDecorator::UBloxGPSDecorator()
 {
 }
 
-GPSInterface* GPSInterface::GetInstance()
-{
-	if (gpsInterface == nullptr) {
-		mutexGPSInterface.lock();
-		if (gpsInterface == nullptr)
-			gpsInterface = new GPSInterface();
-		mutexGPSInterface.unlock();
-	}
-	return gpsInterface;
-}
-
-bool GPSInterface::attachGPS()
+bool UBloxGPSDecorator::attachGPS()
 {
 	fd = serialOpen("/dev/serial0", 9600);
 
@@ -39,7 +27,7 @@ bool GPSInterface::attachGPS()
 	return fd >= 0;
 }
 
-void GPSInterface::updateFunction()
+void UBloxGPSDecorator::updateFunction()
 {
 	bool readingLine = false;
 	string data = "";
@@ -69,13 +57,13 @@ void GPSInterface::updateFunction()
 						}
 						numberOfSatelites = stoi(parts.at(7));
 						if (numberOfSatelites > 2) {
-							gpsUp = true;
+							error = false;
 
 							longitude = parts.at(4).empty() ? 0 : stod(parts.at(4));
 							latitude = parts.at(2).empty() ? 0 : stod(parts.at(2));
 							altitude = parts.at(9).empty() ? 0 : stod(parts.at(9));
 						} else {
-							gpsUp = false;
+							error = true;
 							if (debug)
 								cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
 						}
@@ -93,51 +81,18 @@ void GPSInterface::updateFunction()
 	}
 }
 
-int GPSInterface::getPollingDelay()
+int UBloxGPSDecorator::getPollingDelay()
 {
 	return pollingDelay;
 }
 
-void GPSInterface::setPollingDelay(int newPollingDelay)
+void UBloxGPSDecorator::setPollingDelay(int newPollingDelay)
 {
 	pollingDelay = newPollingDelay;
 }
 
-void GPSInterface::startLoop()
+void UBloxGPSDecorator::startLoop()
 {
-	loopThread = thread(&GPSInterface::updateFunction, this);
+	loopThread = thread(&UBloxGPSDecorator::updateFunction, this);
 }
 
-double GPSInterface::getLat()
-{
-	return latitude;
-}
-
-double GPSInterface::getLon()
-{
-	return longitude;
-}
-
-double GPSInterface::getAltitude()
-{
-	return altitude;
-}
-
-bool GPSInterface::getGPSStatus()
-{
-	return gpsUp;
-}
-
-int GPSInterface::getNOS()
-{
-	return numberOfSatelites;
-}
-
-double GPSInterface::getGroundSpeed()
-{
-	return groundSpeed;
-}
-
-double GPSInterface::getHeading(){
-	return heading;
-}

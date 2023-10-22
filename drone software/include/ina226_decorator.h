@@ -1,12 +1,12 @@
 /*
- * attitudeReader.h
+ * ina226_decorator.h
  * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#ifndef BATTERY_INTERFACE_H
-#define BATTERY_INTERFACE_H
+#ifndef INA226_DECORATOR_H
+#define INA226_DECORATOR_H
 
 #include "../libraries/raspberry-pi-ina226/ina226.h"
 #include <cmath>
@@ -17,12 +17,13 @@
 #include <string>
 #include <thread>
 #include <iostream>
+#include "i2c_periphery.h"
 
 #define INA_I2C_ADDRESS 0x44
 
 using namespace std;
 
-class BatteryInterface {
+class INA226Decorator : I2CPeriphery {
 	private:
 	//int fd;
 	float voltage = 0;
@@ -34,23 +35,19 @@ class BatteryInterface {
 	char buffer[80];
 	int trig=1;
 
-	bool inaUp = false;
 	int pollingDelay = 1000;
 	const bool debug = true;
 
 	INA226 ina226;
 
 	protected:
-	thread loopThread;
 
-	/**
-	 * TODO: should send notification if voltage is low
-	 * starts loop that will periodically load info about power
-	 */
-	void updateFunction();
 
 	public:
-	BatteryInterface();
+	INA226Decorator();
+
+
+	void read();
 
 	/**
 	 * initializes INA226 library

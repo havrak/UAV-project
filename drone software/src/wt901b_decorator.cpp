@@ -5,28 +5,11 @@
  * Distributed under terms of the MIT license.
  */
 
-#include "imu_interface.h"
-#include <chrono>
-#include <iostream>
+#include "wt901_decorator.h"
 
-ImuInterface* ImuInterface::imuInterface = nullptr;
-mutex ImuInterface::mutexImuInterface;
 
-ImuInterface::ImuInterface()
-{
-}
 
-ImuInterface* ImuInterface::GetInstance()
-{
-	if (imuInterface == nullptr) {
-		mutexImuInterface.lock();
-		if (imuInterface == nullptr) imuInterface = new ImuInterface();
-		mutexImuInterface.unlock();
-	}
-	return imuInterface;
-}
-
-bool ImuInterface::attachIMU(int address)
+bool WT901Decorator::attachIMU(int address)
 {
 	bool tmp = JY901.startI2C(address);
 
@@ -34,72 +17,66 @@ bool ImuInterface::attachIMU(int address)
 		if(debug) cout << "IMUINTERFACE | attachIMU | Failed to attach IMU " << endl;
 		return false;
 	}
-	/* JY901.setD1mode(0x05); // change mode of D1 port to gps */
-	/* JY901.saveConf(0); */
 	return tmp;
 
 }
 
-bool ImuInterface::resetOrientation(){
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+bool WT901Decorator::resetOrientation(){
+
 	yawOffset = JY901.getYaw();
 	pitchOffset = JY901.getPitch();
 	rollOffset = JY901.getRoll();
 	return true;
 }
 
-void ImuInterface::setIMUStatus(bool status){
+void WT901Decorator::setIMUStatus(bool status){
 		imuUp = status;
 }
 
-void ImuInterface::setIMUOrientation(IMU_Orientation orientation){
-	this->orientation = orientation;
+void WT901Decorator::setIMUOrientation(IMU_Orientation orientation){
 }
 
-bool ImuInterface::getIMUStatus(){
-	return imuUp;
-}
 
-double ImuInterface::getTemp()
+double WT901Decorator::getTemp()
 {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+
 	return JY901.getTemp();
 }
 
-double ImuInterface::getAccX() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getAccX() {
+
 	return JY901.getAccX();
 }  // getAccX() unit: G(gravity)
 
-double ImuInterface::getAccY() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getAccY() {
+
 	return JY901.getAccY();
 }  // getAccY() unit: G(gravity)
 
-double ImuInterface::getAccZ() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getAccZ() {
+
 	return JY901.getAccZ();
 }  // getAccZ() unit: G(gravity)
 
-double ImuInterface::getGyroX() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getGyroX() {
+
 	return JY901.getGyroX();
 }  // getGyroX() unit: degree(s) per second
 
-double ImuInterface::getGyroY() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getGyroY() {
+
 	return JY901.getGyroY();
 }  // getGyroY() unit: degree(s) per second
 
-double ImuInterface::getGyroZ() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getGyroZ() {
+
 	return JY901.getGyroZ();
 }  // getGyroZ() unit: degree(s) per second
 
 
 // pitch and roll is switched on hardware
-double ImuInterface::getRoll() {  // X-axis
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getRoll() {  // X-axis
+
 	if(orientation == X_Y_INVERTED){
 		return JY901.getPitch() - pitchOffset;
 	}else{
@@ -107,8 +84,8 @@ double ImuInterface::getRoll() {  // X-axis
 	}
 }  // getRoll() unit: degree(s)
 
-double ImuInterface::getPitch() {  // Y-axis
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getPitch() {  // Y-axis
+
 	if(orientation== X_Y_INVERTED){
 	return JY901.getRoll() - rollOffset;
 	}else{
@@ -117,40 +94,40 @@ double ImuInterface::getPitch() {  // Y-axis
 	}
 }  // getPitch() unit: degree(s)
 
-double ImuInterface::getYaw() {  // Z-axis
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getYaw() {  // Z-axis
+
 	return JY901.getYaw() - yawOffset;
 }  // getYaw() unit: degree(s)
 
-double ImuInterface::getMagX() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getMagX() {
+
 	return JY901.getMagX();
 }  // getMagX()
 
-double ImuInterface::getMagY() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getMagY() {
+
 	return JY901.getMagY();
 }  // getMagY()
 
-double ImuInterface::getMagZ() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getMagZ() {
+
 	return JY901.getMagZ();
 }  // getMagZ()
 
 
-int ImuInterface::getPressure() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+int WT901Decorator::getPressure() {
+
 	return JY901.getPressure();
 }  // getPressure() unit: Pa
 
-int ImuInterface::getAltitude() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+int WT901Decorator::getAltitude() {
+
 	return JY901.getAltitude();
 }  // getAltitude() unit: cm
 
 
-double ImuInterface::getQuater(string str) {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+double WT901Decorator::getQuater(string str) {
+
   if (str.compare("q0") == 0)
      return JY901.getQuater("q0");  // get q0
   if (str.compare("q1") == 0)
@@ -163,8 +140,8 @@ double ImuInterface::getQuater(string str) {
 }  // getQuater()
 
 
-milliseconds ImuInterface::getLastTime() {
-	if(usingSerial) lock_guard<mutex> mutex(sensorMutex);
+milliseconds WT901Decorator::getLastTime() {
+
 	return JY901.getLastTime();
 }  // get last receive time
 

@@ -1,5 +1,5 @@
 /*
- * servoControl.h
+ * pca9685_decorator.h
  * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
@@ -26,20 +26,28 @@
 /* #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h" */
 #include "../libraries/lib-pca9685/pca9685servo.h"
 
+#include "protocol_spec.h"
+#include <bits/types/clock_t.h>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <iostream>
+#include <iterator>
+#include <math.h>
+#include <ostream>
+#include <stdexcept>
+#include <thread>
+#include <time.h>
+#include <unistd.h>
+
+
 #include <chrono>
 #include <mutex>
 #include <string>
 #include <thread>
 
 using namespace std;
-
-/**
- * enum for configuration of plane
- */
-enum WingSurfaceConfiguration{
-	V_SHAPE_TAIL_WING = 1,
-	STANDARD_TAIL_WING = 2,
-};
 
 
 /**
@@ -49,54 +57,41 @@ enum ControlMethodAdjuster{
 	TRIGONOMETRIC, SQUARING
 };
 
+typedef struct {
+	int rightFlapIndex = 4;
+	int leftFlapIndex = 5;
+	int rightRuddervatorIndex = 2;
+	int leftRuddervatorIndex = 3;
+	unsigned int short leftFlap;
+	unsigned int short rightFlap;
+	unsigned int short leftRuddervator;
+	unsigned int short rightRuddervator;
+} VShapeTailWingConfiguration;
+
+
 
 /**
  * class handeling interfacing between
  * PCA9685 and rest of the system
  */
-class ServoControl {
+class PCA9685Decorator : I2CPeriphery{
 private:
   int fd = -1;
   const bool debug = true;
-  static ServoControl *servoControl;
-  static mutex mutexServoControl;
+  static PCA9685Decorator *servoControl;
+  static mutex mutexPCA9685Decorator;
 	thread pidControllerThread;
 	float pitch = 0, roll = 0;
 
-	 WingSurfaceConfiguration planeConfiguration = V_SHAPE_TAIL_WING;
-	 ControlMethodAdjuster controllAdjuster = SQUARING;
+ ControlMethodAdjuster controllAdjuster = SQUARING;
 	bool pca9685Up = false;
 	unsigned int short mainMotorMS;
 
 	PCA9685Servo servo = PCA9685Servo(0x40);
 	int currentMotorPulse;
 
-	struct StandardTailWingConfiguration{
-		int rightFlapIndex = 1;
-		int leftFlapIndex = 2;
-		int rightElevatorIndex = 3;
-		int leftElevatorIndex = 4;
-		int rudderIndex = 5;
-		unsigned int short leftFlap;
-		unsigned int short rightFlap;
-		unsigned int short leftElevator;
-		unsigned int short rightElevator;
-		unsigned int short rudder;
-
-	};
-	struct VShapeTailWingConfiguration{
-		int rightFlapIndex = 4;
-		int leftFlapIndex = 5;
-		int rightRuddervatorIndex = 2;
-		int leftRuddervatorIndex = 3;
-		unsigned int short leftFlap;
-		unsigned int short rightFlap;
-		unsigned int short leftRuddervator;
-		unsigned int short rightRuddervator;
-	};
 
 	VShapeTailWingConfiguration vTail;
-	StandardTailWingConfiguration standard;
 
 	/**
 	 * adjust control of main motor new
@@ -120,30 +115,12 @@ private:
 	void setAngleOfServo(int channel, bool right, unsigned char angle);
 
 
-	// PID controller
-	bool pidOn = false;
-	/**
-	 * method run if pid controller is active
-	 */
-	bool pidController();
 
-
-protected:
-  ServoControl();
 
 public:
-	/**
-	 * main method used to access ServoControl
-	 * if instace wasn't created it will initialize
-	 * ServoControl
-	 */
-  static ServoControl *GetInstance();
+  PCA9685Decorator(uint8_t address):I2CPeriphery(address) {
+	};
 
-	/**
-   * attaches PCA9685, runs initial configuration
-	 *
-	 */
-	bool attachPCA9685(int address);
 
 	/**
 	 * calibrates ESC
@@ -173,7 +150,7 @@ public:
 	 * @param WingSurfaceConfiguration wsc - plane configuration
 	 * @param ControlMethodAdjuster cma - method how controller input should be adjusted
 	 */
-	void setOperationalParameters(WingSurfaceConfiguration wsc, ControlMethodAdjuster cma);
+	void setOperationalParameters(ControlMethodAdjuster cma);
 
 	/**
 	 * get status of PCA9685
@@ -190,12 +167,6 @@ public:
 	 */
 	void setPCA9865Status(bool status);
 
-	/**
-	 * start/stops PID controller
-	 * if PID is running acces standard
-	 * controll will not be processed
-	 */
-	bool togglePIDController();
 
 	unsigned int short getMainMotorMS();
 
@@ -215,23 +186,6 @@ public:
 	 * @return int - 0 if processesing went well
 	 */
 	bool processControl(ProcessingStructure ps);
-
-	/**
-	 * interprets controller state for V-Tail
-	 *
-	 * @param pConStr ps - structure with controller state
-	 * @return int - 0 if processesing went well
-	 */
-	bool processMovementForVTail(pConStr ps);
-
-	/**
-	 * interprets controller state for standard
-	 * plane configuration
-	 *
-	 * @param pConStr ps - structure with controller state
-	 * @return int - 0 if processesing went well
-	 */
-	bool processMovementForStandart(pConStr  ps);
 
 	/**
 	 * sets pitch and roll value used by PID

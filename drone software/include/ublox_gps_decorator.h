@@ -1,12 +1,12 @@
 /*
- * gps_interface.h
+ * ublox_gps_decorator.h
  * Copyright (C) 2022 Havránek Kryštof <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#ifndef GPS_INTERFACE_H
-#define GPS_INTERFACE_H
+#ifndef UBLOX_GPS_DECORATOR_H
+#define UBLOX_GPS_DECORATOR_H
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -17,19 +17,17 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include "periphery.h"
 
 using namespace std;
 
-class GPSInterface {
+class UBloxGPSDecorator : Periphery{
 	private:
-	int pollingDelay = 25; // TODO: should be more accurate
+	int pollingDelay = 25;
 	int fd;
 	const bool debug = false;
-  static GPSInterface* gpsInterface;
-  static mutex mutexGPSInterface;
 
 	// values
-	bool gpsUp = false;
 	double longitude = 0;
 	double latitude = 0;
 	double altitude = 0;
@@ -39,8 +37,9 @@ class GPSInterface {
 	char numberOfSatelites = 0;
 
 	protected:
+
 	thread loopThread;
-	GPSInterface();
+
 
 	/**
 	 * method used byt thread to regularly
@@ -49,12 +48,7 @@ class GPSInterface {
 	void updateFunction();
 
 	public:
-	/**
-	 * main method used to access GPSInterface
-	 * if instace wasn't created it will initialize
-	 * GPSInterface
-	 */
-	static GPSInterface* GetInstance();
+	UBloxGPSDecorator();
 
 	/**
 	 * start loop to read data from serial
@@ -86,36 +80,29 @@ class GPSInterface {
 	 *
 	 * @return double - latitude
 	 */
-	double getLat();
+	double getLat(){return latitude;}
 
 	/**
 	 * returns longitude of drone in degrees
 	 *
 	 * @return double - latitude
 	 */
-	double getLon();
+	double getLon(){return longitude;}
 
 	/**
 	 * returns altitude of drone in meters
 	 *
 	 * @return double - latitude
 	 */
-	double getAltitude();
+	double getAltitude(){return altitude;}
 
 	/**
 	 * return ground speed of drone in knots
 	 *
 	 * @return double - ground speed
 	 */
-	double getGroundSpeed();
+	double getGroundSpeed(){return groundSpeed;}
 
-
-	/**
-	 * returns status of GPS
-	 *
-	 * @return bool - true if it sees more than two satelites
-	 */
-	bool getGPSStatus();
 
 	/**
 	 * returns number of satelites that GPS
@@ -123,16 +110,16 @@ class GPSInterface {
 	 *
 	 * @return int - number of satelites
 	 */
-	int getNOS();
+	int getNOS(){return numberOfSatelites;}
 
 	/**
 	 * returns heading of the plane
 	 *
 	 * @return double - heading in degrees;
 	 */
-	double getHeading();
+	double getHeading(){return heading;}
 
 };
 
 
-#endif /* !GPS_INTERFACE_H */
+#endif /* !UBLOX_GPS_DECORATOR_H */

@@ -1,51 +1,35 @@
 /*
- * servoControl.cpp
+ * pca9685_decorator.cpp
  * Copyright (C) 2021 havra <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.
  */
 
-#include "servo_control.h"
-#include "protocol_spec.h"
-#include <bits/types/clock_t.h>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <ctime>
-#include <iostream>
-#include <iterator>
-#include <math.h>
-#include <ostream>
-#include <stdexcept>
-#include <thread>
-#include <time.h>
-#include <unistd.h>
+#include "pca9685_decorator.h"
 
-using namespace std;
+PCA9685Decorator* PCA9685Decorator::servoControl = nullptr;
+mutex PCA9685Decorator::mutexPCA9685Decorator;
 
-ServoControl* ServoControl::servoControl = nullptr;
-mutex ServoControl::mutexServoControl;
-
-ServoControl::ServoControl()
+PCA9685Decorator::PCA9685Decorator()
 {
 
 }
 
-ServoControl* ServoControl::GetInstance()
+PCA9685Decorator* PCA9685Decorator::getInstance()
 {
 
 	if (servoControl == nullptr) {
-		mutexServoControl.lock();
+		mutexPCA9685Decorator.lock();
 		if (servoControl == nullptr)
-			servoControl = new ServoControl();
-		mutexServoControl.unlock();
+			servoControl = new PCA9685Decorator();
+		mutexPCA9685Decorator.unlock();
 	}
 
 	return servoControl;
 }
 
 
-bool ServoControl::attachPCA9685(int address){
+bool PCA9685Decorator::attachPCA9685(int address){
 	servo = PCA9685Servo(address);
 
 	servo.SetFrequency(60);
@@ -61,17 +45,17 @@ bool ServoControl::attachPCA9685(int address){
 	servo.SetAngle(CHANNEL(5), ANGLE(135));
 
 	/* if (debug) */
-	cout << "SERVOCONTROL | ServoControl | servos setted up, ESC armed\n";
+	std::cout << "SERVOCONTROL | PCA9685Decorator | servos setted up, ESC armed\n";
 
 }
 
-void ServoControl::setPichAndRoll(float pitch, float roll)
+void PCA9685Decorator::setPichAndRoll(float pitch, float roll)
 {
 	this->pitch = pitch;
 	this->roll = roll;
 }
 
-void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
+void PCA9685Decorator::setAngleOfServo(int channel, bool right, unsigned char angle)
 {
 	if (right) {
 		servo.SetAngle(channel, 90 + angle);
@@ -80,16 +64,16 @@ void ServoControl::setAngleOfServo(int channel, bool right, unsigned char angle)
 	}
 }
 
-bool ServoControl::calibrateESC()
+bool PCA9685Decorator::calibrateESC()
 {
 	int b;
-	cout << "SERVOCONTROL | calibrateESC | setting max\n";
+	std::cout << "SERVOCONTROL | calibrateESC | setting max\n";
 	servo.Set(CHANNEL(0), servo.GetRightUs());
 	mainMotorMS = servo.GetRightUs();
-	cout << "SERVOCONTROL | calibrateESC | press key to set min\n";
+	std::cout << "SERVOCONTROL | calibrateESC | press key to set min\n";
 	cin >> b;
 
-	cout << "SERVOCONTROL | calibrateESC | setting min\n";
+	std::cout << "SERVOCONTROL | calibrateESC | setting min\n";
 	servo.Set(CHANNEL(0), servo.GetLeftUs());
 	mainMotorMS = servo.GetLeftUs();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
@@ -97,61 +81,43 @@ bool ServoControl::calibrateESC()
 	return true;
 }
 
-bool ServoControl::armESC()
+bool PCA9685Decorator::armESC()
 {
-	cout << "SERVOCONTROL | armESC | arming ESC\n";
+	std::cout << "SERVOCONTROL | armESC | arming ESC\n";
 	slowDownToMin();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 	return true;
 }
 
-void ServoControl::slowDownToMin()
+void PCA9685Decorator::slowDownToMin()
 {
 	mainMotorMS = MIN_PULSE_LENGTH;
 	servo.Set(CHANNEL(0), mainMotorMS);
 }
 
-void ServoControl::setOperationalParameters(WingSurfaceConfiguration wsc, ControlMethodAdjuster cma)
-{
-	planeConfiguration = wsc;
-	controllAdjuster = cma;
-}
 
-bool ServoControl::getPCA9865Status()
+bool PCA9685Decorator::getPCA9865Status()
 {
 	return pca9685Up;
 }
-void ServoControl::setPCA9865Status(bool status)
+void PCA9685Decorator::setPCA9865Status(bool status)
 {
 	pca9685Up= status;
 }
 
 
-pair<int, unsigned char*> ServoControl::getControlSurfaceConfiguration()
+pair<int, unsigned char*> PCA9685Decorator::getControlSurfaceConfiguration()
 {
 	pair<int, unsigned char*> toReturn;
 	toReturn.second = new unsigned char[16];
-	switch (planeConfiguration) {
-	case V_SHAPE_TAIL_WING:
-		toReturn.first = V_SHAPE_TAIL_WING;
-		toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
-		toReturn.second[vTail.rightFlapIndex] = vTail.leftFlap;
-		toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftRuddervator;
-		toReturn.second[vTail.leftRuddervatorIndex] = vTail.rightRuddervator;
-		break;
-	case STANDARD_TAIL_WING:
-		break;
-		toReturn.first = STANDARD_TAIL_WING;
-		toReturn.second[standard.leftFlapIndex] = standard.leftFlap;
-		toReturn.second[standard.rightFlapIndex] = standard.leftFlap;
-		toReturn.second[standard.leftElevatorIndex] = standard.leftElevator;
-		toReturn.second[standard.rightElevatorIndex] = standard.rightElevator;
-		toReturn.second[standard.rudderIndex] = standard.rudder;
-	}
+	toReturn.second[vTail.leftFlapIndex] = vTail.leftFlap;
+	toReturn.second[vTail.rightFlapIndex] = vTail.leftFlap;
+	toReturn.second[vTail.leftRuddervatorIndex] = vTail.leftRuddervator;
+	toReturn.second[vTail.leftRuddervatorIndex] = vTail.rightRuddervator;
 	return toReturn;
 }
 
-bool ServoControl::adjustMainMotorSpeed(pConStr ps)
+bool PCA9685Decorator::adjustMainMotorSpeed(pConStr ps)
 {
 	if (ps.lTrigger < 2500)
 		ps.lTrigger = 0;
@@ -169,7 +135,7 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 		if (mainMotorMS + log(valR - valL) * SERVO_ACCELERATION_MULTIPLIER <= MAX_MOTOR_PULSE_LENGTH) {
 			mainMotorMS += log(valR - valL) * SERVO_ACCELERATION_MULTIPLIER;
 			servo.Set(CHANNEL(0), mainMotorMS);
-			/* cout << "SERVO_CONTROL | processMovementForVTail | accelerating: " << mainMotorMS << "\n"; */
+			/* std::cout << "SERVO_CONTROL | processMovementForVTail | accelerating: " << mainMotorMS << "\n"; */
 		}
 	} else {
 		// decelerate
@@ -177,7 +143,7 @@ bool ServoControl::adjustMainMotorSpeed(pConStr ps)
 			mainMotorMS -= log(valL - valR) * SERVO_ACCELERATION_MULTIPLIER;
 			if (mainMotorMS - 80 > MIN_PULSE_LENGTH)
 				mainMotorMS = MIN_PULSE_LENGTH;
-			/* cout << "SERVO_CONTROL | processMovementForVTail | decelerating: " << mainMotorMS << "\n"; */
+			/* std::cout << "SERVO_CONTROL | processMovementForVTail | decelerating: " << mainMotorMS << "\n"; */
 			servo.Set(CHANNEL(0), mainMotorMS);
 		}
 	}
@@ -189,24 +155,17 @@ float scalerX, scalerY;
 float tmpX, tmpY;
 int yaw, pitch;
 
-bool ServoControl::processMovementForVTail(pConStr ps)
-{
-	adjustMainMotorSpeed(ps);
-	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
-	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
-	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
-	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
-	setAngleOfServo(vTail.leftFlapIndex, false, roll);
-	setAngleOfServo(vTail.rightFlapIndex, true, (90 - roll));
-	return true;
-}
-
-bool ServoControl::processMovementForStandart(pConStr ps)
+bool PCA9685Decorator::processMovementForVTail(pConStr ps)
 {
 	return true;
 }
 
-bool ServoControl::processControl(ProcessingStructure ps)
+bool PCA9685Decorator::processMovementForStandart(pConStr ps)
+{
+	return true;
+}
+
+bool PCA9685Decorator::processControl(ProcessingStructure ps)
 {
 	pConStr control;
 	memcpy(&control, ps.getMessageBuffer(), sizeof(control));
@@ -247,19 +206,18 @@ bool ServoControl::processControl(ProcessingStructure ps)
 	else
 		pitch = ((float)control.lAnalog.second / MAX_CONTROLLER_AXIS_VALUE) * 90;
 
-	switch (planeConfiguration) {
-	case V_SHAPE_TAIL_WING:
-		return processMovementForVTail(control);
-		break;
-	case STANDARD_TAIL_WING:
-		return processMovementForStandart(control);
-		break;
-	}
-	cout << "Control processed\n";
+	adjustMainMotorSpeed(ps);
+	vTail.leftRuddervator = (roll + pitch) * MIXING_GAIN;
+	vTail.rightRuddervator = (90 - roll + pitch) * MIXING_GAIN;
+	setAngleOfServo(vTail.leftRuddervatorIndex, false, vTail.leftRuddervator);
+	setAngleOfServo(vTail.rightRuddervatorIndex, true, vTail.rightRuddervator);
+	setAngleOfServo(vTail.leftFlapIndex, false, roll);
+	setAngleOfServo(vTail.rightFlapIndex, true, (90 - roll));
+	std::cout << "Control processed\n";
 	return true;
 }
 
-unsigned int short ServoControl::getMainMotorMS()
+unsigned int short PCA9685Decorator::getMainMotorMS()
 {
 	return mainMotorMS;
 }

@@ -8,7 +8,7 @@
 #ifndef I2CPERIPHERY_H
 #define I2CPERIPHERY_H
 
-#include <periphery.h>
+#include "periphery.h"
 
 
 class I2CPeriphery : public Periphery {
