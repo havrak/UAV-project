@@ -1,0 +1,15 @@
+[submodule "drone software/libraries/raspberry-pi-wt901"]
+	path = drone software/libraries/raspberry-pi-wt901
+	url = git@github.com:havrak/raspberry-pi-wt901.git
+[submodule "drone software/libraries/raspberry-pi-ina226"]
+	path = drone software/libraries/raspberry-pi-ina226
+	url = git@github.com:havrak/raspberry-pi-ina226.git
+[submodule "drone software/libraries/inih"]
+	path = drone software/libraries/inih
+	url = https://github.com/benhoyt/inih.git
+[submodule "drone software/libraries/raspberry-pi-pca9685"]
+	path = drone software/libraries/raspberry-pi-pca9685
+	url = git@github.com:havrak/raspberry-pi-pca9685.git
+[submodule "desktop client/libraries/inih"]
+	path = desktop client/libraries/inih
+	url = https://github.com/benhoyt/inih.git

@@ -1,5 +1,5 @@
 /*
- * sensor.h
+ * i2c_periphery.h
  * Copyright (C) 2022 Kryštof Havránek <krystof@havrak.xyz>
  *
  * Distributed under terms of the MIT license.

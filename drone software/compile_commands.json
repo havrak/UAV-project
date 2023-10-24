@@ -1,74 +1,80 @@
 [
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\"  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/cjy901.dir/libraries/Raspberry-JY901-Serial/JY901.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial/JY901.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial/JY901.cpp",
-  "output": "CMakeFiles/cjy901.dir/libraries/Raspberry-JY901-Serial/JY901.cpp.o"
+  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\"  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/wt901b.dir/libraries/raspberry-pi-wt901/JY901.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901/JY901.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901/JY901.cpp",
+  "output": "CMakeFiles/wt901b.dir/libraries/raspberry-pi-wt901/JY901.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\"  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/ina226.dir/libraries/raspberry-pi-ina226/ina226.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226/ina226.cpp\"",
+  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\"  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/ina226.dir/libraries/raspberry-pi-ina226/ina226.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226/ina226.cpp\"",
   "file": "/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226/ina226.cpp",
   "output": "CMakeFiles/ina226.dir/libraries/raspberry-pi-ina226/ina226.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\"  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/pca9685.dir/libraries/lib-pca9685/pca9685.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/lib-pca9685/pca9685.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/libraries/lib-pca9685/pca9685.cpp",
-  "output": "CMakeFiles/pca9685.dir/libraries/lib-pca9685/pca9685.cpp.o"
+  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\"  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/pca9685.dir/libraries/raspberry-pi-pca9685/pca9685.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685/pca9685.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685/pca9685.cpp",
+  "output": "CMakeFiles/pca9685.dir/libraries/raspberry-pi-pca9685/pca9685.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\"  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/pca9685.dir/libraries/lib-pca9685/pca9685servo.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/lib-pca9685/pca9685servo.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/libraries/lib-pca9685/pca9685servo.cpp",
-  "output": "CMakeFiles/pca9685.dir/libraries/lib-pca9685/pca9685servo.cpp.o"
-},
-{
-  "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\"  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/inih.dir/libraries/inih/cpp/INIReader.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/inih/cpp/INIReader.cpp\"",
+  "command": "/usr/bin/c++  -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\"  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/inih.dir/libraries/inih/cpp/INIReader.cpp.o -c \"/home/havra/prog/uav project/drone software/libraries/inih/cpp/INIReader.cpp\"",
   "file": "/home/havra/prog/uav project/drone software/libraries/inih/cpp/INIReader.cpp",
   "output": "CMakeFiles/inih.dir/libraries/inih/cpp/INIReader.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/cc  -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -g -o CMakeFiles/inih.dir/libraries/inih/ini.c.o -c \"/home/havra/prog/uav project/drone software/libraries/inih/ini.c\"",
+  "command": "/usr/bin/cc  -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -g -o CMakeFiles/inih.dir/libraries/inih/ini.c.o -c \"/home/havra/prog/uav project/drone software/libraries/inih/ini.c\"",
   "file": "/home/havra/prog/uav project/drone software/libraries/inih/ini.c",
   "output": "CMakeFiles/inih.dir/libraries/inih/ini.c.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/camera_streamer.cpp.o -c \"/home/havra/prog/uav project/drone software/src/camera_streamer.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/src/camera_streamer.cpp",
-  "output": "CMakeFiles/uav_drone.dir/src/camera_streamer.cpp.o"
-},
-{
-  "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/communication_interface.cpp.o -c \"/home/havra/prog/uav project/drone software/src/communication_interface.cpp\"",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/communication_interface.cpp.o -c \"/home/havra/prog/uav project/drone software/src/communication_interface.cpp\"",
   "file": "/home/havra/prog/uav project/drone software/src/communication_interface.cpp",
   "output": "CMakeFiles/uav_drone.dir/src/communication_interface.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/config.cpp.o -c \"/home/havra/prog/uav project/drone software/src/config.cpp\"",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/config.cpp.o -c \"/home/havra/prog/uav project/drone software/src/config.cpp\"",
   "file": "/home/havra/prog/uav project/drone software/src/config.cpp",
   "output": "CMakeFiles/uav_drone.dir/src/config.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/main.cpp.o -c \"/home/havra/prog/uav project/drone software/src/main.cpp\"",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/ina226_decorator.cpp.o -c \"/home/havra/prog/uav project/drone software/src/ina226_decorator.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/ina226_decorator.cpp",
+  "output": "CMakeFiles/uav_drone.dir/src/ina226_decorator.cpp.o"
+},
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/main.cpp.o -c \"/home/havra/prog/uav project/drone software/src/main.cpp\"",
   "file": "/home/havra/prog/uav project/drone software/src/main.cpp",
   "output": "CMakeFiles/uav_drone.dir/src/main.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/servo_control.cpp.o -c \"/home/havra/prog/uav project/drone software/src/servo_control.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/src/servo_control.cpp",
-  "output": "CMakeFiles/uav_drone.dir/src/servo_control.cpp.o"
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/pca9685_decorator.cpp.o -c \"/home/havra/prog/uav project/drone software/src/pca9685_decorator.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/pca9685_decorator.cpp",
+  "output": "CMakeFiles/uav_drone.dir/src/pca9685_decorator.cpp.o"
 },
 {
   "directory": "/home/havra/prog/uav project/drone software",
-  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/Raspberry-JY901-Serial\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/lib-pca9685\" -I\"/home/havra/prog/uav project/drone software/libraries/libraries/inih\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11 -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/telemetry.cpp.o -c \"/home/havra/prog/uav project/drone software/src/telemetry.cpp\"",
-  "file": "/home/havra/prog/uav project/drone software/src/telemetry.cpp",
-  "output": "CMakeFiles/uav_drone.dir/src/telemetry.cpp.o"
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/peripherials_manager.cpp.o -c \"/home/havra/prog/uav project/drone software/src/peripherials_manager.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/peripherials_manager.cpp",
+  "output": "CMakeFiles/uav_drone.dir/src/peripherials_manager.cpp.o"
+},
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/ublox_gps_decorator.cpp.o -c \"/home/havra/prog/uav project/drone software/src/ublox_gps_decorator.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/ublox_gps_decorator.cpp",
+  "output": "CMakeFiles/uav_drone.dir/src/ublox_gps_decorator.cpp.o"
+},
+{
+  "directory": "/home/havra/prog/uav project/drone software",
+  "command": "/usr/bin/c++ -DWIRINGPI_DEBUG=1 -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-wt901\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-ina226\" -I\"/home/havra/prog/uav project/drone software/libraries/raspberry-pi-pca9685\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih\" -I\"/home/havra/prog/uav project/drone software/./libraries/inih/cpp\" -isystem /usr/local/. -isystem /usr/include/opencv4  -Wall -std=c++11  -g -std=gnu++17 -o CMakeFiles/uav_drone.dir/src/wt901b_decorator.cpp.o -c \"/home/havra/prog/uav project/drone software/src/wt901b_decorator.cpp\"",
+  "file": "/home/havra/prog/uav project/drone software/src/wt901b_decorator.cpp",
+  "output": "CMakeFiles/uav_drone.dir/src/wt901b_decorator.cpp.o"
 }
 ]

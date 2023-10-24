@@ -34,9 +34,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 0.0,
+          "height": 8.0,
+          "width": 4.7
         },
         "silk_line_width": 0.15,
         "silk_text_italic": false,
@@ -172,12 +172,23 @@
         }
       ],
       "track_widths": [
-        0.0
+        0.0,
+        0.25,
+        0.4,
+        0.8
       ],
       "via_dimensions": [
         {
           "diameter": 0.0,
           "drill": 0.0
+        },
+        {
+          "diameter": 0.8,
+          "drill": 0.4
+        },
+        {
+          "diameter": 1.6,
+          "drill": 0.8
         }
       ],
       "zones_allow_external_fillets": false
@@ -441,7 +452,7 @@
         "name": "+3V3",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgb(255, 0, 216)",
-        "track_width": 0.25,
+        "track_width": 0.4,
         "via_diameter": 0.8,
         "via_drill": 0.4,
         "wire_width": 6
@@ -458,14 +469,14 @@
         "name": "+3V3 Low Noise",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgb(250, 161, 255)",
-        "track_width": 0.25,
+        "track_width": 0.4,
         "via_diameter": 0.8,
         "via_drill": 0.4,
         "wire_width": 6
       },
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.4,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -475,14 +486,14 @@
         "name": "+5V",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgb(255, 81, 96)",
-        "track_width": 0.25,
-        "via_diameter": 0.8,
-        "via_drill": 0.4,
+        "track_width": 0.8,
+        "via_diameter": 1.6,
+        "via_drill": 0.8,
         "wire_width": 6
       },
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.4,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -492,9 +503,9 @@
         "name": "Battery",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgb(255, 0, 0)",
-        "track_width": 0.25,
-        "via_diameter": 0.8,
-        "via_drill": 0.4,
+        "track_width": 3.0,
+        "via_diameter": 4.0,
+        "via_drill": 3.0,
         "wire_width": 12
       }
     ],
@@ -504,23 +515,18 @@
     "net_colors": null,
     "netclass_assignments": {
       "+3V3": "+3V3",
-      "+5V": "+5V",
       "/GPS module/+3V3 LN": "+3V3 Low Noise",
-      "/Power managment/BAT+ SENSE IN": "Batter Line",
-      "/Power managment/BAT+ SENSE OUT": "Battery",
       "Net-(D6-K)": "+5V",
-      "Net-(J3-Pin_2)": "Battery",
-      "Net-(U2-VO)": "+3V3",
       "Net-(U4-FB)": "+5V"
     },
     "netclass_patterns": [
       {
-        "netclass": "Battery",
-        "pattern": "/Power managment/BAT+ SENSE OUT"
-      },
-      {
         "netclass": "+3V3",
         "pattern": "+3.3V"
+      },
+      {
+        "netclass": "Battery",
+        "pattern": "/Power managment/BAT UNSAFE"
       }
     ]
   },
@@ -528,7 +534,7 @@
     "last_paths": {
       "gencad": "",
       "idf": "",
-      "netlist": "",
+      "netlist": "uav_project.net",
       "specctra_dsn": "",
       "step": "",
       "vrml": ""

@@ -9,7 +9,7 @@
 #define COMMUNICATION_INTERFACE_H
 
 #include "protocol_spec.h"
-#include "telemetry.h"
+#include "peripherials_manager.h"
 #include <arpa/inet.h>
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
@@ -33,6 +33,10 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <utility>
+#include <asm-generic/errno-base.h>
+#include <bits/types/clock_t.h>
+
 
 #include "camera_streamer.h"
 #include "protocol_spec.h"

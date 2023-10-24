@@ -4,22 +4,8 @@
  *
  * Distributed under terms of the MIT license.
  */
-
 #include "communication_interface.h"
-#include "imu_interface.h"
-#include "protocol_spec.h"
-#include "servo_control.h"
-#include "telemetry.h"
-#include <asm-generic/errno-base.h>
-#include <bits/types/clock_t.h>
-#include <cerrno>
-#include <cstdint>
-#include <cstring>
-#include <mutex>
-#include <netinet/in.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <utility>
+
 
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
