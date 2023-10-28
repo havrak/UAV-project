@@ -1,5 +1,6 @@
 .cache
 *.a
+fp-info-cache
 pdfa.xmpi
 cmake_install.cmake
 CMakeCache.txt
