@@ -6,57 +6,52 @@
  */
 
 #include "peripherials_manager.h"
-#include "battery_interface.h"
 #include "communication_interface.h"
-#include "gps_interface.h"
-#include "imu_interface.h"
-#include "protocol_spec.h"
-#include "servo_control.h"
-#include <cstring>
-#include <iterator>
 
 PeripherialsManager* PeripherialsManager::telemetry = nullptr;
-mutex PeripherialsManager::telemetryMutex;
+mutex PeripherialsManager::peripherialsMutex;
 
 PeripherialsManager::PeripherialsManager()
 {
+	telemetryThread = thread(&PeripherialsManager::telemetryThreadMethod, this);
 }
 
 PeripherialsManager* PeripherialsManager::GetInstance()
 {
 	if (telemetry == nullptr) {
-		telemetryMutex.lock();
-		if (telemetry == nullptr) {
-			telemetry = new PeripherialsManager();
-		}
-		telemetryMutex.unlock();
+		telemetry = new PeripherialsManager();
 	}
 	return telemetry;
 }
 
-// TODO; make sure everything generates propper messages
-bool PeripherialsManager::setUpSensors(int imuAddress, int inaAddress, int pca9685Address)
-{
+void PeripherialsManager::telemetryThreadMethod(){
+	while(true){
+		peripherialsMutex.lock();
+		wt901b->read();
+		ubloxGPS->read();
+		vaBattery->read();
+		vaInternals->read();
+		peripherialsMutex.unlock();
+		this_thread::sleep_for(chrono::milliseconds(50));
 
-	this->imuAddress = imuAddress;
-	this->inaAddress = inaAddress;
-	this->pca9685Address = pca9685Address;
-	// ImuInterface::GetInstance()->attachIMU(imuAddress);
-	// cout << "MAIN | main | IMU attached\n";
-	// BatteryInterface::GetInstance()->attachINA226(inaAddress);
-	// cout << "MAIN | main | INA226 attached\n";
-	// BatteryInterface::GetInstance()->startLoop();
-	// cout << "MAIN | main | loop started\n";
-	// GPSInterface::GetInstance()->attachGPS();
-	// cout << "MAIN | main | GPS attached\n";
-	// GPSInterface::GetInstance()->startLoop();
-	// cout << "MAIN | main | GPS Loop started\n";
-	return checkPeripheriesStatus();
+
+	}
+
 }
 
-bool PeripherialsManager::checkPeripheriesStatus()
+bool PeripherialsManager::initializePeripherials(uint8_t inaBatAddress, uint8_t inaPowerAddress, uint8_t pcaAddress, uint8_t imuAddress)
 {
-	return 1;
+	vaBattery = new INA226Decorator(inaBatAddress);
+	vaInternals = new INA226Decorator(inaPowerAddress);
+	pca9685 = new PCA9685Decorator(pcaAddress);
+	wt901b = new WT901Decorator(imuAddress, IMU_Orientation::X_Y_INVERTED);
+	ubloxGPS = new UBloxGPSDecorator();
+	return true;
+}
+
+bool PeripherialsManager::i2cScan()
+{
+	lock_guard<mutex> lock(peripherialsMutex);
 
 	char buffer[128];
 	std::string result = "";
@@ -74,71 +69,72 @@ bool PeripherialsManager::checkPeripheriesStatus()
 		cerr << "PeripherialsManager | checkSensorStatus | reading failed!\n";
 		return false;
 	}
+	std::map<uint8_t, bool> addressesMap;
 	// 40, 50, 44
-	ServoControl::GetInstance()->setPCA9865Status(false);
-	ImuInterface::GetInstance()->setIMUStatus(false);
-	BatteryInterface::GetInstance()->setINAStatus(false);
+	addressesMap[((I2CPeriphery*) pca9685)->getI2CBusAddress()] = false;
+	addressesMap[((I2CPeriphery*) wt901b)->getI2CBusAddress()] = false;
+	addressesMap[((I2CPeriphery*) vaBattery)->getI2CBusAddress()] = false;
+	addressesMap[((I2CPeriphery*) vaInternals)->getI2CBusAddress()] = false;
 
-	int tmp;
+
+	uint8_t tmp;
 
 	for (int i = 0; i < result.length() && i+2 < result.length(); i += 3) {
 		tmp = stoul("0x" + result.substr(i, i + 2), nullptr, 16);
-		if (tmp == pca9685Address)
-			ServoControl::GetInstance()->setPCA9865Status(true);
-		else if (tmp == imuAddress)
-			ImuInterface::GetInstance()->setIMUStatus(true);
-		else if (tmp == inaAddress)
-			BatteryInterface::GetInstance()->setINAStatus(true);
+		if (addressesMap.find(tmp) != addressesMap.end())
+			addressesMap[tmp] = true;
+
 	}
 	pclose(pipe);
-	return ServoControl::GetInstance()->getPCA9865Status() && ImuInterface::GetInstance()->getIMUStatus() && BatteryInterface::GetInstance()->getINAStatus();
+
+	pca9685->setError(!addressesMap[((I2CPeriphery*) pca9685)->getI2CBusAddress()]);
+	wt901b->setError(!addressesMap[((I2CPeriphery*) wt901b)->getI2CBusAddress()]);
+	vaBattery->setError(!addressesMap[((I2CPeriphery*) vaBattery)->getI2CBusAddress()]);
+	vaInternals->setError(!addressesMap[((I2CPeriphery*) vaInternals)->getI2CBusAddress()]);
+	return true;
 }
 
 pTeleATT PeripherialsManager::createTeleAttStruct()
 {
-	ImuInterface* instance = ImuInterface::GetInstance();
-	pTeleATT toReturn(instance->getYaw(), instance->getPitch(), instance->getRoll(), instance->getAccX(), instance->getAccY(), instance->getAccZ(), instance->getGyroX(), instance->getGyroY(), instance->getGyroZ(), instance->getMagX(), instance->getMagY(), instance->getMagZ(), instance->getPressure(), instance->getTemp());
+	pTeleATT toReturn(wt901b->getYaw(), wt901b->getPitch(), wt901b->getRoll(), wt901b->getAccX(), wt901b->getAccY(), wt901b->getAccZ(), wt901b->getGyroX(), wt901b->getGyroY(), wt901b->getGyroZ(), wt901b->getMagX(), wt901b->getMagY(), wt901b->getMagZ(), wt901b->getPressure(), wt901b->getTemp());
 	return toReturn;
 }
 
 pTeleGPS PeripherialsManager::createTeleGPSStruct()
 {
-	GPSInterface* instance = GPSInterface::GetInstance();
-	pTeleGPS toReturn(instance->getGPSStatus(), instance->getAltitude(), instance->getLon(), instance->getLat(), instance->getGroundSpeed(), instance->getHeading(), instance->getNOS());
+	pTeleGPS toReturn(ubloxGPS->getError(), ubloxGPS->getAltitude(), ubloxGPS->getLon(), ubloxGPS->getLat(), ubloxGPS->getGroundSpeed(), ubloxGPS->getHeading(), ubloxGPS->getNOS());
 	return toReturn;
 }
 
-pTeleBATT PeripherialsManager::createTeleBattStuct()
+pTelePOW PeripherialsManager::createTelePOWStuct()
 {
-	BatteryInterface* instance = BatteryInterface::GetInstance();
-	pTeleBATT toReturn(instance->getVoltage(), instance->getCurrent(), instance->getPower(), instance->getEnergy(), instance->getShunt());
+	pTelePOW toReturn(vaBattery->getVoltage(), vaBattery->getCurrent(), vaBattery->getPower(), vaInternals->getVoltage(), vaInternals->getCurrent(), vaInternals->getCurrent());
 	return toReturn;
 }
 
 pTeleIOStat PeripherialsManager::createTeleIOStatStruct()
 {
-	pTeleIOStat toReturn(BatteryInterface::GetInstance()->getINAStatus(), ServoControl::GetInstance()->getPCA9865Status(), ImuInterface::GetInstance()->getIMUStatus(), GPSInterface::GetInstance()->getGPSStatus());
+	pTeleIOStat toReturn(!vaBattery->getError(), !vaInternals->getError(), !pca9685->getError(), !wt901b->getError(), ubloxGPS->getError());
 	return toReturn;
 }
 
-pTelePWM PeripherialsManager::createTelePWMStruct()
+pTelePWM PeripherialsManager::createTelePWMStruct() // TODO: What a horrendous way to do it
 {
 	pTelePWM toReturn;
-
-	ServoControl* instance = ServoControl::GetInstance();
-	toReturn.motorMS = instance->getMainMotorMS();
-	pair<int, unsigned char*> tmp = instance->getControlSurfaceConfiguration();
+	toReturn.motorMS = pca9685->getMainMotorMS();
+	pair<int, unsigned char*> tmp = pca9685->getControlSurfaceConfiguration();
 	toReturn.configuration = tmp.first;
 	memcpy(&toReturn.angle, &tmp.second, 16);
+	delete[] tmp.second;
 	return toReturn;
 }
 
-bool PeripherialsManager::processGeneralPeripherialsManagerRequest(const client cli)
+bool PeripherialsManager::processGeneralTelemetryRequest(const client cli)
 {
 	pTeleGen data;
 	data.att = createTeleAttStruct();
 	data.gps = createTeleGPSStruct();
-	data.batt = createTeleBattStuct();
+	data.pow = createTelePOWStuct();
 	data.io = createTeleIOStatStruct();
 	data.pwm = createTelePWMStruct();
 	/* cout << "yaw:   " << data.att.yaw << "\npitch: " << data.att.pitch << "\nroll:  " << data.att.roll << "\nacc:   " << data.att.accX << "\ntemp:  " << data.att.temp << "\nvolt:  " << data.batt.voltage << "\ncurr:  " << data.batt.current << "\n\n"; */
@@ -159,10 +155,10 @@ bool PeripherialsManager::processAttGPSRequest(const client cli)
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return true;
 }
-bool PeripherialsManager::processBatteryRequest(const client cli)
+bool PeripherialsManager::processPowerRequest(const client cli)
 {
-	pTeleBATT data = createTeleBattStuct();
-	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_BATT, 0x01, sizeof(data));
+	pTelePOW data = createTelePOWStuct();
+	SendingStructure ss(cli.fd, cli.cMutex, P_TELE_POW, 0x01, sizeof(data));
 	memcpy(ss.getMessageBuffer(), &data, sizeof(data));
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 	return true;

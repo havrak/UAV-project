@@ -6,7 +6,6 @@
  */
 #include "communication_interface.h"
 
-
 CommunicationInterface* CommunicationInterface::communicationInterface = nullptr;
 mutex CommunicationInterface::mutexCommunicationInterface;
 
@@ -73,10 +72,10 @@ void CommunicationInterface::cleanUp()
 	close(sockfd);
 }
 
-void CommunicationInterface::restart(){
+void CommunicationInterface::restart()
+{
 	process = false;
 	checkForNewDataThread.join();
-	managementThread.join();
 	cleanUp();
 	process = true;
 	setupSocket(myIP, serverPort);
@@ -84,12 +83,10 @@ void CommunicationInterface::restart(){
 	SendingThreadPool::GetInstance()->restart();
 }
 
-
 void CommunicationInterface::shutdown()
 {
 	process = false;
 	checkForNewDataThread.join();
-	managementThread.join();
 	cleanUp();
 	ProcessingThreadPool::GetInstance()->endThreadPool();
 	SendingThreadPool::GetInstance()->endThreadPool();
@@ -258,7 +255,7 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 
 			ssize_t sCount = send(ss.cfd, (char*)&message + bytesSend, (MAX_MESSAGE_SIZE < sizeof(message) - bytesSend ? MAX_MESSAGE_SIZE : sizeof(message) - bytesSend), MSG_NOSIGNAL);
 			if ((sCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
-				if(errno== EPIPE)
+				if (errno == EPIPE)
 					removeClient(client(ss.cfd, ss.cMutex));
 
 				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
@@ -348,20 +345,6 @@ int CommunicationInterface::newClientConnect()
 	return clientfd;
 }
 
-void CommunicationInterface::manage()
-{
-	while (process) {
-		Telemetry::GetInstance()->processGeneralTelemetryRequest(client(-1, 0));
-		// NOTE: this should not be here
-		// but wiringPi and the PCA9685 have conflicting delay functions, thus I need to circument it
-		// this fix is only temporary, gpio library shouldn't share this problem
-		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
-		/* this_thread::sleep_for(chrono::milliseconds(100)); */
-		//ServoControl::GetInstance()->updatePichAndRoll(ImuInterface::GetInstance()->getPitch(), ImuInterface::GetInstance()->getRoll());
-		this_thread::sleep_for(chrono::milliseconds(500));
-	}
-}
-
 bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -390,7 +373,6 @@ bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 	listen(sockfd, 8);
 	clientLength = sizeof(serv_addr);
 	checkForNewDataThread = thread(&CommunicationInterface::checkActivityOnSocket, this);
-	managementThread = thread(&CommunicationInterface::manage, this);
 
 	return true;
 }
@@ -423,7 +405,7 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 	memcpy(&pc, ps.getMessageBuffer(), ps.messageSize);
 	switch (pc.cs) {
 	case X:
-		ImuInterface::GetInstance()->resetOrientation();
+		PeripherialsManager::GetInstance()->resetIMUOrientation();
 	case Y:
 	case A:
 	case B:
@@ -436,15 +418,16 @@ void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
 /*-----------------------------------
 // ProcessingThreadPool section
 ----------------------------------**/
-void ProcessingThreadPool::restart(){
+void ProcessingThreadPool::restart()
+{
 	endThreadPool();
 	process = true;
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&ProcessingThreadPool::worker, this));
 	controlThread = thread(&ProcessingThreadPool::controlWorker, this);
- 	queue<ProcessingStructure>().swap(workQueue);
- 	deque<ProcessingStructure>().swap(controlQueue);
- 	deque<clock_t>().swap(controlQueueTimestamps);
+	queue<ProcessingStructure>().swap(workQueue);
+	deque<ProcessingStructure>().swap(controlQueue);
+	deque<clock_t>().swap(controlQueueTimestamps);
 }
 
 void ProcessingThreadPool::endThreadPool()
@@ -484,25 +467,24 @@ void ProcessingThreadPool::worker()
 			CommunicationInterface::GetInstance()->removeClient(tmp);
 			break;
 		case P_SET_CAMERA: // camera settings
-		 break;
+			break;
 		case P_CON_SPC: // spacial control
 			CommunicationInterface::GetInstance()->processSpecialControl(*ps);
-
 			break;
 		case P_TELE_IOSTAT: // io status
-			Telemetry::GetInstance()->processIORequest(tmp);
+			PeripherialsManager::GetInstance()->processIORequest(tmp);
 			break;
-		case P_TELE_GEN:																								 // general information
-			Telemetry::GetInstance()->processGeneralTelemetryRequest(tmp); // sex tvoje máma
+		case P_TELE_GEN:																													 // general information
+			PeripherialsManager::GetInstance()->processGeneralTelemetryRequest(tmp); // sex tvoje máma
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			Telemetry::GetInstance()->processAttGPSRequest(tmp);
+			PeripherialsManager::GetInstance()->processAttGPSRequest(tmp);
 			break;
-		case P_TELE_BATT: // battery status
-			Telemetry::GetInstance()->processBatteryRequest(tmp);
+		case P_TELE_POW: // battery status
+			PeripherialsManager::GetInstance()->processPowerRequest(tmp);
 			break;
 		case P_TELE_PWM: // pwm settings
-			Telemetry::GetInstance()->processPWMRequest(tmp);
+			PeripherialsManager::GetInstance()->processPWMRequest(tmp);
 			break;
 		case P_TELE_ERR: // general error message
 			// NOTE: do we care if clients sends an error,
@@ -526,7 +508,7 @@ void ProcessingThreadPool::controlWorker()
 			controlQueueTimestamps.pop_back();
 			controlQueue.pop_back();
 		}
-		ServoControl::GetInstance()->processControl(*ps);
+		PeripherialsManager::GetInstance()->servoControlRequest(ps);
 	}
 }
 
@@ -553,12 +535,13 @@ void ProcessingThreadPool::addJob(ProcessingStructure ps)
 // SendingThreadPool section
 ----------------------------------**/
 
-void SendingThreadPool::restart(){
+void SendingThreadPool::restart()
+{
 	endThreadPool();
 	process = true;
 	for (unsigned i = 0; i < NUMBER_OF_THREADS; i++)
 		threads.push_back(std::thread(&SendingThreadPool::worker, this));
- 	queue<SendingStructure>().swap(workQueue);
+	queue<SendingStructure>().swap(workQueue);
 }
 
 void SendingThreadPool::endThreadPool()
@@ -595,4 +578,3 @@ void SendingThreadPool::scheduleToSend(SendingStructure ss)
 	workQueue.push(ss);
 	workQueueUpdate.notify_all();
 }
-

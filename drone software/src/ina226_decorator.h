@@ -19,13 +19,10 @@
 #include <iostream>
 #include "i2c_periphery.h"
 
-#define INA_I2C_ADDRESS 0x44
 
-using namespace std;
-
-class INA226Decorator : I2CPeriphery {
+class INA226Decorator : public I2CPeriphery {
 	private:
-	//int fd;
+
 	float voltage = 0;
 	float current = 0;
 	float power = 0;
@@ -44,22 +41,14 @@ class INA226Decorator : I2CPeriphery {
 
 
 	public:
-	INA226Decorator();
+	INA226Decorator(uint8_t address);
 
 
-	void read();
+	void read() override;
 
-	/**
-	 * initializes INA226 library
-	 *
-	 * @return bool - true if connection was established
-	 */
-	bool attachINA226(int address);
+	bool initialize() override;
 
-	/**
-	 * starts loop to periodically load data
-	 */
-	void startLoop();
+
 
 	/**
    * return how often should data be read from sensor
@@ -75,26 +64,16 @@ class INA226Decorator : I2CPeriphery {
 	 */
 	void setPollingDelay(int pollingDelay);
 
-	float getVoltage();
-	float getCurrent();
-	float getPower();
-	float getShunt();
-	float getEnergy();
+	float getVoltage(){return voltage;}
 
-	/**
-	 * return whether connection to sensor was established
-	 *
-	 * @return bool - true if connection was established
-	 */
-	bool getINAStatus();
+	float getCurrent(){return current;}
 
-	/**
-	 * set status of INA226 as it is telemetry.h
-	 * who checks i2c devices
-	 *
-	 * @param bool status - new status
-	 */
-	void setINAStatus(bool status);
+	float getPower(){return power;}
+
+	float getShunt(){return shunt;}
+
+	float getEnergy(){return energy;}
+
 
 };
 

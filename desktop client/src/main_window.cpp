@@ -184,8 +184,10 @@ void MainWindow::updateTelemetry(pTeleGen data, mutex* dataMutex)
 			 << "\nPitch y: " << data.att.pitch
 			 << "\nRoll y:  " << data.att.roll
 			 << "\n-----------------------\n"
-			 << "\nVoltage: " << data.batt.getVoltage
-			 << "\nCurrent: " << data.batt.getCurrent
+			 << "\nBat Voltage : " << data.pow.batVoltage
+			 << "\nBat Current : " << data.pow.batCurrent
+			 << "\n5V Voltage  : " << data.pow.intVoltage
+			 << "\n5V Current  : " << data.pow.intCurrent
 			 << "\nTemp:    " << data.att.temp
 			 << "\n-----------------------\n"
 			 << "\nGPS NOS: " << data.gps.numberOfSatelites

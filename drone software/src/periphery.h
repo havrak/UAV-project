@@ -32,7 +32,7 @@ class Periphery {
 
 	bool isActive() { return active; }
 
-	void read() {}
+	virtual void read() {}
 
 	virtual void setActive(bool active)
 	{

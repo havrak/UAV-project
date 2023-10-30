@@ -57,7 +57,7 @@ int DroneTelemetry::processAttGPS(ProcessingStructure ps)
 	mainWindow->updateTelemetry(data, &telemetryMutex);
 	return 1;
 }
-int DroneTelemetry::processBattery(ProcessingStructure ps)
+int DroneTelemetry::processPOW(ProcessingStructure ps)
 {
 	telemetryMutex.lock();
 	memcpy(&data.batt, ps.getMessageBuffer(),  sizeof(data.batt));

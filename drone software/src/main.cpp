@@ -9,8 +9,7 @@
 
 #include "communication_interface.h"
 #include "config.h"
-#include "servo_control.h"
-#include "telemetry.h"
+#include "peripherials_manager.h"
 #include <cstring>
 #include <iostream>
 #include <csignal>
@@ -20,7 +19,7 @@ using namespace std;
 void signalHandler( int sigNum){
 	cout << "MAIN | signalHandler | caught signal slowing down\n";
 	CommunicationInterface::GetInstance()->cleanUp();
-	ServoControl::GetInstance()->slowDownToMin();
+	PeripherialsManager::GetInstance()->servoControllMin();
 	this_thread::sleep_for(chrono::milliseconds(10));
 	exit(127);
 }
@@ -40,7 +39,7 @@ int main(int argc, char** argv)
 	if (argc > 1){
 		if(strcmp(argv[1], "-r") == 0){
 			cout << "MAIN | main | calirating ESC" << endl;
-			ServoControl::GetInstance()->calibrateESC();
+			PeripherialsManager::GetInstance()->servoControllCalibrate();
 			return 1;
 		}
 		if(strcmp(argv[1], "-a") == 0)
@@ -48,16 +47,12 @@ int main(int argc, char** argv)
 	}
 
 
-	Telemetry::GetInstance()->setUpSensors(config.getIMUAddress(), config.getINAAddress(), config.getPCA9865Address());
-	ImuInterface::GetInstance()->setIMUOrientation(config.getIMUOrientation());
+	PeripherialsManager::GetInstance()->initializePeripherials(config.getINABatAddress(), config.getINA5VAddress(), config.getPCA9865Address(), config.getIMUAddress());
 
-	ServoControl::GetInstance()->attachPCA9685(config.getPCA9865Address());
-
-	if(!suppressArming) ServoControl::GetInstance()->armESC();
+	if(!suppressArming) PeripherialsManager::GetInstance()->servoControllArm();
 
 	cout << "MAIN | main | starting communication interface" << endl;
 	CommunicationInterface::GetInstance()->setupSocket(config.getMyIP(), config.getServerPort());
-	ServoControl::GetInstance()->setOperationalParameters(config.getWingSurfaceConfiguration(), config.getControlMethodAdjuster());
 
 	CommunicationInterface::GetInstance()->checkForNewDataThread.join();
 	return 1;

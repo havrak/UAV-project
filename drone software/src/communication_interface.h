@@ -38,10 +38,6 @@
 #include <bits/types/clock_t.h>
 
 
-#include "camera_streamer.h"
-#include "protocol_spec.h"
-#include "telemetry.h"
-
 using namespace std;
 
 /* #define SERVER_PORT 8066 */
@@ -64,11 +60,8 @@ class CommunicationInterface {
 
 	socklen_t clientLength;
 	list<client> clients;
-	thread managementThread;
 	bool process = true;
 	const bool debug = false;
-
-	/* thread checkForNewDataThread; */
 
 	static CommunicationInterface* communicationInterface;
 	static mutex mutexCommunicationInterface;
@@ -191,12 +184,6 @@ class CommunicationInterface {
 	void shutdown();
 
 	// TODO: move these methods into solo group, outside class COMMUNICATION_INTERFACE
-
-	/**
-	 * method used by thread to periodically update data in ServoControl control
-	 * and send telemetry to all clients
-	 */
-	void manage();
 
 	/**
 	 * pings given client

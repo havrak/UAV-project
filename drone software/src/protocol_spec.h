@@ -156,13 +156,15 @@ struct pConSpc {
 };
 
 struct pTeleIOStat {
-	bool ina226;
+	bool ina226Battery;
+	bool ina226Internals;
 	bool pca9685;
 	bool wt901;
 	bool gps;
 	pTeleIOStat() {};
-	pTeleIOStat(bool ina226, bool pca9685, bool wt901, bool gps)
-			: ina226(ina226)
+	pTeleIOStat(bool ina226Battery, bool ina226Internals, bool pca9685, bool wt901, bool gps)
+			: ina226Battery(ina226Battery)
+			, ina226Internals(ina226Internals)
 			, pca9685(pca9685)
 			, wt901(wt901)
 			, gps(gps) {};
@@ -227,19 +229,21 @@ struct pTeleATT {
 			, temp(temp) {};
 };
 
-struct pTeleBATT {
-	float voltage;
-	float current;
-	float power;
-	float shunt;
-	float energy;
-	pTeleBATT() {};
-	pTeleBATT(float voltage, float current, float power, float shunt, float energy)
-			: voltage(voltage)
-			, current(current)
-			, power(power)
-			, shunt(shunt)
-			, energy(energy) {};
+struct pTelePOW {
+	float batVoltage;
+	float batCurrent;
+	float batPower;
+	float intVoltage;
+	float intCurrent;
+	float intPower;
+	pTelePOW() {};
+	pTelePOW(float batVoltage, float batCurrent, float batPower, float intVoltage, float intCurrent, float intPower)
+			: batVoltage(batVoltage)
+			, batCurrent(batCurrent)
+			, batPower(batPower)
+			, intVoltage(intVoltage)
+			, intCurrent(intCurrent)
+			, intPower(intPower) {};
 };
 
 struct pTelePWM {
@@ -257,7 +261,7 @@ struct pTeleGen {
 	pTeleIOStat io;
 	pTeleATT att;
 	pTeleGPS gps;
-	pTeleBATT batt;
+	pTelePOW pow;
 	pTelePWM pwm;
 };
 
@@ -290,7 +294,7 @@ enum protocol_codes {
 	P_TELE_IOSTAT = 0x41,
 	P_TELE_GEN = 0x42,
 	P_TELE_ATTGPS = 0x43,
-	P_TELE_BATT = 0x44,
+	P_TELE_POW = 0x44,
 	P_TELE_PWM = 0x45,
 	P_TELE_ERR = 0x81,
 };

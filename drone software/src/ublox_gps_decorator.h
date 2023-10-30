@@ -11,7 +11,6 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 #include <chrono>
-#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -21,9 +20,8 @@
 
 using namespace std;
 
-class UBloxGPSDecorator : Periphery{
+class UBloxGPSDecorator : public Periphery{
 	private:
-	int pollingDelay = 25;
 	int fd;
 	const bool debug = false;
 
@@ -38,8 +36,6 @@ class UBloxGPSDecorator : Periphery{
 
 	protected:
 
-	thread loopThread;
-
 
 	/**
 	 * method used byt thread to regularly
@@ -50,30 +46,8 @@ class UBloxGPSDecorator : Periphery{
 	public:
 	UBloxGPSDecorator();
 
-	/**
-	 * start loop to read data from serial
-	 */
-	void startLoop();
+	bool initialize() override;
 
-	/**
-	 * returns value of how often data should be read
-	 *
-	 * @return int - polling delay
-	 */
-	int getPollingDelay();
-
-	/**
-	 * sets new time how often data should be read
-	 *
-	 */
-	void setPollingDelay(int newPollingDelay);
-
-	/**
-	 * opens serial connections to the sensor
-	 *
-	 * @return bool - true if connection was open
-	 */
-	bool attachGPS();
 
 	/**
 	 * returns latitude of drone in degrees

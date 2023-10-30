@@ -19,19 +19,6 @@ enum wingSurfaceConfiguration{
 	STANDARD_TAIL_WING = 2,
 };
 
-struct StandardTailWingConfiguration{
-	int leftFlapIndex = 1;
-	int rightFlapIndex = 2;
-	int leftElevatorIndex = 3;
-	int rightElevatorIndex = 4;
-	int rudderIndex = 5;
-	unsigned int short leftFlap;
-	unsigned int short rightFlap;
-	unsigned int short leftElevator;
-	unsigned int short rightElevator;
-	unsigned int short rudder;
-
-};
 
 struct VShapeTailWingConfiguration{
 	int leftFlapIndex = 1;
@@ -60,7 +47,7 @@ class DroneTelemetry{
 
 		pTeleGen data;
 
-		pTeleBATT battery;
+		pTelePOW battery;
 		clock_t batteryLastTimeReceived;
 		pTeleATT attitude;
 		clock_t attitudeLastTimeReceived;
@@ -104,7 +91,7 @@ class DroneTelemetry{
 		 *
 		 * @param ProcessingStructure ps - data to be processed
 		 */
-		int processBattery(ProcessingStructure ps);
+		int processPOW(ProcessingStructure ps);
 
 		/**
 		 * processes data from pwm telemetry packet

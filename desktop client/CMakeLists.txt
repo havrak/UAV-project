@@ -38,7 +38,7 @@ set_target_properties(
 target_include_directories(
 	inih PUBLIC "${PROJECT_SOURCE_DIR}/libraries/libraries/inih/")
 
-include_directories(include)
+include_directories(src)
 include_directories(${cpr_INCLUDE_DIR})
 include_directories(${osmgpsmap_INCLUDE_DIR})
 

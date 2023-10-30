@@ -407,8 +407,8 @@ void ProcessingThreadPool::worker()
 		case P_TELE_ATTGPS: // attitude sensors
 			DroneTelemetry::GetInstance()->processAttGPS(*ps);
 			break;
-		case P_TELE_BATT: // battery status
-			DroneTelemetry::GetInstance()->processBattery(*ps);
+		case P_TELE_POW: // battery status
+			DroneTelemetry::GetInstance()->processPOW(*ps);
 			break;
 		case P_TELE_PWM: // pwm settings
 			DroneTelemetry::GetInstance()->processPWM(*ps);

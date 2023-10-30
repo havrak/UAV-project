@@ -130,10 +130,18 @@ struct pConSpc {
 };
 
 struct pTeleIOStat {
-	bool ina226;
+	bool ina226Battery;
+	bool ina226Internals;
 	bool pca9685;
 	bool wt901;
 	bool gps;
+	pTeleIOStat() {};
+	pTeleIOStat(bool ina226Battery, bool ina226Internals, bool pca9685, bool wt901, bool gps)
+			: ina226Battery(ina226Battery)
+			, ina226Internals(ina226Internals)
+			, pca9685(pca9685)
+			, wt901(wt901)
+			, gps(gps) {};
 };
 
 struct pTeleGPS {
@@ -144,6 +152,7 @@ struct pTeleGPS {
 	int numberOfSatelites;
 	double groundSpeed;
 	double heading;
+
 	pTeleGPS() {};
 	pTeleGPS(bool gpsUp, double latitude, double longitude, double altitude, double groundSpeed, double heading, int numberOfSatelites)
 			: gpsUp(gpsUp)
@@ -153,7 +162,6 @@ struct pTeleGPS {
 			, numberOfSatelites(numberOfSatelites)
 			, groundSpeed(groundSpeed)
 			, heading(heading) {};
-
 };
 
 struct pTeleATT {
@@ -177,14 +185,39 @@ struct pTeleATT {
 	int pressure;
 	// TEMP
 	double temp;
+	pTeleATT() {};
+	pTeleATT(double yaw, double pitch, double roll, double accX, double accY, double accZ, double gyroX, double gyroY, double gyroZ, double magX, double magY, double magZ, int pressure, double temp)
+			: yaw(yaw)
+			, pitch(pitch)
+			, roll(roll)
+			, accX(accX)
+			, accY(accY)
+			, accZ(accZ)
+			, gyroX(gyroX)
+			, gyroY(gyroY)
+			, gyroZ(gyroZ)
+			, magX(magX)
+			, magY(magY)
+			, magZ(magZ)
+			, pressure(pressure)
+			, temp(temp) {};
 };
 
-struct pTeleBATT {
-	float getVoltage;
-	float getCurrent;
-	float getPower;
-	float getShunt;
-	float getEnergy;
+struct pTelePOW {
+	float batVoltage;
+	float batCurrent;
+	float batPower;
+	float intVoltage;
+	float intCurrent;
+	float intPower;
+	pTelePOW() {};
+	pTelePOW(float batVoltage, float batCurrent, float batPower, float intVoltage, float intCurrent, float intPower)
+			: batVoltage(batVoltage)
+			, batCurrent(batCurrent)
+			, batPower(batPower)
+			, intVoltage(intVoltage)
+			, intCurrent(intCurrent)
+			, intPower(intPower) {};
 };
 
 struct pTelePWM {
@@ -202,7 +235,7 @@ struct pTeleGen {
 	pTeleIOStat io;
 	pTeleATT att;
 	pTeleGPS gps;
-	pTeleBATT batt;
+	pTelePOW pow;
 	pTelePWM pwm;
 };
 
@@ -210,9 +243,15 @@ struct pTeleErr {
 	unsigned int code;
 	char message[60];
 	pTeleErr(unsigned int code, string msg)
-			: code(code) { strncpy(message, msg.c_str(), msg.length() > 60 ? 60 : msg.length()) ;};
-	pTeleErr(unsigned int code, char *msg)
-			: code(code) { strncpy(message, msg, strlen(msg) > 60 ? 60 : strlen(msg));};
+			: code(code)
+	{
+		strncpy(message, msg.c_str(), msg.size() > 60 ? 60 : msg.size());
+	};
+	pTeleErr(unsigned int code, char* msg)
+			: code(code)
+	{
+		strncpy(message, msg, strlen(msg) > 60 ? 60 : strlen(msg));
+	};
 };
 
 enum protocol_codes {
@@ -229,7 +268,7 @@ enum protocol_codes {
 	P_TELE_IOSTAT = 0x41,
 	P_TELE_GEN = 0x42,
 	P_TELE_ATTGPS = 0x43,
-	P_TELE_BATT = 0x44,
+	P_TELE_POW = 0x44,
 	P_TELE_PWM = 0x45,
 	P_TELE_ERR = 0x81,
 };

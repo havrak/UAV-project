@@ -8,6 +8,7 @@
 #ifndef SERVO_CONTROL_H
 #define SERVO_CONTROL_H
 
+#include "i2c_periphery.h"
 #include "protocol_spec.h"
 #define MIXING_GAIN 0.5
 
@@ -24,7 +25,7 @@
 #define LEVERAGE 20;
 
 /* #include "../libraries/rpidmx512-Lib-PCA9685/pca9685servo.h" */
-#include "../libraries/lib-pca9685/pca9685servo.h"
+#include "../libraries/raspberry-pi-pca9685/pca9685servo.h"
 
 #include "protocol_spec.h"
 #include <bits/types/clock_t.h>
@@ -74,22 +75,19 @@ typedef struct {
  * class handeling interfacing between
  * PCA9685 and rest of the system
  */
-class PCA9685Decorator : I2CPeriphery{
+class PCA9685Decorator : public I2CPeriphery{
 private:
   int fd = -1;
   const bool debug = true;
-  static PCA9685Decorator *servoControl;
-  static mutex mutexPCA9685Decorator;
-	thread pidControllerThread;
 	float pitch = 0, roll = 0;
 
- ControlMethodAdjuster controllAdjuster = SQUARING;
-	bool pca9685Up = false;
+	ControlMethodAdjuster controllAdjuster = SQUARING;
 	unsigned int short mainMotorMS;
 
-	PCA9685Servo servo = PCA9685Servo(0x40);
+	PCA9685Servo* pca;
 	int currentMotorPulse;
 
+	bool initialize() override;
 
 	VShapeTailWingConfiguration vTail;
 
@@ -118,8 +116,7 @@ private:
 
 
 public:
-  PCA9685Decorator(uint8_t address):I2CPeriphery(address) {
-	};
+  PCA9685Decorator(uint8_t address);
 
 
 	/**
@@ -185,7 +182,7 @@ public:
 	 * @param ProcessingStructure ps - strucure with new configuration
 	 * @return int - 0 if processesing went well
 	 */
-	bool processControl(ProcessingStructure ps);
+	bool processControl(ProcessingStructure* ps);
 
 	/**
 	 * sets pitch and roll value used by PID

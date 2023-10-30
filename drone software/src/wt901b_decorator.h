@@ -8,19 +8,16 @@
 #ifndef WT901_DECORATOR_H
 #define WT901_DECORATOR_H
 
-#include "../libraries/Raspberry-JY901-Serial/JY901.h"
-#include <chrono>
-#include <mutex>
-#include <string>
-#include <thread>
+#include "../libraries/raspberry-pi-wt901/JY901.h"
+#include "i2c_periphery.h"
 #include <chrono>
 #include <iostream>
-#include "i2c_periphery.h"
-
+#include <mutex>
+#include <string>
 
 using namespace std;
 
-enum IMU_Orientation{
+enum IMU_Orientation { //TODO: move to Kconfig
 	STANDART,
 	X_Y_INVERTED
 };
@@ -29,31 +26,46 @@ enum IMU_Orientation{
  * wrapper for WT901B library
  * all getters are made thread safe
  */
-class WT901Decorator : I2CPeriphery{
+class WT901Decorator : public I2CPeriphery {
 	private:
 	const bool debug = true;
 	CJY901 JY901;
-
-
-
-	public:
-
-	WT901Decorator(uint8_t address, IMU_Orientation orientation):I2CPeriphery(address), orientation(orientation){	};
-
-	/**
-	 * attaches IMU
-	 *
-	 * @return bool - true if IMU was attached
-	 */
-	bool attachIMU(int address); // bind serial connection
-
 
 	double yawOffset = 0;
 	double pitchOffset = 0;
 	double rollOffset = 0;
 
+	// GYRO
+	double yaw;
+	double pitch;
+	double roll;
+	// ACC
+	double accX;
+	double accY;
+	double accZ;
+	// GYRO ACC
+	double gyroX;
+	double gyroY;
+	double gyroZ;
+	// MAG
+	double magX;
+	double magY;
+	double magZ;
+	// BARO
+	int pressure;
+	// TEMP
+	double temp;
+
+
 	IMU_Orientation orientation;
 	const bool usingSerial = false;
+
+	public:
+	WT901Decorator(uint8_t address, IMU_Orientation orientation);
+
+	bool initialize() override;
+
+	void read() override;
 
 	/**
 	 * resetOrientation of the IMU as value
@@ -65,25 +77,34 @@ class WT901Decorator : I2CPeriphery{
 	 */
 	bool resetOrientation();
 
+	double getTemp(){return temp; }
 
-	double getTemp();						 // get temperature
-	double getAccX();						 // get X-axis acceleration in multiples of g
-	double getAccY();						 // get Y-axis acceleration in multiples of g
-	double getAccZ();						 // get Z-axis acceleration in multiples of g
-	double getGyroX();					 // get X-axis angular velocity - rad/s
-	double getGyroY();					 // get Y-axis angular velocity - rad/s
-	double getGyroZ();					 // get Z-axis angular velocity - rad/s
-	double getRoll();						 // get X-axis(Roll) angle - deg
-	double getPitch();					 // get Y-axis(Pitch) angle - geg
-	double getYaw();						 // get Z-axis(Yaw) angle deg
-	double getMagX();						 // get X-axis magnetic field
-	double getMagY();						 // get Y-axis magnetic field
-	double getMagZ();						 // get Z-axis magnetic field
+	double getAccX(){return accX; } // getAccX() unit: G(gravity)
 
-	int getPressure();					 // get pressure(JY-901B)
-	int getAltitude();					 // get altitude(JY-901B)
-	double getQuater(string);		 // get quaternion
-	milliseconds getLastTime();  // get last receive time
+	double getAccY(){return accY;} // getAccY() unit: G(gravity)
+
+	double getAccZ(){return accZ;} // getAccZ() unit: G(gravity)
+
+	double getGyroX(){return accX;} // getGyroX() unit: degree(s) per second
+
+	double getGyroY(){return accY;} // getGyroY() unit: degree(s) per second
+
+	double getGyroZ(){return accZ;} // getGyroZ() unit: degree(s) per second
+
+	double getRoll(){return roll;} // getRoll() unit: degree(s)
+
+	double getPitch(){return pitch;} // getPitch() unit: degree(s)
+
+	double getYaw(){return yaw;} // getYaw() unit: degree(s)
+
+	double getMagX(){return magX;} // getMagX()
+
+	double getMagY(){return magY;} // getMagY()
+
+	double getMagZ(){return magZ;} // getMagZ()
+
+	int getPressure(){return pressure;} // getPressure() unit: Pa
+
 };
 
 #endif /* !WT901_DECORATOR_H */
