@@ -71,54 +71,54 @@ class DroneTelemetry{
 		 * after data is processed it will update data
 		 * on screen
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processGeneralTelemetry(ProcessingStructure ps);
+		int processGeneralTelemetry(ProcessingStructure* ps);
 
 		/**
 		 * processes data from attitude+GPS telemetry packet
 		 * after data is processed it will update data
 		 * on screen
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processAttGPS(ProcessingStructure ps);
+		int processAttGPS(ProcessingStructure* ps);
 
 		/**
 		 * processes data from battery telemetry packet
 		 * after data is processed it will update data
 		 * on screen
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processPOW(ProcessingStructure ps);
+		int processPOW(ProcessingStructure* ps);
 
 		/**
 		 * processes data from pwm telemetry packet
 		 * after data is processed it will update data
 		 * on screen
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processPWM(ProcessingStructure ps);
+		int processPWM(ProcessingStructure* ps);
 
 		/**
 		 * processes data from io telemetry packet
 		 * after data is processed it will update data
 		 * on screen
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processIO(ProcessingStructure ps);
+		int processIO(ProcessingStructure* ps);
 
 		/**
 		 * processes error packet
 		 * after error is processed it will update data
 		 * display on screen dialog with error message
 		 *
-		 * @param ProcessingStructure ps - data to be processed
+		 * @param ps - data to be processed
 		 */
-		int processError(ProcessingStructure ps);
+		int processError(ProcessingStructure* ps);
 
 
 		/**

@@ -44,6 +44,8 @@ using namespace std;
 #define NUMBER_OF_THREADS 5
 #define MAX_CLIENTS 10
 
+
+// TODO: all reference should de moved to pointers
 class CommunicationInterface {
 	private:
 	struct sockaddr_in serv_addr;
@@ -76,9 +78,9 @@ class CommunicationInterface {
 	/**
 	 * Reads data from client and sends it to be processes
 	 *
-	 * @param client cli - client to be read from
+	 * @param const client cli - client to be read from
 	 */
-	bool receiveDataFromClient(client cli);
+	bool receiveDataFromClient(const client cli);
 
 	/**
 	 * tries to accept new client
@@ -90,18 +92,18 @@ class CommunicationInterface {
 	 * clears information in client struct
 	 * about message that was last read
 	 *
-	 * @param client cli - client which structure should be cleaned
+	 * @param const client cli - client which structure should be cleaned
 	 */
-	void clearClientStruct(client cli);
+	void clearClientStruct(const client cli);
 
 	/**
 	 * Move reading header to point to start of new message
 	 * Works by searching for terminator string in data stream
 	 *
-	 * @param client cli - client for which reading has to be fixed
+	 * @param const client cli - client for which reading has to be fixed
 	 * @return bool - true if terminator was found
 	 */
-	bool fixReceiveData(client cli);
+	bool fixReceiveData(const client cli);
 
 
 	public:
@@ -136,9 +138,9 @@ class CommunicationInterface {
 	/**
 	 * removes client, closes its socket
 	 *
-	 * @param client cli - client to be removed
+	 * @param const client cli - client to be removed
 	 */
-	void removeClient(client cli);
+	void removeClient(const client cli);
 
 	/**
 	 * sends data to client
@@ -159,11 +161,11 @@ class CommunicationInterface {
 	/**
 	 * sends error message to specified client
 	 *
-	 * @param client cli - client to send error to
+	 * @param const client cli - client to send error to
 	 * @param int errCode - error code
 	 * @param char* errMessage - char array with error message, will be cropped to 60 characters
 	 */
-	void sendErrorMessage(client cli, int errCode, char* errMessage);
+	void sendErrorMessage(const client cli, int errCode, char* errMessage);
 
 	/**
 	 * sends error message to all clients
@@ -188,9 +190,9 @@ class CommunicationInterface {
 	/**
 	 * pings given client
 	 *
-	 * @pram client cli - client to be pinged
+	 * @pram const client cli - client to be pinged
 	 */
-	void pingClient(client cli);
+	void pingClient(const client cli);
 
 	/**
 	 * NOTE: this method shouldn't be here and will be moved
@@ -199,7 +201,7 @@ class CommunicationInterface {
 	 *
 	 * @param ProcessingStructure ps - processesing structure with special control stored
 	 */
-	void processSpecialControl(ProcessingStructure ps);
+	void processSpecialControl(ProcessingStructure* ps);
 
 	thread checkForNewDataThread;
 };

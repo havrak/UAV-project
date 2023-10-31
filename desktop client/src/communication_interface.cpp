@@ -399,24 +399,25 @@ void ProcessingThreadPool::worker()
 		case P_CON_SPC: // spacial control
 			break;
 		case P_TELE_IOSTAT: // io status
-			DroneTelemetry::GetInstance()->processIO(*ps);
+			DroneTelemetry::GetInstance()->processIO(ps);
 			break;
 		case P_TELE_GEN: // general information
-			DroneTelemetry::GetInstance()->processGeneralTelemetry(*ps);
+			DroneTelemetry::GetInstance()->processGeneralTelemetry(ps);
 			break;
 		case P_TELE_ATTGPS: // attitude sensors
-			DroneTelemetry::GetInstance()->processAttGPS(*ps);
+			DroneTelemetry::GetInstance()->processAttGPS(ps);
 			break;
 		case P_TELE_POW: // battery status
-			DroneTelemetry::GetInstance()->processPOW(*ps);
+			DroneTelemetry::GetInstance()->processPOW(ps);
 			break;
 		case P_TELE_PWM: // pwm settings
-			DroneTelemetry::GetInstance()->processPWM(*ps);
+			DroneTelemetry::GetInstance()->processPWM(ps);
 			break;
 		case P_TELE_ERR: // general error message
 			cerr << "ProcessingThreadPool | worker | server send an error \n";
 			break;
 		}
+		delete ps;
 	}
 }
 
@@ -564,7 +565,6 @@ int ControllerDroneBridge::update(ControlSurface cs, int val)
 		controllerStateMutex.unlock();
 	} else if (active) {
 		if (val == 1) {
-			/* if(cs == D) */
 			pConSpc pcs;
 			pcs.cs = cs;
 			pcs.val = val;

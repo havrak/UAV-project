@@ -114,7 +114,7 @@ bool CommunicationInterface::buildFdSets()
 	return true;
 }
 
-void CommunicationInterface::clearClientStruct(client cli)
+void CommunicationInterface::clearClientStruct(const client cli)
 {
 	cli.curIndexInBuffer = 0; // position where we have left off
 	cli.curMessageType = 0;
@@ -123,7 +123,7 @@ void CommunicationInterface::clearClientStruct(client cli)
 	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
-void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
+void CommunicationInterface::removeClient(const client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
 {
 	close(cli.fd);
 	for (client c : clients) {
@@ -135,7 +135,7 @@ void CommunicationInterface::removeClient(client cli) // just disconnect and set
 }
 
 // NOTE: will only move socket to last sequence of terminator and valid header data
-bool CommunicationInterface::fixReceiveData(client cli)
+bool CommunicationInterface::fixReceiveData(const client cli)
 {
 	unsigned char buffer[5];
 	bool receivingData = true;
@@ -153,7 +153,7 @@ bool CommunicationInterface::fixReceiveData(client cli)
 	return false;
 }
 
-bool CommunicationInterface::receiveDataFromClient(client cli)
+bool CommunicationInterface::receiveDataFromClient(const client cli)
 {
 	ssize_t bytesReceived = 0;
 
@@ -382,7 +382,7 @@ void CommunicationInterface::sendErrorMessageToAll(int errCode, char* errMessage
 	sendErrorMessage(client(-1, 0), errCode, errMessage);
 }
 
-void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* errMessage)
+void CommunicationInterface::sendErrorMessage(const client cli, int errCode, char* errMessage)
 {
 	/* if(logOn){ */
 	/* 	// TODO: log errors into file */
@@ -393,16 +393,16 @@ void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* err
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
-void CommunicationInterface::pingClient(client cli)
+void CommunicationInterface::pingClient(const client cli)
 {
 	SendingStructure ss(cli.fd, cli.cMutex, P_PING, 0x01, 1);
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
-void CommunicationInterface::processSpecialControl(ProcessingStructure ps)
+void CommunicationInterface::processSpecialControl(ProcessingStructure* ps)
 {
 	pConSpc pc;
-	memcpy(&pc, ps.getMessageBuffer(), ps.messageSize);
+	memcpy(&pc, ps->getMessageBuffer(), ps->messageSize);
 	switch (pc.cs) {
 	case X:
 		PeripherialsManager::GetInstance()->resetIMUOrientation();
@@ -469,7 +469,7 @@ void ProcessingThreadPool::worker()
 		case P_SET_CAMERA: // camera settings
 			break;
 		case P_CON_SPC: // spacial control
-			CommunicationInterface::GetInstance()->processSpecialControl(*ps);
+			CommunicationInterface::GetInstance()->processSpecialControl(ps);
 			break;
 		case P_TELE_IOSTAT: // io status
 			PeripherialsManager::GetInstance()->processIORequest(tmp);
@@ -491,6 +491,7 @@ void ProcessingThreadPool::worker()
 			cerr << "ProcessingThreadPool | worker | client send an error \n";
 			break;
 		}
+		delete ps;
 		// here we process the request;
 	}
 }

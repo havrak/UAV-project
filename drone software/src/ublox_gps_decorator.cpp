@@ -33,6 +33,7 @@ void UBloxGPSDecorator::updateFunction()
 	static bool readingLine = false;
 	static string data = "";
 	while (serialDataAvail(fd) > 0) {
+
 		char c = serialGetchar(fd);
 		if (c == '$') {
 			readingLine = true;
