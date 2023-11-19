@@ -1,37 +1,38 @@
 # UAV project
 
-This is project for my (hopefully) final year of highschool.
+This repository contains all resource that comprised my final thesis for my senior year in high school.
+Main purpose was to create UAV platform based on Raspberry Pi.
 
-Main purpose is to create UAV platform based on Raspberry Pi.
-However as I have never done anything like this I'm not sure how far will I get.
+Codebase is this project is rather bad by my current standards and is heavily impacted by the fact it was essentially my first hardware related project.
+Not to mention my experience with C++ was rather limited at the time.
 
-Alongside code for the drone and software to control it this repo includes various stl files to be 3d printed.
+Desktop client is written in C++ using Gtk3 and is used to control the drone and display telemetry data.
+UI wise it's really bad, and code itself doesn't land much in a way for easy rewrite.
 
+Drone side might fare a bit better, but it's still not great.
+Usage of threads is rather questionable and OOP design patterns were a hip new thing for me at the time and not something I was able to use properly.
 
-# Components
+Thus some parts of codebase are overengineered and some lack any flexibility and don't deserve much other than deletion.
 
-| Component                                     | Description                                        |
-|-----------------------------------------------|----------------------------------------------------|
-| X-UAV Mini Talon (PNP)                        | Basic chassis of the UAV                           |
-| 1200kv motor 					                        | Main motor of the drone                            |
-| Beatles 40A ESC                               | Electronic speed control                           |
-| 4 servo motor                                 | Servos to control all control surfaces             |
-| Wifi Adapter                                  | 6Dbi Wi-Fi adapter to extend range of rpi0 Wi-Fi   |
-| Raspberry Pi Zero 2                           | Main computing unit of the UAV                     |
+In my 3rd semester of university I've made addition to this project in a shape of proper custom PCB to house drone electronics.
 
-* whole drone runs off from 4S 14.8V battery with XT60 plug, thus packet of XT60 F/M plugs is also necessary
-* servos and Pi have seperete supply of power thus two step down converters and XT60 splitter
-* On PC side I'm using Alfa Wi-Fi adapter with 25dBi directional antenna
+I might rewrite this project in the future, but time is a limited resource and school+work take priority.
+Though if rewrite happens, it will be wholly different project.
+* camera streaming with gstreamer has never worked as well as I wanted it to
+* using Wi-Fi for communication was never ideal (drone was acting as AP)
+* codebase and communication protocol needs to be much more open to allow different configurations of hardware
+* desktop client needs to be rewritten from scratch and preferably in Qt
+* way more robust compilation and deployment process is needed (Kconfig, hierarchical Makefiles, etc.)
+
 
 # Libraries and toolkits
 * [WT901B library](https://github.com/havrak/Raspberry-JY901-Serial-I2C)
 * [INA226 library](https://github.com/havrak/raspberry-pi-ina226)
 * [PCA9685 library](https://github.com/havrak/PCA9685-rpi)
 * [inih (INI Not Invented Here)](https://github.com/benhoyt/inih)
-* OpenCV
 * Gtk3
 * crp, fmt
-* WiringPi (used by some libraries above) -- need to move to gpio library
+* WiringPi
 
 # Photos
 
@@ -41,15 +42,9 @@ Alongside code for the drone and software to control it this repo includes vario
 
 ![body detail](./photos/body.jpg)
 
-### Controlling unit
+### Board
 
-![component 1](./photos/detail.jpg)
-
-![component 2](./photos/detail_2.jpg)
-
-### Circuit schema
-
-![circuit](./photos/schema.png)
+![board](./photos/board.png)
 
 
 # Credits
