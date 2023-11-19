@@ -34,7 +34,10 @@ int main(int argc, char** argv)
 	Config config;
 	config.loadConfiguration();
 
+	cout << "MAIN | main | initializing peripherials" << endl;
+	PeripherialsManager::GetInstance()->initializePeripherials(config.getINABatAddress(), config.getINA5VAddress(), config.getPCA9865Address(), config.getIMUAddress());
 
+	cout << "MAIN | main | initializing servo" << endl;
 	bool suppressArming = false; // don't want to wait 8 second for servos to arm
 	if (argc > 1){
 		if(strcmp(argv[1], "-r") == 0){
@@ -45,9 +48,6 @@ int main(int argc, char** argv)
 		if(strcmp(argv[1], "-a") == 0)
 				suppressArming = true;
 	}
-
-
-	PeripherialsManager::GetInstance()->initializePeripherials(config.getINABatAddress(), config.getINA5VAddress(), config.getPCA9865Address(), config.getIMUAddress());
 
 	if(!suppressArming) PeripherialsManager::GetInstance()->servoControllArm();
 

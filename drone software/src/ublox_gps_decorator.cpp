@@ -23,7 +23,7 @@ bool UBloxGPSDecorator::initialize()
 		return true;
 	}else{
 		fd = serialOpen("/dev/serial0", 9600);
-		printf("GPS_INTERFACE | initialize | fd: %d\n", fd);
+		printf("UBloxGPSDecorator | initialize | fd: %d\n", fd);
 		return fd >= 0;
 	}
 }
@@ -41,7 +41,7 @@ void UBloxGPSDecorator::updateFunction()
 		} else if (c == '\n') {
 			readingLine = false;
 			if (debug)
-				cout << "GPS_INTERFACE | updateFunction | Processing: " << data << "\n";
+				cout << "UBloxGPSDecorator | updateFunction | Processing: " << data << "\n";
 			vector<string> parts;
 			stringstream ss(data);
 			string item;
@@ -52,8 +52,8 @@ void UBloxGPSDecorator::updateFunction()
 				if (parts.at(0).compare("$GPGGA") == 0) { // position inforamtion
 
 					if (debug) {
-						cout << "GPS_INTERFACE | updateFunction | found GPGGA string \n";
-						cout << "GPS_INTERFACE | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
+						cout << "UBloxGPSDecorator | updateFunction | found GPGGA string \n";
+						cout << "UBloxGPSDecorator | updateFunction | satellites: " << stoi(parts.at(7)) << "\n";
 					}
 					numberOfSatelites = stoi(parts.at(7));
 					if (numberOfSatelites > 2) {
@@ -65,7 +65,7 @@ void UBloxGPSDecorator::updateFunction()
 					} else {
 						error = true;
 						if (debug)
-							cout << "GPS_INTERFACE | updateFunction | no satellites were found" << endl;
+							cout << "UBloxGPSDecorator | updateFunction | no satellites were found" << endl;
 					}
 				} else if (parts.at(0).compare("$GPVTG") == 0) { // ground speed information
 					groundSpeed = parts.at(6).empty() ? -1 : stod(parts.at(6));

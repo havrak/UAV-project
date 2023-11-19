@@ -16,9 +16,9 @@ DroneTelemetry* DroneTelemetry::telemetry = nullptr;
 mutex DroneTelemetry::telemetryMutex;
 
 DroneTelemetry::DroneTelemetry(){
-	gps.latitude = 0;
-	gps.longitude = 0;
-	gps.altitude = 0;
+	data.gps.latitude = 0;
+	data.gps.longitude = 0;
+	data.gps.altitude = 0;
 }
 
 DroneTelemetry* DroneTelemetry::GetInstance()
@@ -94,6 +94,6 @@ int DroneTelemetry::processError(ProcessingStructure* ps){
 }
 
 pair<double, double> DroneTelemetry::getGPSPosition(){
-	return pair<double, double>(gps->latitude, gps->longitude);
+	return pair<double, double>(data.gps.latitude, data.gps.longitude);
 }
 

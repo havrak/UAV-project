@@ -32,7 +32,8 @@ class Config {
 	IMU_Orientation imo = STANDART;
 
 	int imuAddress = 0x44;
-	int inaAddress = 0x50;
+	int inaBatAddress = 0x50;
+	int inaV5Address = 0x50;
 	int pca9685Address = 0x40;
 
 	public:
@@ -51,15 +52,15 @@ class Config {
 	bool loadConfiguration();
 
 
-	string getMyIP();
-	ControlMethodAdjuster getControlMethodAdjuster();
-	IMU_Orientation getIMUOrientation();
+	string getMyIP(){return myIP;};
+	ControlMethodAdjuster getControlMethodAdjuster(){return cma;};
+	IMU_Orientation getIMUOrientation(){return imo;};
 
-	int getServerPort();
-	int getIMUAddress();
-	int getINABatAddress();
-	int getINA5VAddress();
-	int getPCA9865Address();
+	int getServerPort(){return serverPort;};
+	int getIMUAddress(){return imuAddress;};
+	int getINABatAddress(){return inaBatAddress;};
+	int getINA5VAddress(){return inaV5Address;};
+	int getPCA9865Address(){return pca9685Address;};
 
 };
 

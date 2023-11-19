@@ -47,15 +47,10 @@ class DroneTelemetry{
 
 		pTeleGen data;
 
-		pTelePOW battery;
 		clock_t batteryLastTimeReceived;
-		pTeleATT attitude;
 		clock_t attitudeLastTimeReceived;
-		pTeleGPS gps;
 		clock_t gpsLastTimeReceived;
-		pTelePWM pwm;
 		clock_t pwmLastTimeReceived;
-		pTeleIOStat ioStat;
 		clock_t ioLastTimeReceived;
 
 	public:

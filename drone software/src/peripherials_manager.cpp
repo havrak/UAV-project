@@ -13,14 +13,12 @@ mutex PeripherialsManager::peripherialsMutex;
 
 PeripherialsManager::PeripherialsManager()
 {
-	telemetryThread = thread(&PeripherialsManager::telemetryThreadMethod, this);
 }
 
 PeripherialsManager* PeripherialsManager::GetInstance()
 {
-	if (telemetry == nullptr) {
+	if (telemetry == nullptr)
 		telemetry = new PeripherialsManager();
-	}
 	return telemetry;
 }
 
@@ -33,19 +31,24 @@ void PeripherialsManager::telemetryThreadMethod(){
 		vaInternals->read();
 		peripherialsMutex.unlock();
 		this_thread::sleep_for(chrono::milliseconds(50));
-
-
 	}
-
 }
 
 bool PeripherialsManager::initializePeripherials(uint8_t inaBatAddress, uint8_t inaPowerAddress, uint8_t pcaAddress, uint8_t imuAddress)
 {
+	cout << "PeripherialsManager | initializePeripherials | initializing peripherials: ";
+	cout << "ina battery, ";
 	vaBattery = new INA226Decorator(inaBatAddress);
+	cout << "ina power, ";
 	vaInternals = new INA226Decorator(inaPowerAddress);
+	cout << "pca9685, ";
 	pca9685 = new PCA9685Decorator(pcaAddress);
+	cout << "wt901b, ";
 	wt901b = new WT901Decorator(imuAddress, IMU_Orientation::X_Y_INVERTED);
+	cout << "ublox gps" << endl;
 	ubloxGPS = new UBloxGPSDecorator();
+
+	telemetryThread = thread(&PeripherialsManager::telemetryThreadMethod, this);
 	return true;
 }
 
@@ -55,7 +58,7 @@ bool PeripherialsManager::i2cScan()
 
 	char buffer[128];
 	std::string result = "";
-	FILE* pipe = popen("echo $(sudo i2cdetect -y 1 2>/dev/null | tail -7 | cut -d':' -f2 | sed 's/[^0-9]*\\(.\\)/\\1/g')", "r");
+	FILE* pipe = popen("echo $(i2cdetect -y 1 2>/dev/null | tail -7 | cut -d':' -f2 | sed 's/[^0-9]*\\(.\\)/\\1/g')", "r");
 	if (!pipe) {
 		cerr << "PeripherialsManager | checkSensorStatus | popen() failed!\n";
 		return false;

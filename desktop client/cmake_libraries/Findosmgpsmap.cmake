@@ -1,6 +1,6 @@
 find_path(osmgpsmap_INCLUDE_DIR
 	NAMES osm-gps-map.h
-	# PATH_SUFFIXES /osmgpsmap-1.0
+	PATH_SUFFIXES /osmgpsmap-1.0
 	)
 find_library(osmgpsmap_LIBRARY
 	NAMES osmgpsmap-1.0

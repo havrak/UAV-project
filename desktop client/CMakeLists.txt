@@ -51,9 +51,9 @@ target_link_libraries(${PROJECT_NAME}
 	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	${osmgpsmap_LIBRARY}
+	${cpr_LIBRARY}
 	X11
 	inih
-	cpr
 	nlohmann_json
 	)
 

@@ -51,13 +51,13 @@ void PCA9685Decorator::setAngleOfServo(int channel, bool right, unsigned char an
 bool PCA9685Decorator::calibrateESC()
 {
 	int b;
-	std::cout << "SERVOCONTROL | calibrateESC | setting max\n";
+	std::cout << "PCA9685Decorator | calibrateESC | setting max\n";
 	pca->Set(CHANNEL(0), pca->GetRightUs());
 	mainMotorMS = pca->GetRightUs();
 	std::cout << "SERVOCONTROL | calibrateESC | press key to set min\n";
 	cin >> b;
 
-	std::cout << "SERVOCONTROL | calibrateESC | setting min\n";
+	std::cout << "PCA9685Decorator | calibrateESC | setting min\n";
 	pca->Set(CHANNEL(0), pca->GetLeftUs());
 	mainMotorMS = pca->GetLeftUs();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
@@ -67,7 +67,7 @@ bool PCA9685Decorator::calibrateESC()
 
 bool PCA9685Decorator::armESC()
 {
-	std::cout << "SERVOCONTROL | armESC | arming ESC\n";
+	std::cout << "PCA9685Decorator | armESC | arming ESC\n";
 	slowDownToMin();
 	nanosleep((const struct timespec[]) { { 8, 0L } }, NULL);
 	return true;

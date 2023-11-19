@@ -114,7 +114,7 @@ bool CommunicationInterface::buildFdSets()
 	return true;
 }
 
-void CommunicationInterface::clearClientStruct(const client cli)
+void CommunicationInterface::clearClientStruct(client cli)
 {
 	cli.curIndexInBuffer = 0; // position where we have left off
 	cli.curMessageType = 0;
@@ -123,7 +123,7 @@ void CommunicationInterface::clearClientStruct(const client cli)
 	memset(&cli.curMessageBuffer, 0, sizeof(cli.curMessageBuffer)); // just technicality, unecessary
 }
 
-void CommunicationInterface::removeClient(const client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
+void CommunicationInterface::removeClient(client cli) // just disconnect and set fd to zero, not sure if removing it from the list would be fine
 {
 	close(cli.fd);
 	for (client c : clients) {
@@ -135,7 +135,7 @@ void CommunicationInterface::removeClient(const client cli) // just disconnect a
 }
 
 // NOTE: will only move socket to last sequence of terminator and valid header data
-bool CommunicationInterface::fixReceiveData(const client cli)
+bool CommunicationInterface::fixReceiveData(client cli)
 {
 	unsigned char buffer[5];
 	bool receivingData = true;
@@ -153,7 +153,7 @@ bool CommunicationInterface::fixReceiveData(const client cli)
 	return false;
 }
 
-bool CommunicationInterface::receiveDataFromClient(const client cli)
+bool CommunicationInterface::receiveDataFromClient(client cli)
 {
 	ssize_t bytesReceived = 0;
 
@@ -164,7 +164,7 @@ bool CommunicationInterface::receiveDataFromClient(const client cli)
 			return false;
 
 		if ((infoBuffer[0] + infoBuffer[1] + infoBuffer[2] + infoBuffer[3] + infoBuffer[4]) % 7 != 0) { // just check if first few bytes look semi valid
-			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | checksum of received data doesn't match\n";
+			cerr << "CommunicationInterface | receiveDataFromClient | checksum of received data doesn't match\n";
 			fixReceiveData(cli);
 			return false;
 		} else {
@@ -173,7 +173,7 @@ bool CommunicationInterface::receiveDataFromClient(const client cli)
 			cli.curMessageSize = (((uint16_t)infoBuffer[2]) << 8) + ((uint16_t)infoBuffer[3]) + 5;
 
 			if (debug)
-				cout << "COMMUNICATION_INTERFACE | receiveDataFromClient | message: ";
+				cout << "CommunicationInterface | receiveDataFromClient | message: ";
 			if (debug)
 				cout << "\n   message sender" << cli.fd << "\n   message type: " << int(cli.curMessageType) << "\n   message priority: " << int(cli.curMessagePriority) << "\n   message size: " << cli.curMessageSize << "\n";
 		}
@@ -185,7 +185,7 @@ bool CommunicationInterface::receiveDataFromClient(const client cli)
 		ssize_t rCount = recv(cli.fd, (char*)&cli.curMessageBuffer + bytesReceived, cli.curMessageSize - cli.curIndexInBuffer, MSG_DONTWAIT);
 
 		if (rCount < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-			cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | cannot read from client\n";
+			cerr << "CommunicationInterface | receiveDataFromClient | cannot read from client\n";
 			clearClientStruct(cli);
 			return true;
 		}
@@ -208,7 +208,7 @@ bool CommunicationInterface::receiveDataFromClient(const client cli)
 				clearClientStruct(cli);
 				return true;
 			} else {
-				cerr << "COMMUNICATION_INTERFACE | receiveDataFromClient | Data doesn't end with correct terminator\n";
+				cerr << "CommunicationInterface | receiveDataFromClient | Data doesn't end with correct terminator\n";
 				clearClientStruct(cli);
 				return false;
 			}
@@ -220,13 +220,13 @@ bool CommunicationInterface::receiveDataFromClient(const client cli)
 bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 {
 	if (ss.messageSize + 10 > MAX_MESSAGE_SIZE) { // we don't care about meta for now
-		cerr << "COMMUNICATION_INTERFACE | sendDataToClient | data is over the size limit (0.5KB)\n";
+		cerr << "CommunicationInterface | sendDataToClient | data is over the size limit (0.5KB)\n";
 		return false;
 	}
 	char message[ss.messageSize + 10];
 
 	if (debug)
-		cout << "COMMUNICATION_INTERFACE | sendDataToClient | message: ";
+		cout << "CommunicationInterface | sendDataToClient | message: ";
 	if (debug)
 		cout << "\n   clientfd: " << int(ss.cfd) << "\n   message type: " << int(ss.messageType) << "\n   message priority: " << int(ss.messagePriority) << "\n   message size: " << ss.messageSize << "\n";
 	/* for (int i = 0; i < ss.messageSize; i++) { */
@@ -258,13 +258,13 @@ bool CommunicationInterface::sendDataToClient(SendingStructure ss)
 				if (errno == EPIPE)
 					removeClient(client(ss.cfd, ss.cMutex));
 
-				cerr << "COMMUNICATION_INTERFACE | sendDataToClient | unable to send data\n";
+				cerr << "CommunicationInterface | sendDataToClient | unable to send data\n";
 				return false;
 			}
 			bytesSend += sCount;
 			if (bytesSend == sizeof(message)) {
 				if (debug)
-					cout << "COMMUNICATION_INTERFACE | sendDataToClient | data was send, unlocking client\n";
+					cout << "CommunicationInterface | sendDataToClient | data was send, unlocking client\n";
 				return true;
 			}
 		}
@@ -301,11 +301,11 @@ void CommunicationInterface::checkActivityOnSocket()
 		state = select(fd + 1, &read_fds, 0, &except_fds, NULL); // OPTIONAL: use write_fds to control when to write to client?
 		switch (state) {
 		case -1:
-			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong\n";
+			cerr << "CommunicationInterface | checkActivityOnSocket | something went's wrong\n";
 			break;
 			exit(127);
 		case 0:
-			cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | something went's wrong, select return 0\n";
+			cerr << "CommunicationInterface | checkActivityOnSocket | something went's wrong, select return 0\n";
 			break;
 		default:
 			if (FD_ISSET(sockfd, &read_fds)) // we will drop first packet by this method
@@ -316,11 +316,11 @@ void CommunicationInterface::checkActivityOnSocket()
 					receiveDataFromClient(c);
 				}
 				if (FD_ISSET(c.fd, &except_fds)) {
-					cerr << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client  " << c.fd << " failed with exception\n";
+					cerr << "CommunicationInterface | checkActivityOnSocket | client  " << c.fd << " failed with exception\n";
 					removeClient(c);
 				}
 				/* if(FD_ISSET(c.fd, &write_fds)){ */
-				/* 	cout << "COMMUNICATION_INTERFACE | checkActivityOnSocket | client " << c.fd << " is ready to be written to\n"; */
+				/* 	cout << "CommunicationInterface | checkActivityOnSocket | client " << c.fd << " is ready to be written to\n"; */
 				/* } */
 			}
 		}
@@ -331,7 +331,7 @@ void CommunicationInterface::checkActivityOnSocket()
 int CommunicationInterface::newClientConnect()
 {
 	sockaddr_in clientAddress;
-	cout << "COMMUNICATION_INTERFACE | newClientConnect | trying to connect to new client\n";
+	cout << "CommunicationInterface | newClientConnect | trying to connect to new client\n";
 	int clientfd = accept(sockfd, (struct sockaddr*)&clientAddress, &clientLength);
 
 	if (clientfd == -1)
@@ -340,7 +340,7 @@ int CommunicationInterface::newClientConnect()
 	char clientIPV4Address[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &clientAddress.sin_addr, clientIPV4Address, INET_ADDRSTRLEN);
 
-	cout << "COMMUNICATION_INTERFACE | newClientConnect | ip: " << clientIPV4Address << ":" << clientAddress.sin_port << " fd:" << clientfd << "\n";
+	cout << "CommunicationInterface | newClientConnect | ip: " << clientIPV4Address << ":" << clientAddress.sin_port << " fd:" << clientfd << "\n";
 	clients.push_back(client(clientfd, clientAddress, new mutex));
 	return clientfd;
 }
@@ -349,12 +349,12 @@ bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {
-		cerr << "COMMUNICATION_INTERFACE | setupSocket | failed to setup socket\n";
+		cerr << "CommunicationInterface | setupSocket | failed to setup socket\n";
 		return false;
 	}
 	int reuse = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0) {
-		cerr << "COMMUNICATION_INTERFACE | setupSocket | failed to setup socket options\n";
+		cerr << "CommunicationInterface | setupSocket | failed to setup socket options\n";
 		return false;
 	}
 	this->serverPort = serverPort;
@@ -363,10 +363,10 @@ bool CommunicationInterface::setupSocket(string myIP, int serverPort)
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(serverPort);
 	if (bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-		cerr << "COMMUNICATION_INTERFACE | setupSocket | error with binding\n";
+		cerr << "CommunicationInterface | setupSocket | error with binding\n";
 		return false;
 	}
-	cout << "COMMUNICATION_INTERFACE | setupSocket | socket created successfully\n";
+	cout << "CommunicationInterface | setupSocket | socket created successfully\n";
 	cout << "  server port: " << serverPort << "\n";
 	cout << "  my IP:       " << myIP << "\n";
 
@@ -382,7 +382,7 @@ void CommunicationInterface::sendErrorMessageToAll(int errCode, char* errMessage
 	sendErrorMessage(client(-1, 0), errCode, errMessage);
 }
 
-void CommunicationInterface::sendErrorMessage(const client cli, int errCode, char* errMessage)
+void CommunicationInterface::sendErrorMessage(client cli, int errCode, char* errMessage)
 {
 	/* if(logOn){ */
 	/* 	// TODO: log errors into file */
@@ -393,7 +393,7 @@ void CommunicationInterface::sendErrorMessage(const client cli, int errCode, cha
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);
 }
 
-void CommunicationInterface::pingClient(const client cli)
+void CommunicationInterface::pingClient(client cli)
 {
 	SendingStructure ss(cli.fd, cli.cMutex, P_PING, 0x01, 1);
 	SendingThreadPool::GetInstance()->scheduleToSend(ss);

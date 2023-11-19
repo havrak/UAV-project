@@ -78,9 +78,9 @@ class CommunicationInterface {
 	/**
 	 * Reads data from client and sends it to be processes
 	 *
-	 * @param const client cli - client to be read from
+	 * @param client cli - client to be read from
 	 */
-	bool receiveDataFromClient(const client cli);
+	bool receiveDataFromClient(client cli);
 
 	/**
 	 * tries to accept new client
@@ -92,18 +92,18 @@ class CommunicationInterface {
 	 * clears information in client struct
 	 * about message that was last read
 	 *
-	 * @param const client cli - client which structure should be cleaned
+	 * @param client cli - client which structure should be cleaned
 	 */
-	void clearClientStruct(const client cli);
+	void clearClientStruct(client cli);
 
 	/**
 	 * Move reading header to point to start of new message
 	 * Works by searching for terminator string in data stream
 	 *
-	 * @param const client cli - client for which reading has to be fixed
+	 * @param client cli - client for which reading has to be fixed
 	 * @return bool - true if terminator was found
 	 */
-	bool fixReceiveData(const client cli);
+	bool fixReceiveData(client cli);
 
 
 	public:
@@ -138,9 +138,9 @@ class CommunicationInterface {
 	/**
 	 * removes client, closes its socket
 	 *
-	 * @param const client cli - client to be removed
+	 * @param client cli - client to be removed
 	 */
-	void removeClient(const client cli);
+	void removeClient(client cli);
 
 	/**
 	 * sends data to client
@@ -161,11 +161,11 @@ class CommunicationInterface {
 	/**
 	 * sends error message to specified client
 	 *
-	 * @param const client cli - client to send error to
+	 * @param client cli - client to send error to
 	 * @param int errCode - error code
 	 * @param char* errMessage - char array with error message, will be cropped to 60 characters
 	 */
-	void sendErrorMessage(const client cli, int errCode, char* errMessage);
+	void sendErrorMessage(client cli, int errCode, char* errMessage);
 
 	/**
 	 * sends error message to all clients
@@ -190,9 +190,9 @@ class CommunicationInterface {
 	/**
 	 * pings given client
 	 *
-	 * @pram const client cli - client to be pinged
+	 * @pram client cli - client to be pinged
 	 */
-	void pingClient(const client cli);
+	void pingClient(client cli);
 
 	/**
 	 * NOTE: this method shouldn't be here and will be moved

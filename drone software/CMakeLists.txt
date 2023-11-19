@@ -7,12 +7,11 @@ set(PROJECT_NAME uav_drone)
 
 project(${PROJECT_NAME})
 
-find_package(OpenCV REQUIRED)
-find_package(PkgConfig REQUIRED)
+# find_package(OpenCV REQUIRED)
+# find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
-find_package(wiringPi REQUIRED)
+find_package(WiringPi REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 ")
 
 add_library(wt901b STATIC
 	"${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-wt901/JY901.cpp")
@@ -26,6 +25,7 @@ target_include_directories(
 
 add_library(pca9685 STATIC
 	"${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-pca9685/pca9685.cpp"
+	"${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-pca9685/pca9685servo.cpp"
 	)
 target_include_directories(
 	pca9685 PUBLIC "${PROJECT_SOURCE_DIR}/libraries/raspberry-pi-pca9685/")
@@ -48,13 +48,16 @@ file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -lm ")
+
 target_link_libraries(
 	${PROJECT_NAME}
 	PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 	${WIRINGPI_LIBRARIES}
-	${OpenCV_LIBS}
 	wt901b
 	ina226
 	pca9685
 	inih
+	rt
+	crypt
 	)

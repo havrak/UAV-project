@@ -26,6 +26,7 @@ bool WT901Decorator::resetOrientation(){
 }
 
 void WT901Decorator::read(){
+	if(error) return;
 	yaw = JY901.getYaw() - yawOffset;
 	pitch = JY901.getPitch() - pitchOffset;
 	roll = JY901.getRoll() - rollOffset;

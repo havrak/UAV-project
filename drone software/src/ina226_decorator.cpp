@@ -12,13 +12,12 @@ INA226Decorator::INA226Decorator(uint8_t address): I2CPeriphery(address){
 	initialize();
 }
 
-
-
 void INA226Decorator::read()
 {
-		ina226.ina226_read(&voltage, &current, &power, &shunt);
-		energy = voltage * current * 24 * 365.25 / 1000000;
-		printf("%s,%d,%.3f,%.3f,%.3f,%.3f,%.3f\n", buffer, (int)rawtime, voltage, current, voltage * current, shunt, energy);
+	if(error) return;
+	ina226.ina226_read(&voltage, &current, &power, &shunt);
+	energy = voltage * current * 24 * 365.25 / 1000000;
+	printf("INA226Decorator | read | %s,%d,%.3f,%.3f,%.3f,%.3f,%.3f\n", buffer, (int)rawtime, voltage, current, voltage * current, shunt, energy);
 }
 
 bool INA226Decorator::initialize()
@@ -29,7 +28,7 @@ bool INA226Decorator::initialize()
 		error = false;
 		return true;
 	} else {
-		cout << "BATTERYINTERFACE | attachINA226 | Failed to attach unit" << endl;
+		cout << "INA226Decorator | initialize | Failed to attach unit" << endl;
 		error = true;
 		return false;
 	}

@@ -15,7 +15,7 @@ Config::Config()
 
 bool Config::loadConfiguration()
 {
-	cout << "configDirectory " << configDirectory<< "\n";
+	cout << "Config | loadConfiguration | loading from: " << configDirectory<< "\n";
 	INIReader reader(configDirectory);
 
 	if (reader.ParseError() < 0) {
@@ -23,14 +23,15 @@ bool Config::loadConfiguration()
 		return false;
 	}
 
-	myIP = reader.GetString("connection", "my_IP", "192.168.6.1");
+	myIP = reader.GetString("connection", "my_IP", "192.168.4.1");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
 	cma = reader.Get("control", "controller_input_adjuster", "SQUARING").compare("TRIGONOMETRIC") == 0 ? TRIGONOMETRIC : SQUARING;
 	imo = reader.Get("configuration", "imu_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 
-	imuAddress = reader.GetInteger("configuration", "imu_address", 0x50);
-	inaAddress = reader.GetInteger("configuration", "ina_address", 0x44);
-	pca9685Address = reader.GetInteger("configuration", "pca_address", 0x40);
+	imuAddress = reader.GetInteger("configuration", "wt901b_address", 0x50);
+	inaBatAddress = reader.GetInteger("configuration", "ina226_bat_address", 0x44);
+	inaV5Address = reader.GetInteger("configuration", "ina226_v5_address", 0x44);
+	pca9685Address = reader.GetInteger("configuration", "pca9685_address", 0x40);
 	return true;
 }
 
