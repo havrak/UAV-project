@@ -89,6 +89,8 @@ class PeripherialsManager {
 	 */
 	bool initializePeripherials(uint8_t inaBatAddress, uint8_t inaPowerAddress, uint8_t pcaAddress, uint8_t imuAddress);
 
+	bool setupINA(float batShunt, float powerShunt);
+
 
 	/**
 	 * Verifies if all peripheries are connected

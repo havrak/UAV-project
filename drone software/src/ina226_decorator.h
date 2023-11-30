@@ -64,6 +64,8 @@ class INA226Decorator : public I2CPeriphery {
 	 */
 	void setPollingDelay(int pollingDelay);
 
+	void setShunt(float shunt){ina226.ina226_calibrate(shunt, 2);};
+
 	float getVoltage(){return voltage;}
 
 	float getCurrent(){return current;}

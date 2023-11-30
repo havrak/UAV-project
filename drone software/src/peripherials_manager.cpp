@@ -34,6 +34,12 @@ void PeripherialsManager::telemetryThreadMethod(){
 	}
 }
 
+	bool PeripherialsManager::setupINA(float batShunt, float powerShunt){
+		vaBattery->setShunt(batShunt);
+		vaInternals->setShunt(powerShunt);
+		return true;
+	}
+
 bool PeripherialsManager::initializePeripherials(uint8_t inaBatAddress, uint8_t inaPowerAddress, uint8_t pcaAddress, uint8_t imuAddress)
 {
 	cout << "PeripherialsManager | initializePeripherials | initializing peripherials: ";

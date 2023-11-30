@@ -35,7 +35,12 @@ int main(int argc, char** argv)
 	config.loadConfiguration();
 
 	cout << "MAIN | main | initializing peripherials" << endl;
+
+	// TODO: peripherals should be created here and added to the peripherials manager
 	PeripherialsManager::GetInstance()->initializePeripherials(config.getINABatAddress(), config.getINA5VAddress(), config.getPCA9865Address(), config.getIMUAddress());
+
+	// NOTE: this is not the right place to setup INA226
+	PeripherialsManager::GetInstance()->setupINA(config.getINABatShunt(), config.getINA5VShunt());
 
 	cout << "MAIN | main | initializing servo" << endl;
 	bool suppressArming = false; // don't want to wait 8 second for servos to arm

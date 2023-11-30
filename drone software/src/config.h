@@ -35,6 +35,8 @@ class Config {
 	int inaBatAddress = 0x50;
 	int inaV5Address = 0x50;
 	int pca9685Address = 0x40;
+	float inaBatShunt = 0;
+	float inaV5Shunt = 0;
 
 	public:
 
@@ -58,8 +60,12 @@ class Config {
 
 	int getServerPort(){return serverPort;};
 	int getIMUAddress(){return imuAddress;};
+
 	int getINABatAddress(){return inaBatAddress;};
-	int getINA5VAddress(){return inaV5Address;};
+	int getINABatShunt(){return inaBatShunt;};
+	float getINA5VAddress(){return inaV5Address;};
+	float getINA5VShunt(){return inaV5Shunt;};
+
 	int getPCA9865Address(){return pca9685Address;};
 
 };

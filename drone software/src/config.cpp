@@ -26,11 +26,13 @@ bool Config::loadConfiguration()
 	myIP = reader.GetString("connection", "my_IP", "192.168.4.1");
 	serverPort = reader.GetInteger("connection", "server_port", 8066);
 	cma = reader.Get("control", "controller_input_adjuster", "SQUARING").compare("TRIGONOMETRIC") == 0 ? TRIGONOMETRIC : SQUARING;
-	imo = reader.Get("configuration", "imu_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 
 	imuAddress = reader.GetInteger("configuration", "wt901b_address", 0x50);
+	imo = reader.Get("configuration", "wt901b_orientation", "STANDARD").compare("STANDARD") == 0 ? STANDART : X_Y_INVERTED;
 	inaBatAddress = reader.GetInteger("configuration", "ina226_bat_address", 0x44);
+	inaBatShunt = reader.GetReal("configuration", "ina226_bat_shunt", 0.1);
 	inaV5Address = reader.GetInteger("configuration", "ina226_v5_address", 0x44);
+	inaV5Shunt = reader.GetReal("configuration", "ina226_v5_shunt", 0.1);
 	pca9685Address = reader.GetInteger("configuration", "pca9685_address", 0x40);
 	return true;
 }

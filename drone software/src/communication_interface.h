@@ -9,31 +9,23 @@
 #define COMMUNICATION_INTERFACE_H
 
 #include "protocol_spec.h"
-#include "peripherials_manager.h"
 #include <arpa/inet.h>
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
-#include <cerrno>
-#include <chrono>
 #include <condition_variable>
-#include <cstdint>
-#include <cstring>
-#include <iostream>
 #include <list>
-#include <locale>
 #include <mutex>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <queue>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <iostream>
+#include "peripherials_manager.h"
 #include <thread>
 #include <unistd.h>
 #include <vector>
-#include <utility>
 #include <asm-generic/errno-base.h>
 #include <bits/types/clock_t.h>
 
